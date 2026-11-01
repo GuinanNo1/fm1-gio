@@ -206,8 +206,8 @@ and enjoy!</p>
 <a href="https://fartypants.github.io/fm1-nachtfahrt/">NACHTFAHRT</a> by Cranky Man, and influenced by the music of
 Giorgio Moroder, Patrick Cowley, Marc Cerrone, Space, Daft Punk and many others. You are all giants, and I stand on your
 shoulders.</p>
-<p>Credit for sparking the idea goes to YouTube user @mateocarrion7776, who posted those immortal words, "My name is
-Giovanni Giorgio…", and set off this train of thought.</p>
+<p>I'd like to give credit for sparking this idea to YouTube user @mateocarrion7776, who posted on a recent thread on
+my channel those immortal words, "My name is Giovanni Giorgio…", and set off this train of thought.</p>
 </section>
 </main>"""
 

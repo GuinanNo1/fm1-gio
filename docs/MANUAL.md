@@ -295,8 +295,8 @@ Inspired by and modelled on [AMB-1](https://charlesvestal.github.io/fm1-amb/) by
 [DUB-1](https://sbegueria.github.io/fm1-dub/) by Santiago Beguería and
 [NACHTFAHRT](https://fartypants.github.io/fm1-nachtfahrt/) by Cranky Man, and influenced by the music of Giorgio Moroder,
 Patrick Cowley, Marc Cerrone, Space, Daft Punk and many others. You are all giants, and I stand on your shoulders.
-Credit for sparking the idea goes to YouTube user @mateocarrion7776, who posted those immortal words, "My name is
-Giovanni Giorgio…", and set off this train of thought.
+I'd like to give credit for sparking this idea to YouTube user @mateocarrion7776, who posted on a recent thread on
+my channel those immortal words, "My name is Giovanni Giorgio…", and set off this train of thought.
 
 A fork of [AMB-1](https://github.com/charlesvestal/fm1-amb) by Charles Vestal: its platform, panel, plate reverb,
 tape echo and screen reader. Built on [fm1-base](https://github.com/charlesvestal/fm1-base) and
