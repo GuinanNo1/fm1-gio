@@ -165,7 +165,7 @@ and drum parts are MOR-1's own, written as it plays.
 | # | Song | After | Tempo | Key | The form |
 |---|---|---|---|---|---|
 | 1 | Feel | *I Feel Love* | 126 | C | Intro (bass, hats) · Verse (C) · Chorus (C–E♭–F–G) · Shift (on B♭) · Verse · Chorus · Break |
-| 2 | Click | *Giorgio by Moroder* | 113 | A minor | Click (hats on the beat) · Arpeggio · Disco (Am–Em) · Strings (Am–F) · Fills · House |
+| 2 | TickTock | *Giorgio by Moroder* | 113 | A minor | Click (hats on the beat) · Arpeggio · Disco (Am–Em) · Strings (Am–F) · Fills · House |
 | 3 | Mutant | *Supernature* | 123 | F minor | Dawn (the pad alone) · Sequence · Groove · Theme (Fm–D♭) · Bridge (B♭m–Fm) · Theme |
 | 4 | Heaven | *The Number One Song in Heaven* | 130 | A♭ | Slow ×2 (half time, A♭–E♭–Fm11–E♭) · Lift · Fast (A♭–E♭–B♭–A♭) · Vamp (Fm11) · Fast |
 | 5 | Clock | *Beat the Clock* | 126 | C | Intro · Verse (G–F) · Pre (Am–Dm–G–C) · Chorus (G–Em7–G) · Turn (C–E♭) · the same a minor third up · Outro |
@@ -290,6 +290,13 @@ back from there.
 ---
 
 ## 12. Credits
+
+Inspired by and modelled on [AMB-1](https://charlesvestal.github.io/fm1-amb/) by Charles Vestal,
+[DUB-1](https://sbegueria.github.io/fm1-dub/) by Santiago Beguería and
+[NACHTFAHRT](https://fartypants.github.io/fm1-nachtfahrt/) by Cranky Man, and influenced by the music of Giorgio Moroder,
+Patrick Cowley, Marc Cerrone, Space, Daft Punk and many others. You are all giants, and I stand on your shoulders.
+Credit for sparking the idea goes to YouTube user @mateocarrion7776, who posted those immortal words, "My name is
+Giovanni Giorgio…", and set off this train of thought.
 
 A fork of [AMB-1](https://github.com/charlesvestal/fm1-amb) by Charles Vestal: its platform, panel, plate reverb,
 tape echo and screen reader. Built on [fm1-base](https://github.com/charlesvestal/fm1-base) and

@@ -223,7 +223,7 @@ static const song_t SONGS[EN_NSONGS] = {
       {"Chorus", 8, 1, ALL, 0, 0, 0},
       {"Break", 8, 0, L_BASS | L_PAD | L_HATS, 0, F_BREAK, 0}},
      {{{0, Q_MAJ, 16}}, {{0, Q_MAJ, 8}, {3, Q_MAJ, 8}, {5, Q_MAJ, 8}, {7, Q_MAJ, 8}}}},
-    {"Click", "Giorgio by Moroder", {113, 35, 50, 30, 80, 48, 35, 30, 50, 0, 55, 25, 55, 0, 55, 25, 70, 45, 50, 0, 25, 1, 30, 40, 9, 0, 1, 0, 0, 0, 35, 50, 55},
+    {"TickTock", "Giorgio by Moroder", {113, 35, 50, 30, 80, 48, 35, 30, 50, 0, 55, 25, 55, 0, 55, 25, 70, 45, 50, 0, 25, 1, 30, 40, 9, 0, 1, 0, 0, 0, 35, 50, 55},
      M_MINOR, A_ARP, 6, 2,
      {{"Click", 8, 2, L_HATS, 0, F_CLICK, 0},
       {"Arpeggio", 8, 0, L_BASS | L_HATS, 0, F_BUILD | F_CLICK, 0},

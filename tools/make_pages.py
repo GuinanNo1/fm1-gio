@@ -1,21 +1,21 @@
 #!/usr/bin/env python3
 # SPDX-License-Identifier: MPL-2.0
-# Copyright (C) 2026 Charles Vestal
-"""Make the MOR-1 site for GitHub Pages (https://YOUR-NAME.github.io/fm1-mor/):
+# Copyright (C) 2026 Charles Vestal, Ian Guinan
+"""Make the MOR-1 site for GitHub Pages (https://YOUR-NAME.github.io/fm1-mor/), dark, after AMB-1's:
 
-  index.html                  what MOR-1 is, and the ways in: try, install, manual, download, source
+  index.html                  what MOR-1 is, and the ways in: try, install, manual, quickstart, download, source
   img/                        screenshots (docs/img)
-  emu/                        MOR-1 in the browser (app/build/emu, from ./build.sh --web)
-  words/                      the screen reader's words files (app/web/words, from app/words.tsv)
-  install/index.html          fm1-base's web installer (base/web/installer.html, with fm1pkg.js, fm1ota.js and
-                              the package's metadata inlined; Chrome or Edge, Web MIDI)
-  manual/index.html, img/     the manual (fm1-base's tools/manual_html.py, from docs/MANUAL.md)
-  firmware/mor-VERSION.fwsc   the package the installer writes; also the download
+  emu/                        MOR-1 in the browser (app/build/emu, from ./build.sh --web), with its guide
+  quickstart/index.html       one page: every control, page, effect and song
+  manual/index.html, img/     the manual (fm1-base's tools/manual_html.py, from docs/MANUAL.md), in the site's colours
+  install/index.html          fm1-base's web installer, when a package is given; else a page saying it's coming
+  firmware/mor-VERSION.fwsc   the package the installer writes; also the download (when given)
+  words/                      the screen reader's words files (app/web/words)
 
-  tools/make_pages.py app/build/mor-1.0.fwsc 1.0 OUT_DIR
+  tools/make_pages.py OUT_DIR [PKG VERSION]
 
-The package must be a release build (./build.sh --release X.Y): its identity, FM-1_7XXYYZZ, is what
-the installer checks the download against and what the FM-1 reports after the install."""
+A package must be a release build (./build.sh --release X.Y): its identity, FM-1_4XXYYZZ, is what the installer
+checks the download against and what the FM-1 reports after the install."""
 import hashlib
 import html
 import json
@@ -31,144 +31,419 @@ sys.path.insert(0, str(BASE / "tools"))
 from make_site import MBOOT_VERSION, product_of, read_conf, strip_module  # noqa: E402  (fm1-base's: the package format)
 
 REPO = "https://github.com/YOUR-NAME/fm1-mor"
+FONTS = ('<link rel="preconnect" href="https://fonts.googleapis.com">\n'
+         '<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>\n'
+         '<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow:ital,wght@0,400;0,600;1,400'
+         '&family=Barlow+Semi+Condensed:wght@500;700&display=swap">\n')
 
-LANDING = """<!doctype html>
+# the site's colours: MOR-1's own screen. A night-club navy, the cards a shade up; magenta for what's live; the bass's
+# cyan, the pad's violet, the lead's gold for the three kinds of thing
+TOKENS = """
+:root {
+  --night: #100e22; --card: #1c1a3a; --card-2: #262350; --rule: #3a3668; --ink: #f2eeff; --muted: #aaa4d4;
+  --magenta: #ff5cb4; --cyan: #2fd8f0; --violet: #b994ff; --gold: #ffc840; --red: #ff7a7a;
+  --display: "Barlow Semi Condensed", "Arial Narrow", "Helvetica Neue", Arial, sans-serif;
+  --body: "Barlow", "Helvetica Neue", Helvetica, Arial, sans-serif;
+  color-scheme: dark;
+}
+"""
+HEADER_CSS = """
+header.site { max-width: 46rem; margin: 0 auto; display: flex; flex-wrap: wrap; gap: .4rem 1.2rem; align-items: baseline;
+              padding: 18px 0 14px; border-bottom: 1px solid var(--rule); }
+header.site .home { font: 700 1.15rem/1 var(--display); letter-spacing: .08em; text-decoration: none; color: var(--ink); }
+header.site nav { display: flex; flex-wrap: wrap; gap: .2rem 1rem; font: 500 .95rem/1.4 var(--display);
+                  letter-spacing: .05em; text-transform: uppercase; }
+header.site nav a { text-decoration: none; color: var(--muted); }
+header.site nav a:hover, header.site nav a[aria-current] { color: var(--magenta); }
+"""
+THEME = TOKENS + """
+body { background: var(--night); color: var(--ink); margin: 0; font: 400 17px/1.6 var(--body);
+       padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px));
+       padding-block: 0 64px; }
+a { color: var(--ink); text-decoration-color: var(--magenta); text-decoration-thickness: 2px; text-underline-offset: 3px; }
+a:hover { color: var(--magenta); }
+a:focus-visible, button:focus-visible { outline: 2px solid var(--cyan); outline-offset: 2px; }
+code { font: .88em ui-monospace, Menlo, Consolas, monospace; background: var(--card-2); padding: .08em .35em; border-radius: 3px; }
+.foot { max-width: 46rem; margin: 3rem auto 0; color: var(--muted); font-size: .88rem; border-top: 1px solid var(--rule);
+        padding-top: 1rem; }
+""" + HEADER_CSS
+
+NAV = [("emu/", "Try it"), ("install/", "Install"), ("manual/", "Manual"), ("quickstart/", "Quickstart")]
+
+
+def header(here, depth):
+    up = "../" * depth
+    links = "".join('<a href="%s%sindex.html"%s>%s</a>' % (up, p, ' aria-current="page"' if p == here else "", t)
+                    for p, t in NAV)
+    return (f'<header class="site"><a class="home" href="{up}index.html">MOR-1</a><nav aria-label="MOR-1">{links}'
+            f'<a href="{REPO}">Source</a></nav></header>')
+
+
+FOOT = """<p class="foot">M-VAVE and FM-1 are trademarks of their owners. MOR-1 is independent firmware, not affiliated with
+M-VAVE, Giorgio Moroder or any artist named here. To go back to the official firmware, use the installer's "Back to the
+stock firmware", or M-VAVE's updater, M-UPGRADE, from <a href="https://www.m-vave.com/download">m-vave.com/download</a>.</p>"""
+
+
+def page(title, desc, body, here, depth, css=""):
+    return f"""<!doctype html>
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>MOR-1 · Electronic disco for the FM-1</title>
-<meta name="description" content="A generative electronic disco machine for the M-VAVE FM-1, after Giorgio Moroder's Munich sound.">
-<meta name="theme-color" content="#fdf9e4">
-<style>
-/* the colours of Ambient 1: Music for Airports (1978), as the manual: the page a shade lighter than the
-   cover's paper, so the screenshots (on that paper) stand out; the cover's paper for the cards */
-:root { --paper: #fdf9e4; --sheet: #f6eeb5; --green-1: #d0dc92; --green-3: #9cb16f; --river: #85c3c1; --river-2: #3b7470;
-        --ink: #1d1b02; --muted: #49451f; --rule: #c2ce7f; color-scheme: light; }
-/* --river-2 and --muted a shade darker than the cover's, so text in them reads (4.5:1 on the paper and the cards) */
-body { background: var(--paper); color: var(--ink); margin: 0; padding-inline: 16px; padding-block: 48px 64px;
-       font: 400 17px/1.6 "Helvetica Neue", Helvetica, Arial, sans-serif; }
-main { max-width: 42rem; margin: 0 auto; }
-h1 { font-size: 3rem; font-weight: 300; line-height: 1; letter-spacing: .06em; margin: 0 0 .3rem; }
-.sub { text-transform: uppercase; letter-spacing: .08em; font-size: .9rem; margin: 0 0 1.2rem; padding-bottom: .8rem; border-bottom: 1px solid var(--ink); }
-h2 { font-size: 1.1rem; font-weight: 400; text-transform: uppercase; letter-spacing: .06em; margin: 2.4rem 0 .6rem;
-     padding-top: .6rem; border-top: 1px solid var(--ink); }
-.lede { font-size: 1.15rem; margin: 0 0 1.6rem; max-width: 36rem; }
-.shots { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 12px; margin: 0 0 1.8rem; }
-.shots img { width: 100%; height: auto; image-rendering: pixelated; border: 1px solid var(--ink); }
-.ways { display: grid; gap: 10px; margin: 0 0 1rem; }
-.ways a { display: block; text-decoration: none; color: var(--ink); background: var(--sheet); border: 1px solid var(--ink); padding: 12px 16px; }
-.ways a:first-child { background: var(--river); }
-.ways a:hover, .ways a:focus-visible { background: var(--green-1); }
-.ways a:focus-visible { outline: 3px solid var(--ink); outline-offset: 2px; }
-a:focus-visible { outline: 2px solid var(--ink); outline-offset: 2px; }
-.ways strong { font-weight: 400; font-size: 1.15rem; text-transform: uppercase; letter-spacing: .05em; display: block; }
-.ways span { color: var(--muted); font-size: .95rem; }
-.ways em.v { font-style: normal; text-transform: none; letter-spacing: 0; }
-ul.garden { padding-left: 1.2rem; margin: 0 0 1rem; }
-ul.garden li { margin: 0 0 .4rem; }
-ul.garden li::marker { color: var(--river-2); }
-p.small { color: var(--muted); font-size: .9rem; }
-a { color: var(--ink); text-decoration-color: var(--river-2); text-decoration-thickness: 2px; text-underline-offset: 3px; }
-code { font-size: .9em; }
-</style>
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>{title}</title>
+<meta name="description" content="{html.escape(desc)}">
+<meta name="theme-color" content="#100e22">
+{FONTS}<style>{THEME}{css}</style>
 </head>
 <body>
-<main>
-<h1>MOR-1</h1>
-<p class="sub">A generative electronic disco machine for the M-VAVE FM-1</p>
-<p class="lede">A generative ambient machine, inspired by Brian Eno's <i>Music for Airports</i>. It plays itself from the moment it's switched on. You don't perform it, you tend it: pick a
-piece and a scale, take notes out, put them back, and let it grow.</p>
-<div class="shots">
-  <img src="img/screen-garden.png" width="240" height="240" alt="MOR-1's screen: the scale as a ring with the chord Dm7, the four bell loops around it, the pulse rings on the right">
-  <img src="img/screen-voices.png" width="240" height="240" alt="MOR-1's screen: the piece Voices, F Aeolian, the chord Fm7">
-  <img src="img/screen-frozen.png" width="240" height="240" alt="MOR-1's screen: frozen, the chord held">
-</div>
-<nav class="ways" aria-label="Get MOR-1">
-  <a href="emu/"><strong>Try it in the browser</strong><span>The same code the FM-1 runs, with sound. Mouse, touch or keyboard; no FM-1 needed.</span></a>
-  <a href="install/"><strong>Install <em class="v">v__VERSION__</em></strong><span>From Chrome or Edge, with the FM-1 connected by USB. Nothing to install on the computer.</span></a>
-  <a href="manual/"><strong>Manual</strong><span>Getting started in a few minutes, then everything else.</span></a>
-  <a href="firmware/__PKG__"><strong>Download <em class="v">__PKG__</em></strong><span>For the command-line installer: <code>python3 base/tools/fm1_install.py __PKG__</code></span></a>
-  <a href="__REPO__"><strong>Source</strong><span>GitHub, MPL-2.0. Built on fm1-base and felucca-bsp, from Felucca by Hügelton Instruments.</span></a>
-</nav>
-
-<h2>The garden</h2>
-<ul class="garden">
-  <li><b>Pad.</b> Four breathing voices, a Rhodes or sung voices, each swelling and fading on its own cycle, so the chord forms and dissolves. Now and then it drifts to another chord in the scale.</li>
-  <li><b>Bells.</b> Soft FM bells on four tape loops 13, 17, 23 and 29 beats long, sliding against each other so the melody never quite repeats.</li>
-  <li><b>Bass.</b> The chord's root, low and gliding.</li>
-  <li><b>Pulse.</b> A thump and two hats on Euclidean patterns of 16, 12 and 7 steps.</li>
-  <li><b>Space.</b> A tape echo, a long tape loop and a plate reverb: most of what you hear. REC freezes the chord and lets the reverb ring on forever.</li>
-</ul>
-<p>Eight pieces, each remembering how you left it. The keys are the scale: press one to take its note out or
-put it back. A slow tide between sparse and full, and rests now and then, keep it moving for hours.</p>
-<p class="small">To go back to the official firmware, use the installer's "Back to the stock firmware", or
-M-VAVE's updater, M-UPGRADE, from <a href="https://www.m-vave.com/download">m-vave.com/download</a>.
-M-VAVE and FM-1 are trademarks of their owners. MOR-1 is not affiliated with M-VAVE or Brian Eno.</p>
-</main>
+{header(here, depth)}
+{body}
+{FOOT}
 </body>
 </html>
 """
 
 
-def main(pkg, version, out):
-    pkg, out = Path(pkg), Path(out)
-    raw = pkg.read_bytes()
-    product = product_of(raw)
-    if not re.fullmatch(r"FM-1_7\d{6}", product):
-        raise SystemExit(f"{pkg}: identity {product!r}: make a release build (./build.sh --release X.Y)")
-    if b"FELUCCA-LOADER-1" not in raw:
-        raise SystemExit(f"{pkg}: no update loader in it")
-    name = f"mor-{re.sub(r'[^A-Za-z0-9.-]', '-', version)}.fwsc"
+LANDING_CSS = """
+main { max-width: 46rem; margin: 0 auto; }
+.hero { padding: 2.6rem 0 1.2rem; }
+h1 { font: 700 clamp(3.6rem, 14vw, 6.4rem)/.9 var(--display); letter-spacing: .04em; margin: 0;
+     background: linear-gradient(180deg, #fff 0%, #ffd0ee 38%, var(--magenta) 52%, #7a3cff 100%);
+     -webkit-background-clip: text; background-clip: text; color: transparent; }
+.sub { font: 500 1.15rem/1.3 var(--display); letter-spacing: .1em; text-transform: uppercase; color: var(--muted);
+       margin: .7rem 0 0; }
+/* the form strip, as on MOR-1's screen: a block a section, the one playing filling */
+.strip { display: flex; gap: 4px; margin: 1.4rem 0 0; height: 10px; }
+.strip i { flex: var(--w); border-radius: 5px; background: var(--card-2); }
+.strip i.on { background: linear-gradient(90deg, var(--magenta) 60%, var(--card-2) 60%); }
+@media (prefers-reduced-motion: no-preference) {
+  .strip i.on { background: linear-gradient(90deg, var(--magenta) 50%, var(--card-2) 50%); background-size: 200% 100%;
+                background-position: 70% 0; animation: fill 7.6s linear infinite; }
+  @keyframes fill { from { background-position: 100% 0; } to { background-position: 0 0; } }
+}
+.lede { font-size: 1.18rem; margin: 1.6rem 0 1.2rem; max-width: 36rem; }
+.shots { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 12px; margin: 1.4rem 0 2rem; }
+.shots figure { margin: 0; min-width: 0; }
+.shots img { display: block; width: 100%; max-width: 100%; height: auto; image-rendering: pixelated; border-radius: 10px;
+             border: 6px solid #07061a; box-shadow: 0 0 0 1px var(--rule); box-sizing: border-box; }
+.shots figcaption { color: var(--muted); font-size: .85rem; margin-top: .3rem; }
+.ways { display: grid; gap: 10px; margin: 0 0 1rem; }
+.ways a, .ways .off { display: block; text-decoration: none; background: var(--card); border: 1px solid var(--rule);
+                      border-radius: 10px; padding: 12px 16px; }
+.ways .off { border-style: dashed; }
+.ways a:hover { border-color: var(--magenta); color: var(--ink); }
+.ways a.first { background: var(--card-2); border-color: var(--magenta); }
+.ways strong { display: block; font: 700 1.2rem/1.3 var(--display); letter-spacing: .06em; text-transform: uppercase; }
+.ways strong em { font-style: normal; color: var(--gold); font-weight: 500; letter-spacing: .04em; margin-left: .4em; }
+.ways span { color: var(--muted); font-size: .95rem; }
+h2 { font: 700 1.25rem/1.2 var(--display); letter-spacing: .08em; text-transform: uppercase; margin: 2.6rem 0 .8rem;
+     padding-top: .8rem; border-top: 1px solid var(--rule); }
+.parts { display: grid; gap: 10px; padding: 0; margin: 0 0 1rem; list-style: none; }
+.parts li { border-left: 4px solid var(--c); padding: 2px 0 2px 14px; }
+.parts b { color: var(--c); font-family: var(--display); letter-spacing: .06em; text-transform: uppercase; }
+.songs { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 8px; margin: 0 0 1rem;
+         padding: 0; list-style: none; }
+.songs li { background: var(--card); border-radius: 8px; padding: 8px 12px; }
+.songs b { font: 700 1.05rem/1.2 var(--display); letter-spacing: .06em; text-transform: uppercase; }
+.songs span { display: block; color: var(--muted); font-size: .9rem; font-style: italic; }
+.credits p { max-width: 38rem; }
+"""
+
+LANDING_BODY = """<main>
+<section class="hero">
+  <h1>MOR-1</h1>
+  <p class="sub">A generative electronic disco firmware for the M-VAVE FM-1</p>
+  <div class="strip" aria-hidden="true"><i style="--w:8"></i><i class="on" style="--w:16"></i><i style="--w:8"></i><i style="--w:8"></i><i style="--w:16"></i><i style="--w:8"></i><i style="--w:8"></i></div>
+</section>
+
+<p class="lede">It's time to relive the futuristic electronic disco sounds of the '70s, '80s and '90s with MOR-1, new
+firmware for the M-VAVE FM-1. It is generative: it writes music in these styles as it plays. Pick a song, play along on
+the keys and let the lead answer you, drop in effects, and nudge it in the direction your feelings take you. Feel love
+and enjoy!</p>
+
+<div class="shots">
+  <figure><img src="img/screen-song.png" width="240" height="240" alt="MOR-1's screen: the song Feel, its verse; the bass's sixteen steps in a ring round the chord C; the form across the top"><figcaption>Feel, its verse</figcaption></figure>
+  <figure><img src="img/screen-heaven.png" width="240" height="240" alt="MOR-1's screen: the song Heaven at full tempo, the chord A flat"><figcaption>Heaven at full tempo</figcaption></figure>
+  <figure><img src="img/screen-grid.png" width="240" height="240" alt="MOR-1's Effects page: sixteen effects in four rows, Sweep and Roll held"><figcaption>The effects grid</figcaption></figure>
+</div>
+
+<nav class="ways" aria-label="Get MOR-1">
+  <a class="first" href="emu/index.html"><strong>Try it in the browser</strong><span>The same code the FM-1 runs, with sound. Mouse, touch or keyboard; no FM-1 needed.</span></a>
+  __INSTALL__
+  <a href="manual/index.html"><strong>Manual</strong><span>Getting started in a few minutes, then everything else.</span></a>
+  <a href="quickstart/index.html"><strong>Quickstart</strong><span>Every control, page, effect and song on one page.</span></a>
+  __DOWNLOAD__
+  <a href="__REPO__"><strong>Source</strong><span>GitHub, MPL-2.0. Built on fm1-base and felucca-bsp, from Felucca by Hügelton Instruments.</span></a>
+</nav>
+
+<h2>What plays</h2>
+<ul class="parts">
+  <li style="--c: var(--cyan)"><b>Bass.</b> A Moog-style sequence out in front: two saws and a square through a four-pole ladder, short decays, the dry note on one side and its echo on the other. Seven pattern shapes, written in chord degrees so they follow the changes.</li>
+  <li style="--c: var(--violet)"><b>Pad.</b> Strings, a choir or detuned saws on the chord, voice-led, through a slow stereo phaser.</li>
+  <li style="--c: var(--gold)"><b>Lead.</b> Ten voices, from Mini and Odyssey to Theremin, FM Brass and Robot. It writes its own phrases. Play the white keys and it follows your line, answers it, and makes it the song's theme.</li>
+  <li style="--c: var(--red)"><b>Drums.</b> Four on the floor, claps on two and four, open hats off the beat, and syndrum fills.</li>
+  <li style="--c: var(--magenta)"><b>The form.</b> Each song is a set of sections with their own chord changes. It loops for ever, repeating, skipping, dropping a layer, or moving the whole song up a key for a while. Sixteen drop-in effects are under your fingers.</li>
+</ul>
+
+<h2>The songs</h2>
+<p>Nine songs, each after a record: its tempo, key, chord changes and the shape of its arrangement. The lines are
+MOR-1's own, written as it plays.</p>
+<ul class="songs">
+  <li><b>Feel</b><span>after I Feel Love</span></li>
+  <li><b>TickTock</b><span>after Giorgio by Moroder</span></li>
+  <li><b>Mutant</b><span>after Supernature</span></li>
+  <li><b>Heaven</b><span>after The Number One Song in Heaven</span></li>
+  <li><b>Clock</b><span>after Beat the Clock</span></li>
+  <li><b>Energy</b><span>after Menergy</span></li>
+  <li><b>Fly</b><span>after Magic Fly</span></li>
+  <li><b>Lover</b><span>after Automatic Lover</span></li>
+  <li><b>Express</b><span>after Chase</span></li>
+</ul>
+
+<section class="credits">
+<h2>Thanks</h2>
+<p>Inspired by and modelled on <a href="https://charlesvestal.github.io/fm1-amb/">AMB-1</a> by Charles Vestal,
+<a href="https://sbegueria.github.io/fm1-dub/">DUB-1</a> by Santiago Beguería and
+<a href="https://fartypants.github.io/fm1-nachtfahrt/">NACHTFAHRT</a> by Cranky Man, and influenced by the music of
+Giorgio Moroder, Patrick Cowley, Marc Cerrone, Space, Daft Punk and many others. You are all giants, and I stand on your
+shoulders.</p>
+<p>Credit for sparking the idea goes to YouTube user @mateocarrion7776, who posted those immortal words, "My name is
+Giovanni Giorgio…", and set off this train of thought.</p>
+</section>
+</main>"""
+
+INSTALL_SOON = """<main style="max-width:46rem;margin:0 auto">
+<h1 style="font:700 2.6rem/1 var(--display);letter-spacing:.05em;margin:2.4rem 0 .6rem">Install <span style="color:var(--gold);font-weight:500">alpha</span></h1>
+<p>MOR-1 is in alpha. The installer will be here with the first firmware build, and test beta downloads are coming
+soon. Until then, <a href="../emu/index.html">try it in the browser</a>: the same code the FM-1 will run.</p>
+<p>When it's ready, installing works from Chrome or Edge with the FM-1 connected by a USB data cable, with nothing to
+install on the computer, and the same page can put M-VAVE's own firmware back.</p>
+</main>"""
+
+QUICK_CSS = """
+header.site, .foot { max-width: 62rem; }
+main { max-width: 62rem; margin: 0 auto; }
+h1 { font: 700 2.6rem/1 var(--display); letter-spacing: .05em; margin: 2rem 0 .3rem; }
+.sub { color: var(--muted); margin: 0 0 1.4rem; }
+.grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 28rem), 1fr)); gap: 14px; }
+.card { background: var(--card); border-radius: 10px; padding: 14px 16px; min-width: 0; border-top: 4px solid var(--c, var(--magenta)); }
+.card h2 { font: 700 1.1rem/1.2 var(--display); letter-spacing: .08em; text-transform: uppercase; margin: 0 0 .6rem; color: var(--c, var(--magenta)); }
+.wrap { overflow-x: auto; }
+table { border-collapse: collapse; width: 100%; font-size: .93rem; }
+th, td { text-align: left; padding: 5px 10px 5px 0; border-bottom: 1px solid var(--rule); vertical-align: top; }
+th { font: 500 .78rem/1.3 var(--display); letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
+td:first-child { font-weight: 600; white-space: nowrap; }
+.fx { display: grid; grid-template-columns: auto repeat(4, minmax(0, 1fr)); gap: 4px; font-size: .9rem; }
+.fx span { background: var(--card-2); border-radius: 5px; padding: 4px 6px; min-width: 0; overflow-wrap: anywhere; }
+.fx b { font: 700 .8rem/1.6 var(--display); letter-spacing: .06em; text-transform: uppercase; color: var(--muted); padding-right: 6px; }
+.fx small { color: var(--muted); font-size: .72rem; margin-right: 4px; }
+kbd { font: 600 .82em ui-monospace, Menlo, monospace; background: var(--card-2); border: 1px solid var(--rule); border-radius: 4px; padding: 0 .3em; }
+ol.start { margin: 0; padding-left: 1.3rem; }
+ol.start li { margin-bottom: .35rem; }
+ol.start li::marker { color: var(--magenta); font-weight: 600; }
+"""
+
+QUICK_BODY = """<main>
+<h1>Quickstart</h1>
+<p class="sub">MOR-1 on one page: every control, page, effect and song.</p>
+<div class="grid">
+
+<section class="card" style="--c: var(--magenta)">
+<h2>Start</h2>
+<ol class="start">
+  <li>Switch on: <b>Feel</b> plays from its intro.</li>
+  <li><b>PRESETS</b>: another song, from the top.</li>
+  <li><b>White keys</b>: play the lead, always in key. Three notes and a pause: it answers, and keeps your line as its theme.</li>
+  <li><b>Black keys</b>: an effect while held. <b>SEL</b>: all sixteen on the white keys.</li>
+  <li><b>EDIT</b>: the next section. A tap on <b>REC</b>: stay in this one.</li>
+  <li><b>ENV</b>, KNOB 2: open the bass filter.</li>
+</ol>
+</section>
+
+<section class="card" style="--c: var(--cyan)">
+<h2>Controls</h2>
+<div class="wrap"><table>
+<tr><td>White keys</td><td>The lead, a step of the scale each; the chord's notes lit</td></tr>
+<tr><td>Black keys</td><td>Effects while held: Throw, Tape stop, Swell, Low-pass, High-pass, Sweep, Phaser, Freeze, Drop, Stutter, Roll</td></tr>
+<tr><td>PLAY</td><td>Play / stop (the song from the top)</td></tr>
+<tr><td>REC</td><td>Tap: hold the section. Held: the effects grid</td></tr>
+<tr><td>EDIT</td><td>The next section, on the next bar</td></tr>
+<tr><td>SEL</td><td>The Effects page; again: back</td></tr>
+<tr><td>OCT− / OCT+</td><td>The bass's octave</td></tr>
+<tr><td>ALGORITHM</td><td>The bass pattern: Song, Pump, Pump 16, Arpeggio, Gallop, Octaves, Slow</td></tr>
+<tr><td>PRESETS</td><td>The song (each keeps its settings)</td></tr>
+<tr><td>SELECT</td><td>Pages. With HOME held: tempo 110–130</td></tr>
+<tr><td>SAVE</td><td>Save. Held 1.5 s: the song's recipe again</td></tr>
+</table></div>
+</section>
+
+<section class="card" style="--c: var(--violet)">
+<h2>Pages and knobs</h2>
+<div class="wrap"><table>
+<tr><th>Page</th><th>1</th><th>2</th><th>3</th><th>4</th></tr>
+<tr><td>Song (HOME)</td><td>Tempo</td><td>Evolve</td><td>Motion</td><td>Arrange</td></tr>
+<tr><td>Bass (ENV)</td><td>Level</td><td>Cutoff</td><td>Emphasis</td><td>Decay</td></tr>
+<tr><td>Lead (ARP)</td><td>Level</td><td>Voice</td><td>Busy</td><td>Glide</td></tr>
+<tr><td>Lead FX (ARP ×2)</td><td>Echo</td><td>Reverb</td><td>Octave</td><td>Tone</td></tr>
+<tr><td>Pad (LFO)</td><td>Level</td><td>Colour</td><td>Bright</td><td>Phaser</td></tr>
+<tr><td>Drums (SEQ)</td><td>Level</td><td>Fills</td><td>Hats</td><td>Swing</td></tr>
+<tr><td>Space (FX)</td><td>Echo</td><td>Time</td><td>Feedback</td><td>Reverb</td></tr>
+<tr><td>Setup (GLO)</td><td>Key</td><td>Tune</td><td>MIDI out</td><td>Lights</td></tr>
+<tr><td>MIDI (GLO ×2)</td><td>MIDI out</td><td>Channels</td><td>Clock</td><td>Clock out</td></tr>
+<tr><td>Effects (SEL)</td><td>Bass echo</td><td>Lead echo</td><td>Time</td><td>Feedback</td></tr>
+</table></div>
+</section>
+
+<section class="card" style="--c: var(--red)">
+<h2>Effects</h2>
+<p style="margin:0 0 .6rem;color:var(--muted);font-size:.9rem">SEL or REC held: white keys 1–16, each while held.</p>
+<div class="fx">
+<b>Echo</b><span><small>1</small>Throw</span><span><small>2</small>Time x2</span><span><small>3</small>Tape stop</span><span><small>4</small>Swell</span>
+<b>Filter</b><span><small>5</small>Low-pass</span><span><small>6</small>High-pass</span><span><small>7</small>Sweep</span><span><small>8</small>Phaser</span>
+<b>Space</b><span><small>9</small>Reverb</span><span><small>10</small>Wash</span><span><small>11</small>Freeze</span><span><small>12</small>Drop</span>
+<b>Moves</b><span><small>13</small>Stutter</span><span><small>14</small>Gate</span><span><small>15</small>Octave</span><span><small>16</small>Roll</span>
+</div>
+</section>
+
+<section class="card" style="--c: var(--gold)">
+<h2>Songs</h2>
+<div class="wrap"><table>
+<tr><th>Song</th><th>After</th><th>Tempo</th><th>Key</th></tr>
+<tr><td>1 Feel</td><td>I Feel Love</td><td>126</td><td>C</td></tr>
+<tr><td>2 TickTock</td><td>Giorgio by Moroder</td><td>113</td><td>A minor</td></tr>
+<tr><td>3 Mutant</td><td>Supernature</td><td>123</td><td>F minor</td></tr>
+<tr><td>4 Heaven</td><td>The Number One Song in Heaven</td><td>130</td><td>A♭</td></tr>
+<tr><td>5 Clock</td><td>Beat the Clock</td><td>126</td><td>C, then E♭</td></tr>
+<tr><td>6 Energy</td><td>Menergy</td><td>123</td><td>C minor</td></tr>
+<tr><td>7 Fly</td><td>Magic Fly</td><td>126</td><td>A minor</td></tr>
+<tr><td>8 Lover</td><td>Automatic Lover</td><td>130</td><td>C minor</td></tr>
+<tr><td>9 Express</td><td>Chase</td><td>128</td><td>D minor</td></tr>
+</table></div>
+</section>
+
+<section class="card" style="--c: var(--cyan)">
+<h2>Handy to know</h2>
+<div class="wrap"><table>
+<tr><td>Help</td><td>Hold any button a second: a card says what it does</td></tr>
+<tr><td>MIDI</td><td>Out on USB: bass, pad, lead, drums on 1, 2, 3, 10 (or 4, 5, 6, 11). Clock from Internal, USB or TRS</td></tr>
+<tr><td>Update mode</td><td>OCT− and OCT+ together for 5 s</td></tr>
+<tr><td>Calibration</td><td>OCT− and OCT+ held while switching on</td></tr>
+<tr><td>Emulator keys</td><td>White <kbd>Q</kbd>–<kbd>I</kbd> <kbd>A</kbd>–<kbd>K</kbd>, black <kbd>1</kbd>–<kbd>-</kbd>, <kbd>P</kbd> PLAY, <kbd>O</kbd> REC, <kbd>Esc</kbd> HOME, <kbd>Z</kbd> <kbd>X</kbd> OCT, <kbd>↑</kbd> <kbd>↓</kbd> SELECT</td></tr>
+</table></div>
+</section>
+
+</div>
+</main>"""
+
+# the manual in the site's colours: fm1-base's renderer, its tokens given MOR-1's
+MANUAL_CSS = """
+:root:root { --paper: #100e22; --sheet: #1c1a3a; --rule: #3a3668; --ink: #f2eeff; --muted: #aaa4d4;
+        --hot: #ff5cb4; --hot-t: #3a1d48; --cool: #ffc840; --cool-t: #2d2840; --hot-ink: #ff7cc4; color-scheme: dark; }
+body { font-family: "Barlow", "Helvetica Neue", Helvetica, Arial, sans-serif; }
+h1, h2, h3 { font-family: "Barlow Semi Condensed", "Arial Narrow", Arial, sans-serif; letter-spacing: .03em; }
+img { image-rendering: pixelated; max-width: 100%; border-radius: 8px; }
+"""
+
+
+def main(out, pkg=None, version=None):
+    out = Path(out)
+    conf = read_conf(SRC / "app" / "fm1.toml")
     if out.exists():
         shutil.rmtree(out)
-    for d in ("install", "manual", "firmware"):
+    for d in ("install", "manual", "quickstart"):
         (out / d).mkdir(parents=True)
-    shutil.copy(pkg, out / "firmware" / name)
-    # the installer: fm1-base's page, filled in from app/fm1.toml
-    conf = read_conf(SRC / "app" / "fm1.toml")
-    page = (BASE / "web" / "installer.html").read_text(encoding="utf-8")
-    lib = strip_module((BASE / "web" / "fm1pkg.js").read_text(encoding="utf-8")) + "\n" + \
-        strip_module((BASE / "web" / "fm1ota.js").read_text(encoding="utf-8"))
-    # m-bootloader (MIT), which the installer offers to install after MOR-1, with its licence (as fm1-base's make_site)
-    boot = BASE / "web" / "m-bootloader" / f"fm1-uboot-{MBOOT_VERSION}.fwsc"
-    boot_name = f"m-bootloader-{MBOOT_VERSION}.fwsc"
-    shutil.copy(boot, out / "firmware" / boot_name)
-    shutil.copy(BASE / "web" / "m-bootloader" / "LICENSE", out / "firmware" / "m-bootloader-LICENSE.txt")
-    meta = json.dumps({"version": version, "product": product, "pkg": "../firmware/" + name,
-                       "backup": bool(conf.get("backup")),
-                       "boot": {"pkg": "../firmware/" + boot_name, "version": MBOOT_VERSION,
-                                "sha256": hashlib.sha256(boot.read_bytes()).hexdigest()}})
-    for mark in ("/*LIB*/", "/*META*/", "/*APP*/"):
-        if page.count(mark) != 1:
-            raise SystemExit(f"base/web/installer.html must contain {mark} once")
-    for key, val in (("NAME", "MOR-1"), ("REPO", REPO), ("REPO_SHORT", re.sub(r"^https?://", "", REPO)),
-                     ("LICENSE", conf.get("licence", "MPL-2.0")), ("CREDITS", " " + conf.get("credits", ""))):
-        page = page.replace("{{" + key + "}}", val)
-    # the firmware's own steps around an install (fm1.toml install_app; base/web/installer.html APP): MOR-1 has none
-    app_js = (SRC / "app" / conf["install_app"]).read_text(encoding="utf-8") if conf.get("install_app") else "null"
-    (out / "install" / "index.html").write_text(page.replace("/*LIB*/", lib).replace("/*META*/", meta)
-                                                .replace("/*APP*/", app_js), encoding="utf-8")
-    # the manual (a complete page; its images beside it)
-    subprocess.run([sys.executable, str(BASE / "tools" / "manual_html.py"), str(SRC / "docs" / "MANUAL.md"),
-                    str(out / "manual" / "index.html"), "--name", "MOR-1", "--repo", REPO,
-                    "--tagline", conf.get("tagline", "")], check=True, capture_output=True)
-    shutil.copytree(SRC / "docs" / "img", out / "manual" / "img")
+    product = None
+    # the installer, when there is a package; else a page saying it is coming
+    if pkg:
+        pkg = Path(pkg)
+        raw = pkg.read_bytes()
+        product = product_of(raw)
+        if not re.fullmatch(r"FM-1_4\d{6}", product):
+            raise SystemExit(f"{pkg}: identity {product!r}: make a release build (./build.sh --release X.Y)")
+        if b"FELUCCA-LOADER-1" not in raw:
+            raise SystemExit(f"{pkg}: no update loader in it")
+        name = f"mor-{re.sub(r'[^A-Za-z0-9.-]', '-', version)}.fwsc"
+        (out / "firmware").mkdir()
+        shutil.copy(pkg, out / "firmware" / name)
+        page_i = (BASE / "web" / "installer.html").read_text(encoding="utf-8")
+        lib = strip_module((BASE / "web" / "fm1pkg.js").read_text(encoding="utf-8")) + "\n" + \
+            strip_module((BASE / "web" / "fm1ota.js").read_text(encoding="utf-8"))
+        boot = BASE / "web" / "m-bootloader" / f"fm1-uboot-{MBOOT_VERSION}.fwsc"
+        boot_name = f"m-bootloader-{MBOOT_VERSION}.fwsc"
+        shutil.copy(boot, out / "firmware" / boot_name)
+        shutil.copy(BASE / "web" / "m-bootloader" / "LICENSE", out / "firmware" / "m-bootloader-LICENSE.txt")
+        meta = json.dumps({"version": version, "product": product, "pkg": "../firmware/" + name,
+                           "backup": bool(conf.get("backup")),
+                           "boot": {"pkg": "../firmware/" + boot_name, "version": MBOOT_VERSION,
+                                    "sha256": hashlib.sha256(boot.read_bytes()).hexdigest()}})
+        for mark in ("/*LIB*/", "/*META*/", "/*APP*/"):
+            if page_i.count(mark) != 1:
+                raise SystemExit(f"base/web/installer.html must contain {mark} once")
+        for key, val in (("NAME", "MOR-1"), ("REPO", REPO), ("REPO_SHORT", re.sub(r"^https?://", "", REPO)),
+                         ("LICENSE", conf.get("licence", "MPL-2.0")), ("CREDITS", " " + conf.get("credits", ""))):
+            page_i = page_i.replace("{{" + key + "}}", val)
+        app_js = (SRC / "app" / conf["install_app"]).read_text(encoding="utf-8") if conf.get("install_app") else "null"
+        (out / "install" / "index.html").write_text(page_i.replace("/*LIB*/", lib).replace("/*META*/", meta)
+                                                    .replace("/*APP*/", app_js), encoding="utf-8")
+        install = (f'<a href="install/index.html"><strong>Install <em>alpha {html.escape(version)}</em></strong><span>From Chrome '
+                   f'or Edge, with the FM-1 connected by USB. Nothing to install on the computer.</span></a>')
+        download = (f'<a href="firmware/{name}"><strong>Download <em>{name}</em></strong><span>For the command-line '
+                    f'installer: <code>python3 base/tools/fm1_install.py {name}</code>. In alpha; test beta downloads '
+                    f'coming soon.</span></a>')
+    else:
+        (out / "install" / "index.html").write_text(
+            page("MOR-1 Install", "Installing MOR-1 on the M-VAVE FM-1: coming with the first build.", INSTALL_SOON,
+                 "install/", 1), encoding="utf-8")
+        install = ('<a href="install/index.html"><strong>Install <em>alpha</em></strong><span>From Chrome or Edge, with the FM-1 '
+                   'connected by USB. Coming with the first firmware build.</span></a>')
+        download = ('<div class="off"><strong>Download <em>alpha</em></strong><span>In alpha; test beta downloads coming '
+                    'soon.</span></div>')
     # the landing page and its screenshots
     shutil.copytree(SRC / "docs" / "img", out / "img")
-    (out / "index.html").write_text(LANDING.replace("__VERSION__", html.escape(version)).replace("__PKG__", name)
-                                    .replace("__REPO__", REPO), encoding="utf-8")
+    (out / "index.html").write_text(
+        page("MOR-1", "A generative electronic disco firmware for the M-VAVE FM-1.",
+             LANDING_BODY.replace("__INSTALL__", install).replace("__DOWNLOAD__", download).replace("__REPO__", REPO),
+             "", 0, LANDING_CSS), encoding="utf-8")
+    # the quickstart
+    (out / "quickstart" / "index.html").write_text(
+        page("MOR-1 Quickstart", "MOR-1 on one page: every control, page, effect and song.", QUICK_BODY,
+             "quickstart/", 1, QUICK_CSS), encoding="utf-8")
+    # the manual: fm1-base's renderer, then the site's colours, header and links
+    man = out / "manual" / "index.html"
+    subprocess.run([sys.executable, str(BASE / "tools" / "manual_html.py"), str(SRC / "docs" / "MANUAL.md"), str(man),
+                    "--name", "MOR-1", "--repo", REPO, "--tagline", conf.get("tagline", "")],
+                   check=True, capture_output=True)
+    m = man.read_text(encoding="utf-8")
+    m = re.sub(r'<header class="site">.*?</header>', lambda _: header("manual/", 1), m, count=1, flags=re.S)
+    m = m.replace("</head>", FONTS + "<style>" + TOKENS + HEADER_CSS + MANUAL_CSS + "</style>\n</head>", 1)
+    m = m.replace('href="../BUILDING.md"', f'href="{REPO}/blob/main/BUILDING.md"')
+    m = m.replace('href="../LICENSING.md"', f'href="{REPO}/blob/main/LICENSING.md"')
+    man.write_text(m, encoding="utf-8")
+    shutil.copytree(SRC / "docs" / "img", out / "manual" / "img")
+    # the emulator: fm1-base's page, dark, with MOR-1's guide under it and the site's header
     emu = SRC / "app" / "build" / "emu"
     if not (emu / "app.wasm").exists():
-        raise SystemExit("no app/build/emu/app.wasm: run ./build.sh --web (needs Emscripten)")
-    shutil.copytree(emu, out / "emu")
+        raise SystemExit("no app/build/emu/app.wasm: run ./build.sh --web (needs Emscripten, or tools/emcc_wasi.py)")
+    shutil.copytree(emu, out / "emu", ignore=shutil.ignore_patterns("o2"))
+    e = (out / "emu" / "index.html").read_text(encoding="utf-8")
+    guide = (SRC / "tools" / "emu_guide.html").read_text(encoding="utf-8")
+    mark = "<!-- what the screen says, for the computer's screen reader -->"
+    e = e.replace('<html lang="en">', '<html lang="en" data-theme="dark">', 1)
+    e = e.replace("<title>MOR in the browser</title>", "<title>MOR-1 Emulator</title>").replace("MOR uses ", "MOR-1 uses ")
+    e = re.sub(r"<header>\s*<h1>MOR</h1>\s*</header>", lambda _: header("emu/", 1), e, count=1)
+    e = e.replace(mark, guide + mark, 1)
+    e = e.replace("</head>", FONTS + "<style>" + TOKENS + HEADER_CSS.replace("max-width: 46rem", "max-width: 62rem") +
+                  ':root[data-theme="dark"] { --ground: #100e22; --card: #1c1a3a; --rule: #3a3668; --ink: #f2eeff;'
+                  ' --muted: #aaa4d4; --accent: #ff5cb4; --teal: #2fd8f0; color-scheme: dark; }\n'
+                  'header.site { margin-bottom: 8px; }</style>\n</head>', 1)
+    (out / "emu" / "index.html").write_text(e, encoding="utf-8")
     # the screen reader's words files (fm1-reader): every one ever made, for the devices that point at them
     shutil.copytree(SRC / "app" / "web" / "words", out / "words")
     (out / ".nojekyll").write_text("")
-    print(f"site: {out}: index.html, install/ ({product}), manual/, emu/, words/, firmware/{name} ({len(raw)} B)")
+    print(f"site: {out}: index.html, quickstart/, manual/, emu/, words/, install/ ({product or 'coming with the first build'})")
 
 
 if __name__ == "__main__":
-    if len(sys.argv) != 4:
+    if len(sys.argv) not in (2, 4):
         sys.exit(__doc__)
-    main(*sys.argv[1:4])
+    main(*sys.argv[1:])

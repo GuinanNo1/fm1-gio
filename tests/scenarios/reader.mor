@@ -23,7 +23,7 @@ wait 100
 said HOLD OFF
 turn PRESET 1
 wait 200
-said SONG Click, after Giorgio by Moroder, key of A, tempo 113
+said SONG TickTock, after Giorgio by Moroder, key of A, tempo 113
 turn ALGO 1
 said PATTERN Pump
 key b0 down

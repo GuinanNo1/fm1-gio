@@ -6,7 +6,7 @@ expect par0 126
 tap ENV
 spin K1 -10
 expect par4 75
-# Click: 113, A minor
+# TickTock: 113, A minor
 turn PRESET 1
 expect piece 1
 expect par0 113

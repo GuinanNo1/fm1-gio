@@ -21,7 +21,7 @@ MOR-1's own, written as it plays.
 | # | Song | After | Tempo | Key | Bass | What's taken |
 |---|---|---|---|---|---|---|
 | 1 | Feel | *I Feel Love*, Donna Summer (1977) | 126 | C | Pump (eighths, octaves) | the dry-left, echo-right eighths; a vamp on C, the chorus C–E♭–F–G, the riff moving to B♭ |
-| 2 | Click | *Giorgio by Moroder*, Daft Punk (2013) | 113 | A minor | Arpeggio | a click, the arpeggio, disco, strings, drum fills, a house beat; Am–Em, Am–F |
+| 2 | TickTock | *Giorgio by Moroder*, Daft Punk (2013) | 113 | A minor | Arpeggio | a click, the arpeggio, disco, strings, drum fills, a house beat; Am–Em, Am–F |
 | 3 | Mutant | *Supernature*, Cerrone (1977) | 123 | F minor | Gallop | a long build from the pad alone; a minor vamp, i–♭VI, iv–i (the changes are MOR-1's) |
 | 4 | Heaven | *The Number One Song in Heaven*, Sparks (1979) | 130 | A♭ | Slow, then Pump 16 | a half-time first half (A♭–E♭–Fm11–E♭), then full tempo (A♭–E♭–B♭–A♭, an Fm11 vamp) |
 | 5 | Clock | *Beat the Clock*, Sparks (1979) | 126 | C, then E♭ | Pump 16 | G–F verses, Am–Dm–G–C, G–Em7–G; the turn through C–E♭ and the whole song again a minor third up |
