@@ -1,0 +1,84 @@
+<!-- MOR-1's guide under the emulator (tools/make_local_emu.py puts it after the Screen Reader section) -->
+<style>
+.guide { margin-top: 1.5rem; display: grid; gap: 1.25rem; max-width: 62rem; }
+.guide h2 { font-size: 1.15rem; margin: 0 0 .5rem; }
+.guide p { margin: .3rem 0; max-width: 65ch; line-height: 1.5; }
+.guide .wrap { overflow-x: auto; }
+.guide table { border-collapse: collapse; font-size: .95rem; min-width: 32rem; }
+.guide th, .guide td { text-align: left; padding: .35rem .7rem .35rem 0; border-bottom: 1px solid var(--rule); vertical-align: top; }
+.guide th { color: var(--muted); font-weight: 600; font-size: .8rem; letter-spacing: .04em; text-transform: uppercase; }
+.guide td:first-child { font-weight: 600; white-space: nowrap; }
+.guide .note { color: var(--muted); font-size: .9rem; }
+</style>
+<section class="guide" aria-label="MOR-1 guide">
+  <div>
+    <h2>Getting started</h2>
+    <p>Press <b>Switch on</b>. MOR-1 plays the first song, <b>Feel</b>, from its intro. Turn <b>PRESETS</b> for
+      another song, press a white key to move the song to that key, turn <b>ALGORITHM</b> for another bass pattern.
+      <b>EDIT</b> moves on to the next section on the next bar; <b>REC</b> holds the section you are in.</p>
+    <p class="note">This is the same code the FM-1 runs, compiled for the browser. What you save here stays in this
+      browser; Factory reset forgets it.</p>
+  </div>
+
+  <div>
+    <h2>Pages and knobs</h2>
+    <div class="wrap"><table>
+      <thead><tr><th>Page (button)</th><th>Knob 1</th><th>Knob 2</th><th>Knob 3</th><th>Knob 4</th></tr></thead>
+      <tbody>
+        <tr><td>Song (HOME)</td><td>Tempo</td><td>Evolve</td><td>Motion</td><td>Arrange</td></tr>
+        <tr><td>Bass (ENV)</td><td>Level</td><td>Cutoff</td><td>Emphasis</td><td>Decay</td></tr>
+        <tr><td>Lead (ARP)</td><td>Level</td><td>Voice</td><td>Busy</td><td>Glide</td></tr>
+        <tr><td>Pad (LFO)</td><td>Level</td><td>Colour</td><td>Bright</td><td>Phaser</td></tr>
+        <tr><td>Drums (SEQ)</td><td>Level</td><td>Fills</td><td>Hats</td><td>Swing</td></tr>
+        <tr><td>Space (FX)</td><td>Echo</td><td>Time</td><td>Feedback</td><td>Reverb</td></tr>
+        <tr><td>Setup (GLO)</td><td>Key</td><td>Tune</td><td>MIDI out</td><td>Lights</td></tr>
+      </tbody>
+    </table></div>
+  </div>
+
+  <div>
+    <h2>Buttons and dials</h2>
+    <div class="wrap"><table>
+      <tbody>
+        <tr><td>Keys</td><td>The key: any key moves the song to its note. The keys light the chord playing.</td></tr>
+        <tr><td>PLAY / STOP</td><td>Plays or stops. From stopped, the song starts at its first section.</td></tr>
+        <tr><td>REC</td><td>Hold: the section repeats until you press it again.</td></tr>
+        <tr><td>EDIT</td><td>The next section, on the next bar.</td></tr>
+        <tr><td>OCT− / OCT+</td><td>The bass an octave down or up.</td></tr>
+        <tr><td>ALGORITHM</td><td>The bass pattern: Song (the song's own), Pump, Pump 16, Arpeggio, Gallop, Octaves, Slow.</td></tr>
+        <tr><td>PRESETS</td><td>The song. Each keeps its settings as you left it.</td></tr>
+        <tr><td>SELECT</td><td>The previous or next page. With HOME held: the tempo, 110 to 130.</td></tr>
+        <tr><td>SAVE</td><td>Saves all the songs. Held for 1.5 s: the song back to its recipe.</td></tr>
+      </tbody>
+    </table></div>
+    <p class="note">Hold any button for a second and the screen says what it does.</p>
+  </div>
+
+  <div>
+    <h2>Keyboard</h2>
+    <p>White keys: <kbd>Q</kbd>–<kbd>I</kbd> and <kbd>A</kbd>–<kbd>K</kbd> (the first is F). Black keys:
+      <kbd>1</kbd>–<kbd>0</kbd> and <kbd>-</kbd>. <kbd>P</kbd> PLAY, <kbd>O</kbd> REC, <kbd>Esc</kbd> HOME,
+      <kbd>Z</kbd> / <kbd>X</kbd> OCT− / OCT+, <kbd>↑</kbd> <kbd>↓</kbd> SELECT. Drag a knob up or down, or use the
+      scroll wheel; Shift-click or right-click holds a button down.</p>
+  </div>
+
+  <div>
+    <h2>The songs</h2>
+    <div class="wrap"><table>
+      <thead><tr><th>Song</th><th>After</th><th>Tempo</th><th>Key</th></tr></thead>
+      <tbody>
+        <tr><td>1 Feel</td><td><i>I Feel Love</i>, Donna Summer</td><td>126</td><td>C</td></tr>
+        <tr><td>2 Click</td><td><i>Giorgio by Moroder</i>, Daft Punk</td><td>113</td><td>A minor</td></tr>
+        <tr><td>3 Mutant</td><td><i>Supernature</i>, Cerrone</td><td>123</td><td>F minor</td></tr>
+        <tr><td>4 Heaven</td><td><i>The Number One Song in Heaven</i>, Sparks</td><td>130</td><td>A♭</td></tr>
+        <tr><td>5 Clock</td><td><i>Beat the Clock</i>, Sparks</td><td>126</td><td>C, then E♭</td></tr>
+        <tr><td>6 Energy</td><td><i>Menergy</i>, Patrick Cowley</td><td>123</td><td>C minor</td></tr>
+        <tr><td>7 Fly</td><td><i>Magic Fly</i>, Space</td><td>126</td><td>A minor</td></tr>
+        <tr><td>8 Lover</td><td><i>Automatic Lover</i>, Dee D. Jackson</td><td>130</td><td>C minor</td></tr>
+        <tr><td>9 Express</td><td><i>Chase</i>, Giorgio Moroder</td><td>128</td><td>D minor</td></tr>
+      </tbody>
+    </table></div>
+    <p class="note">Each song takes its record's tempo, key, chord changes and shape; the bass lines, leads and drum
+      parts are written by MOR-1 as it plays.</p>
+  </div>
+</section>

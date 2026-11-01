@@ -114,3 +114,15 @@ package was built.
 
 A local release build (`./build.sh --release X.Y`, package `app/build/mor-X.Y.fwsc`; its identity FM-1_4XXYYZZ is
 what the installer checks) is still how to try one on the FM-1 before tagging.
+
+## The emulator as one file
+
+`./build.sh --web` builds the browser emulator into `app/build/emu/` (Emscripten's `emcc`; where Emscripten can't be
+installed, `tools/emcc_wasi.py` stands in for it with clang and the WASI sysroot). Then
+
+```
+python3 tools/make_local_emu.py      # app/build/MOR-1-emulator.html
+```
+
+packs the page, its sound worklet, the WebAssembly build and a guide (`tools/emu_guide.html`) into one HTML file that
+opens with a double-click, from the disk, in Chrome, Edge, Firefox or Safari.
