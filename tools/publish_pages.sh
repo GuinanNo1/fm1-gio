@@ -10,7 +10,7 @@ V="${1:?usage: tools/publish_pages.sh VERSION}"
 PKG="app/build/mor-$V.fwsc"
 [ -f "$PKG" ] || { echo "no $PKG: run ./build.sh --release $V first"; exit 1; }
 sh build.sh --web --release "$V"
-"${PYTHON:-python3}" tools/make_pages.py "$PKG" "$V" app/build/pages
+"${PYTHON:-python3}" tools/make_pages.py app/build/pages "$PKG" "$V"
 REMOTE="$(git remote get-url origin)"
 SHA="$(git rev-parse --short HEAD)"
 cd app/build/pages

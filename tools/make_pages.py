@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # SPDX-License-Identifier: MPL-2.0
 # Copyright (C) 2026 Charles Vestal, Ian Guinan
-"""Make the MOR-1 site for GitHub Pages (https://YOUR-NAME.github.io/fm1-mor/), dark, after AMB-1's:
+"""Make the MOR-1 site for GitHub Pages (https://GuinanNo1.github.io/fm1-mor/), dark, after AMB-1's:
 
   index.html                  what MOR-1 is, and the ways in: try, install, manual, quickstart, download, source
   img/                        screenshots (docs/img)
@@ -30,7 +30,7 @@ BASE = SRC / "base"
 sys.path.insert(0, str(BASE / "tools"))
 from make_site import MBOOT_VERSION, product_of, read_conf, strip_module  # noqa: E402  (fm1-base's: the package format)
 
-REPO = "https://github.com/YOUR-NAME/fm1-mor"
+REPO = "https://github.com/GuinanNo1/fm1-mor"
 FONTS = ('<link rel="preconnect" href="https://fonts.googleapis.com">\n'
          '<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>\n'
          '<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow:ital,wght@0,400;0,600;1,400'
