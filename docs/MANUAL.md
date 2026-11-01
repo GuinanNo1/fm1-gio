@@ -165,10 +165,10 @@ and drum parts are MOR-1's own, written as it plays.
 | # | Song | After | Tempo | Key | The form |
 |---|---|---|---|---|---|
 | 1 | Feel | *I Feel Love* | 126 | C | Intro (bass, hats) · Verse (C) · Chorus (C–E♭–F–G) · Shift (on B♭) · Verse · Chorus · Break |
-| 2 | TickTock | *Giorgio by Moroder* | 113 | A minor | Click (hats on the beat) · Arpeggio · Disco (Am–Em) · Strings (Am–F) · Fills · House |
+| 2 | Gio | *Giorgio by Moroder* | 113 | A minor | Click (hats on the beat) · Arpeggio · Disco (Am–Em) · Strings (Am–F) · Fills · House |
 | 3 | Mutant | *Supernature* | 123 | F minor | Dawn (the pad alone) · Sequence · Groove · Theme (Fm–D♭) · Bridge (B♭m–Fm) · Theme |
 | 4 | Heaven | *The Number One Song in Heaven* | 130 | A♭ | Slow ×2 (half time, A♭–E♭–Fm11–E♭) · Lift · Fast (A♭–E♭–B♭–A♭) · Vamp (Fm11) · Fast |
-| 5 | Clock | *Beat the Clock* | 126 | C | Intro · Verse (G–F) · Pre (Am–Dm–G–C) · Chorus (G–Em7–G) · Turn (C–E♭) · the same a minor third up · Outro |
+| 5 | TickTock | *Beat the Clock* | 126 | C | Intro · Verse (G–F) · Pre (Am–Dm–G–C) · Chorus (G–Em7–G) · Turn (C–E♭) · the same a minor third up · Outro |
 | 6 | Energy | *Menergy* | 123 | C minor | Intro · Groove (Cm) · Lift (A♭–B♭) · Groove (Cm–B♭) · Break · Build |
 | 7 | Fly | *Magic Fly* | 126 | A minor | Liftoff · Theme (Am–F–G) · Drift (Am–Dm) · Theme · Space |
 | 8 | Lover | *Automatic Lover* | 130 | C minor | Intro · Verse (Cm–B♭) · Hook (A♭–B♭–Cm) · Robot · Hook |

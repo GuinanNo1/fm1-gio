@@ -177,7 +177,7 @@ int main(void)
     /* the key: Key moves the chord now */
     start(4, 0, 3);
     run(1.0f);
-    CHECK(en_key == 0 && en_chord_root == 0, "Clock starts in C: key %d chord %d", en_key, en_chord_root);
+    CHECK(en_key == 0 && en_chord_root == 0, "TickTock starts in C: key %d chord %d", en_key, en_chord_root);
     en_set(P_ROOT, 2);
     run(0.1f);
     CHECK(en_key == 2 && en_chord_root == 2, "Key D: key %d chord %d", en_key, en_chord_root);

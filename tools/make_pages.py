@@ -185,15 +185,15 @@ and enjoy!</p>
   <li style="--c: var(--magenta)"><b>The form.</b> Each song is a set of sections with their own chord changes. It loops for ever, repeating, skipping, dropping a layer, or moving the whole song up a key for a while. Sixteen drop-in effects are under your fingers.</li>
 </ul>
 
-<h2>The songs</h2>
-<p>Nine songs, each after a record: its tempo, key, chord changes and the shape of its arrangement. The lines are
+<h2>Presets</h2>
+<p>Nine presets, each after a record: its tempo, key, chord changes and the shape of its arrangement. The lines are
 MOR-1's own, written as it plays.</p>
 <ul class="songs">
   <li><b>Feel</b><span>after I Feel Love</span></li>
-  <li><b>TickTock</b><span>after Giorgio by Moroder</span></li>
+  <li><b>Gio</b><span>after Giorgio by Moroder</span></li>
   <li><b>Mutant</b><span>after Supernature</span></li>
   <li><b>Heaven</b><span>after The Number One Song in Heaven</span></li>
-  <li><b>Clock</b><span>after Beat the Clock</span></li>
+  <li><b>TickTock</b><span>after Beat the Clock</span></li>
   <li><b>Energy</b><span>after Menergy</span></li>
   <li><b>Fly</b><span>after Magic Fly</span></li>
   <li><b>Lover</b><span>after Automatic Lover</span></li>
@@ -310,10 +310,10 @@ QUICK_BODY = """<main>
 <div class="wrap"><table>
 <tr><th>Song</th><th>After</th><th>Tempo</th><th>Key</th></tr>
 <tr><td>1 Feel</td><td>I Feel Love</td><td>126</td><td>C</td></tr>
-<tr><td>2 TickTock</td><td>Giorgio by Moroder</td><td>113</td><td>A minor</td></tr>
+<tr><td>2 Gio</td><td>Giorgio by Moroder</td><td>113</td><td>A minor</td></tr>
 <tr><td>3 Mutant</td><td>Supernature</td><td>123</td><td>F minor</td></tr>
 <tr><td>4 Heaven</td><td>The Number One Song in Heaven</td><td>130</td><td>A♭</td></tr>
-<tr><td>5 Clock</td><td>Beat the Clock</td><td>126</td><td>C, then E♭</td></tr>
+<tr><td>5 TickTock</td><td>Beat the Clock</td><td>126</td><td>C, then E♭</td></tr>
 <tr><td>6 Energy</td><td>Menergy</td><td>123</td><td>C minor</td></tr>
 <tr><td>7 Fly</td><td>Magic Fly</td><td>126</td><td>A minor</td></tr>
 <tr><td>8 Lover</td><td>Automatic Lover</td><td>130</td><td>C minor</td></tr>

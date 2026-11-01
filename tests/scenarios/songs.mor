@@ -6,7 +6,7 @@ expect par0 126
 tap ENV
 spin K1 -10
 expect par4 75
-# TickTock: 113, A minor
+# Gio: 113, A minor
 turn PRESET 1
 expect piece 1
 expect par0 113
