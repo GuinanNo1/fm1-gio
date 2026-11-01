@@ -1,92 +1,87 @@
 /* SPDX-License-Identifier: MPL-2.0
- * Copyright (C) 2026 Charles Vestal */
-/* AMB-1 UI: the panel and the screen. Part of the unity build (after gfx.c and project.c); the host
- * simulator includes it too.
+ * Copyright (C) 2026 Charles Vestal, Ian Guinan */
+/* MOR-1 UI: the panel and the screen. Part of the unity build (after gfx.c and project.c); the host simulator
+ * includes it too. From AMB-1's: the input, the knobs' acceleration, the help cards, the drawing, the autosave and
+ * the screen reader.
  *
- *   keys           the scale: each key adds or removes its note from the pool (the root stays)
- *   PLAY           the garden grows / rests        ARP   the next chord, now
- *   REC            FREEZE: the chord holds, the reverb rings on    OCT- / OCT+   the bells' octave
- *   ENV            the pad's colour: Rhodes / Voices (lit: Voices), kept with the piece
- *   SELECT tempo   ALGORITHM mode (loads a pool)   PRESETS the piece (Root is on the Setup page)
- *   HOME SEQ FX SEL GLO   the pages: LAYERS, MOTION, SPACE, TONE, SETUP (EDIT steps through them)
+ *   keys           the key: any key moves the song to its note (the chord's notes light up on the keys)
+ *   PLAY           plays / stops              EDIT   the next section, on the next bar
+ *   REC            HOLD: the section repeats until let go         OCT- / OCT+   the bass's octave
+ *   ALGORITHM      the bass's pattern (Song: the song's own)      PRESETS       the song
+ *   HOME ENV ARP LFO SEQ FX GLO   the pages: SONG, BASS, LEAD, PAD, DRUMS, SPACE, SETUP; SELECT steps through them
+ *                  (with HOME held: the tempo)
  *   KNOB 1-4       the page's four values
- *   SAVE           saves (it also saves by itself a few seconds after a change, while resting);
- *                  held 1.5 s: the piece back to its recipe */
+ *   SAVE           saves (it also saves by itself a few seconds after a change, while stopped);
+ *                  held 1.5 s: the song back to its recipe */
 #include "fastmath.h"
 
-/* the pages, one a layer (a button each); SELECT steps through them in this order */
-enum { V_GARDEN, V_PAD, V_BELLS, V_BASS, V_PULSE, V_SPACE, V_SETUP, NVIEWS };
-static const char *const VIEW_NAME[NVIEWS] = {"Garden", "Pad", "Bells", "Bass", "Pulse", "Space", "Setup"};
+enum { V_SONG, V_BASS, V_LEAD, V_PAD, V_DRUMS, V_SPACE, V_SETUP, NVIEWS };
+static const char *const VIEW_NAME[NVIEWS] = {"Song", "Bass", "Lead", "Pad", "Drums", "Space", "Setup"};
 static const uint8_t VIEW_BTN[NVIEWS] = {B_HOME, B_ENV, B_ARP, B_LFO, B_SEQ, B_FX, B_GLO};
-/* the four knobs of each page: a parameter, or one of these; and what the knob is called there */
 enum { K_LEDS = 100, K_CPU, K_NONE };
 static const uint8_t VIEW_KNOB[NVIEWS][4] = {
-    {P_TEMPO, P_EVOLVE, P_MOTION, P_DRIFT},
-    {P_PAD, P_SWELL, P_BRIGHT, P_PADTONE},
-    {P_BELLS, P_DENSITY, P_BTONE, P_BOCT},
-    {P_BASS, P_BASSOCT, P_GLIDE, P_FIFTH},
-    {P_PULSE, P_HITS, P_SWING, P_HATS},
-    {P_ECHO, P_ETIME, P_REVERB, P_SIZE},
+    {P_TEMPO, P_EVOLVE, P_MOTION, P_ARRANGE},
+    {P_BASS, P_CUTOFF, P_RESO, P_DECAY},
+    {P_LEAD, P_LVOICE, P_BUSY, P_GLIDE},
+    {P_PAD, P_PCOLOUR, P_BRIGHT, P_PHASER},
+    {P_DRUMS, P_FILLS, P_HATS, P_SWING},
+    {P_ECHO, P_ETIME, P_FEEDBACK, P_REVERB},
     {P_ROOT, P_TUNE, P_MIDI, K_LEDS},
 };
 static const char *const KNOB_LABEL[NVIEWS][4] = {
-    {"Tempo", "Evolve", "Motion", "Drift"},
-    {"Level", "Swell", "Bright", "Colour"},
-    {"Level", "Density", "Tone", "Octave"},
-    {"Level", "Octave", "Glide", "Fifth"},
-    {"Level", "Hits", "Swing", "Hats"},
-    {"Echo", "Echo time", "Reverb", "Size"},
-    {"Root", "Tune", "MIDI out", "Lights"},
+    {"Tempo", "Evolve", "Motion", "Arrange"},
+    {"Level", "Cutoff", "Emphasis", "Decay"},
+    {"Level", "Voice", "Busy", "Glide"},
+    {"Level", "Colour", "Bright", "Phaser"},
+    {"Level", "Fills", "Hats", "Swing"},
+    {"Echo", "Time", "Feedback", "Reverb"},
+    {"Key", "Tune", "MIDI out", "Lights"},
 };
 
-/* the screen's colours: the cover of Ambient 1: Music for Airports (1978), as the web app and the site.
- * The map's paper, its ink; the land's greens for the pad (the chord) and the scale, its rivers for the
- * bells; the bass and the pulse in darker inks. Each layer has a pale tint for the shapes at rest. */
-#define K_BG RGB(246, 238, 181)
-#define K_PANEL RGB(255, 251, 224)
-#define K_LINE RGB(208, 214, 150)
-#define K_DIM RGB(112, 106, 58)
-#define K_TEXT RGB(29, 27, 2)
-#define K_ACC RGB(64, 128, 124)          /* the accent: the page, the knob being turned, a message's word */
-#define K_BELL RGB(84, 153, 149)
-#define K_BELL_T RGB(176, 214, 206)
-#define K_PAD RGB(112, 142, 62)
-#define K_PAD_T RGB(208, 220, 146)
-#define K_PULSE RGB(70, 66, 28)
-#define K_PULSE_T RGB(214, 214, 160)
-#define K_BASS RGB(138, 128, 52)
-#define K_BASS_T RGB(222, 218, 160)
-#define K_FROST RGB(60, 132, 160)
-#define K_FROST_T RGB(170, 210, 216)
+/* the screen's colours: a night club in 1977, a mirror ball over a dark floor. The bass cyan (the loudest
+ * thing, the most light), the pad violet, the lead gold, the drums red; the accent magenta. Each a dim tint too. */
+#define K_BG RGB(16, 14, 34)
+#define K_PANEL RGB(40, 36, 78)
+#define K_LINE RGB(58, 54, 104)
+#define K_DIM RGB(136, 128, 186)
+#define K_TEXT RGB(244, 240, 255)
+#define K_ACC RGB(255, 72, 170)
+#define K_BASS RGB(0, 214, 240)
+#define K_BASS_T RGB(22, 72, 104)
+#define K_PAD RGB(176, 124, 255)
+#define K_PAD_T RGB(62, 46, 112)
+#define K_LEAD RGB(255, 196, 40)
+#define K_LEAD_T RGB(96, 76, 32)
+#define K_DRUM RGB(255, 92, 92)
+#define K_DRUM_T RGB(92, 40, 56)
+#define K_HOLD RGB(120, 224, 255)
 
 static struct {
     uint8_t view;
     uint32_t btn, keys, btn_used;
     uint32_t enc_t[NE];
-    uint8_t enc_run[NE];               /* detents in the current quick run, per knob (accel) */
-    uint32_t down_t[NB];               /* when each button went down */
-    uint32_t turn_t;                   /* the last knob turn */
-    uint8_t help;                      /* a button's card is up: the button + 1 */
-    uint8_t reset_done;                /* SAVE held: the piece went back to its recipe this hold */
-    uint8_t dirty;                     /* the project changed since the last save */
+    uint8_t enc_run[NE];
+    uint32_t down_t[NB];
+    uint32_t turn_t;
+    uint8_t help;
+    uint8_t reset_done;
+    uint8_t dirty;
     uint32_t act_t, saved_t;
     char msg[2][24];
     uint32_t msg_until;
-    int8_t touched;                    /* the knob turned last (0..3), shown bright for a moment */
+    int8_t touched;
     uint32_t touch_until;
     uint32_t frame;
-    uint32_t sig[3];                   /* what each band shows: redrawn when it changes */
+    uint32_t sig[3];
 } ui;
 
-/* the screen reader (announce.c; speak() below): a message went to it this frame, so speak() leaves what it
- * changed be; and the transport as last said (PLAY says its own: the engine takes it a block later) */
 static uint8_t sp_said;
 static struct {
     uint8_t playing;
-    uint32_t play_t;                   /* when PLAY (or the start) set it: the engine catches up within ms */
+    uint32_t play_t;
 } sp_tp;
 static void sp_piece(void);
-static void msg_text(const char *a, const char *b, char *t)   /* the message as a reader gets it: "a b" */
+static void msg_text(const char *a, const char *b, char *t)
 {
     uint32_t i, k = 0;
     for (i = 0; i < 23u && a && a[i]; i++)
@@ -95,11 +90,10 @@ static void msg_text(const char *a, const char *b, char *t)   /* the message as 
         t[k++] = ' ';
     for (i = 0; i < 23u && b && b[i]; i++)
         t[k++] = b[i];
-    while (k && t[k - 1] == '.')               /* "UPDATE MODE IN 3..": the dots are for the eye */
+    while (k && t[k - 1] == '.')
         k--;
     t[k] = 0;
 }
-/* a message for a moment in the header; flags: how a screen reader gets it (0: the caller tells it) */
 static void say_as(const char *a, const char *b, uint32_t flags)
 {
     uint32_t i;
@@ -118,7 +112,6 @@ static void say_as(const char *a, const char *b, uint32_t flags)
     }
 }
 static void say(const char *a, const char *b) { say_as(a, b, ANN_NOW); }
-/* something did not happen: a screen reader says it whole (what follows does not cut it off) */
 static void warn(const char *a, const char *b) { say_as(a, b, ANN_NOW | ANN_KEEP); }
 void ui_say(const char *a, const char *b) { say(a, b); }
 
@@ -138,21 +131,12 @@ static void itoa_u(uint32_t v, char *b)
 static void mark_dirty(void) { ui.dirty = 1; }
 int ui_dirty(void) { return ui.dirty != 0; }
 
-static int pool_count(uint32_t p)
+static void caps(char *d, const char *s, int n)
 {
-    int n = 0, i;
-    for (i = 0; i < 12; i++)
-        n += (int)(p >> i & 1u);
-    return n;
-}
-static uint32_t pool_abs(void)                 /* the pool as absolute pitch classes */
-{
-    uint32_t p = proj.pool, r = (uint32_t)proj.par[P_ROOT];
-    return ((p << r) | (p >> (12u - r))) & 0xFFFu;
-}
-static const char *mode_name(void)
-{
-    return proj.pool == EN_MODE_POOL[proj.par[P_MODE]] ? EN_MODE_NAME[proj.par[P_MODE]] : "Custom";
+    int i;
+    for (i = 0; i < n - 1 && s[i]; i++)
+        d[i] = (char)(s[i] >= 'a' && s[i] <= 'z' ? s[i] - 32 : s[i]);
+    d[i] = 0;
 }
 
 /* ------------------------------------------------------------ values --- */
@@ -176,18 +160,12 @@ static void knob_range(int k, int *lo, int *hi)
         *hi = k == K_LEDS ? 2 : k == K_CPU ? 100 : 0;
     }
 }
-static const char *knob_name(int k)
-{
-    if (k < P_NPARAMS)
-        return en_param_info(k)->name;
-    return k == K_LEDS ? "Lights" : k == K_CPU ? "CPU" : "";
-}
 static void knob_text(int k, char *b)
 {
     int v = knob_get(k);
     if (k < P_NPARAMS) {
         en_param_text(k, v, b);
-    } else if (k == K_LEDS) {                    /* On: the keys, and the unlit buttons glow; Keys: no glow */
+    } else if (k == K_LEDS) {
         const char *n = v == 2 ? "Keys" : v ? "On" : "Off";
         while ((*b++ = *n++))
             ;
@@ -220,10 +198,8 @@ static void knob_set(int k, int v)
     mark_dirty();
 }
 
-/* knob acceleration by speed (X0X's): a few clicks are one step each however quick, so small
- * corrections stay exact; a longer quick turn speeds up to 8 a detent, so half a turn sweeps 0-100.
- * Small ranges never accelerate. */
-static uint8_t accel_off;              /* the host simulator's "spin": exact steps */
+/* knob acceleration by speed (X0X's, by way of AMB-1) */
+static uint8_t accel_off;
 static int32_t accel(int role, int32_t s, int range)
 {
     uint32_t now = plat_ms(), dt = now - ui.enc_t[role], a = (uint32_t)(s < 0 ? -s : s), m;
@@ -231,7 +207,7 @@ static int32_t accel(int role, int32_t s, int range)
     if (!a)
         return s;
     if (a > 1)
-        dt /= a;                                      /* per detent */
+        dt /= a;
     ui.enc_run[role] = (uint8_t)(dt < 60u ? (ui.enc_run[role] + a > 255u ? 255u : ui.enc_run[role] + a) : a);
     if (range <= 24 || accel_off || ui.enc_run[role] < 4u)
         return s;
@@ -250,44 +226,32 @@ static void turn(int role, int k, int32_t e)
     knob_set(k, knob_get(k) + accel(role, e, hi - lo));
 }
 
-/* ------------------------------------------------------------- the pool --- */
-static void toggle_note(int pc)                 /* a key: its note in or out of the scale */
+/* ---------------------------------------------------------- the song --- */
+static void set_key(int pc)                     /* a key: the song moves to its note */
 {
-    int rel = (pc - proj.par[P_ROOT] + 12) % 12;
-    uint32_t p = proj.pool ^ (1u << rel);
-    if (rel == 0) {
-        warn("THE ROOT STAYS", "(SETUP)");
+    pc = (pc % 12 + 12) % 12;
+    if (pc == proj.par[P_ROOT]) {
+        say("KEY", EN_NOTE_NAME[pc]);
         return;
     }
-    if (pool_count(p) < 3) {
-        warn("3 NOTES", "AT LEAST");
-        return;
-    }
-    proj.pool = (uint16_t)p;
-    en_pool(p);
-    say(p >> rel & 1u ? "ADDED" : "REMOVED", EN_NOTE_NAME[pc]);
-    mark_dirty();
+    knob_set(P_ROOT, pc);
+    say("KEY", EN_NOTE_NAME[pc]);
 }
 
-static void set_mode(int m)
+static void set_pattern(int p)
 {
-    m = (m % EN_NMODES + EN_NMODES) % EN_NMODES;
-    proj.par[P_MODE] = (int16_t)m;
-    proj.pool = EN_MODE_POOL[m];
-    en_set(P_MODE, m);
-    en_pool(proj.pool);
-    say("MODE", EN_MODE_NAME[m]);
-    mark_dirty();
+    p = (p % EN_NPATTERNS + EN_NPATTERNS) % EN_NPATTERNS;
+    knob_set(P_PATTERN, p);
+    say("PATTERN", EN_PATTERN_NAME[p]);
 }
 
-static void set_piece(int i)                    /* the piece playing kept as it is; piece i as it was left */
+static void set_piece(int i)                    /* the song playing kept as it is; song i as it was left */
 {
     project_piece(i);
-    project_apply();
     en_seed(plat_ms());
-    en_regrow();
-    say_as("PIECE", piece_name(proj.piece), 0);
-    sp_piece();                                  /* a screen reader: the piece with its key and tempo */
+    project_apply();
+    say_as("SONG", piece_name(proj.piece), 0);
+    sp_piece();
     mark_dirty();
 }
 
@@ -301,7 +265,7 @@ static void set_view(int v)
 static void button(int b)
 {
     int v;
-    for (v = 0; v < NVIEWS; v++)                 /* a page's button: its page */
+    for (v = 0; v < NVIEWS; v++)
         if (VIEW_BTN[v] == b) {
             set_view(v);
             return;
@@ -309,30 +273,30 @@ static void button(int b)
     switch (b) {
     case B_EDIT:
         en_next();
-        say("NEXT CHORD", en_playing ? "ON THE BAR" : 0);
+        say("NEXT SECTION", en_playing ? "ON THE BAR" : 0);
         break;
     case B_PLAY:
         sp_tp.playing = !en_playing;
         sp_tp.play_t = plat_ms();
         if (en_playing) {
             en_play(0);
-            say("RESTING", 0);
+            say("STOPPED", 0);
         } else {
             en_seed(plat_ms());
             en_play(1);
-            say("GROWING", 0);
+            say("PLAYING", 0);
         }
         break;
     case B_REC:
-        say("FREEZE", en_frozen ? "OFF" : "ON");
-        en_freeze(!en_frozen);                   /* the engine takes it at its next block */
+        say("HOLD", en_held ? "OFF" : "ON");
+        en_hold(!en_held);
         break;
     case B_OCTDN: case B_OCTUP:
         knob_set(P_BOCT, proj.par[P_BOCT] + (b == B_OCTUP ? 1 : -1));
         {
             char t[8];
             en_param_text(P_BOCT, proj.par[P_BOCT], t);
-            say("BELL OCTAVE", t);
+            say("BASS OCTAVE", t);
         }
         break;
     case B_SAVE:
@@ -347,8 +311,7 @@ static void button(int b)
     }
 }
 
-/* MIDI in (USB and the TRS jack): channel 1 notes add or remove their note from the scale; clock and
- * start / stop drive the grid */
+/* MIDI in (USB and the TRS jack): a channel 1 note moves the key; clock and start / stop drive the grid */
 static void midi_in(void)
 {
     uint32_t pkt;
@@ -357,13 +320,10 @@ static void midi_in(void)
         if (st == 0xF8u || st == 0xFAu || st == 0xFBu || st == 0xFCu)
             en_clock(st == 0xF8u ? EN_CLK_TICK : st == 0xFAu ? EN_CLK_START : st == 0xFBu ? EN_CLK_CONTINUE : EN_CLK_STOP);
         else if (st == 0x90u && v)
-            toggle_note((int)(n % 12u));
+            set_key((int)(n % 12u));
     }
 }
 
-/* HELP CARDS (X0X's): hold one button alone for HELP_HOLD and a card says what it does. A key, a
- * turn or another button puts it away; letting go after its card does nothing else. PLAY acts on
- * its press, and SEL has no job here: neither has a card. */
 #define HELP_HOLD 900u
 #define RESET_HOLD 1500u
 static void help_tick(uint32_t btn, uint32_t keys)
@@ -382,7 +342,7 @@ static void help_tick(uint32_t btn, uint32_t keys)
         if (btn == 1u << i && i != B_PLAY && i != B_SEL && !(ui.btn_used & btn) && now - ui.down_t[i] >= HELP_HOLD &&
             (int32_t)(ui.turn_t - ui.down_t[i]) <= 0) {
             ui.help = (uint8_t)(i + 1);
-            ui.btn_used |= btn;                  /* its release now does nothing */
+            ui.btn_used |= btn;
         }
 }
 
@@ -401,7 +361,7 @@ static void input(void)
             ui.down_t[i] = plat_ms();
             if (i == B_SAVE)
                 ui.reset_done = 0;
-            if (i == B_PLAY)                   /* transport on the press */
+            if (i == B_PLAY)
                 button((int)i);
         } else if (!(ui.btn_used & m) && i != B_PLAY) {
             button((int)i);
@@ -411,7 +371,7 @@ static void input(void)
     ui.keys = keys;
     for (i = 0; i < NKEYS; i++)
         if ((ch & keys) >> i & 1u)
-            toggle_note((int)((5u + i) % 12u));  /* key 0 is F3 */
+            set_key((int)((5u + i) % 12u));      /* key 0 is F3 */
     if (btn || keys || ch)
         ui.act_t = plat_ms();
     midi_in();
@@ -419,7 +379,7 @@ static void input(void)
         if (btn >> B_HOME & 1u) {
             turn(EN_SELECT, P_TEMPO, e);
             ui.btn_used |= 1u << B_HOME;
-            if (ui.view == V_GARDEN) {           /* Tempo is the Garden's first knob */
+            if (ui.view == V_SONG) {
                 ui.touched = 0;
                 ui.touch_until = plat_ms() + 1200u;
             } else {
@@ -435,7 +395,7 @@ static void input(void)
         ui.turn_t = plat_ms();
     }
     if ((e = plat_enc(EN_ALGO)) != 0) {
-        set_mode(proj.par[P_MODE] + (e > 0 ? 1 : -1));
+        set_pattern(proj.par[P_PATTERN] + (e > 0 ? 1 : -1));
         ui.turn_t = plat_ms();
     }
     if ((e = plat_enc(EN_PRESET)) != 0) {
@@ -443,12 +403,11 @@ static void input(void)
         ui.turn_t = plat_ms();
     }
     if ((btn >> B_SAVE & 1u) && !ui.reset_done && plat_ms() - ui.down_t[B_SAVE] > RESET_HOLD) {
-        ui.reset_done = 1;                     /* held: the piece back to its recipe (not saved) */
+        ui.reset_done = 1;
         ui.btn_used |= 1u << B_SAVE;
         ui.help = 0;
         project_piece_reset();
         project_apply();
-        en_regrow();
         say("RESET", piece_name(proj.piece));
         mark_dirty();
     }
@@ -463,7 +422,6 @@ static void input(void)
 }
 
 /* ------------------------------------------------------------- screen --- */
-/* three bands: the header (28 px), the garden (144), the knobs (68) */
 #define HDR_H 28
 #define MAIN_Y 28
 #define MAIN_H 144
@@ -472,15 +430,18 @@ static void input(void)
 
 static uint32_t hash(uint32_t h, uint32_t v) { return (h ^ v) * 16777619u; }
 
-/* a rectangle with rounded corners (radius r, up to 6) */
 static void cv_round(int32_t x, int32_t y, int32_t w, int32_t h, int32_t r, uint16_t c)
 {
     static const uint8_t IN[7][6] = {{0}, {1}, {1, 0}, {2, 1, 0}, {2, 1, 0, 0}, {3, 2, 1, 0, 0}, {4, 2, 1, 1, 0, 0}};
     int32_t j;
+    if (w <= 0 || h <= 0)
+        return;
     if (r > 6)
         r = 6;
     if (r > h / 2)
         r = h / 2;
+    if (r > w / 2)
+        r = w / 2;
     cv_rect(x, y + r, w, h - 2 * r, c);
     for (j = 0; j < r; j++) {
         int32_t d = IN[r][j];
@@ -489,30 +450,11 @@ static void cv_round(int32_t x, int32_t y, int32_t w, int32_t h, int32_t r, uint
     }
 }
 
-/* a filled circle of radius r (0..6) centred on (cx, cy): HW[r][d] is the half width d rows from the middle */
-static void cv_disc(int32_t cx, int32_t cy, int32_t r, uint16_t c)
-{
-    static const uint8_t HW[7][7] = {{0}, {1, 0}, {2, 1, 0}, {3, 2, 2, 0}, {4, 4, 3, 2, 0}, {5, 5, 4, 4, 3, 0},
-                                     {6, 6, 5, 5, 4, 3, 0}};
-    int32_t j;
-    if (r <= 0) {
-        cv_rect(cx, cy, 1, 1, c);
-        return;
-    }
-    if (r > 6)
-        r = 6;
-    for (j = -r + 1; j < r; j++) {
-        int32_t w = HW[r][j < 0 ? -j : j];
-        cv_rect(cx - w, cy + j, 2 * w + 1, 1, c);
-    }
-}
-
 static void text_c(int32_t cx, int32_t y, const felucca_font_t *f, const char *s, uint16_t c)
 {
     cv_text(cx - text_w(f, s) / 2, y, f, s, c);
 }
 
-/* anti-aliased drawing (X0X's): a pixel blended over the canvas, a disc, and a knob's ring */
 static void px_blend(int32_t x, int32_t y, uint16_t c, uint32_t a)
 {
     uint16_t *q;
@@ -542,11 +484,10 @@ static void disc(float cx, float cy, float r, uint16_t c)
         }
 }
 
-/* atan2 in turns, 0..1 from +x going clockwise on screen (y down) */
 static float turns(float y, float x)
 {
     float ax = fm_fabsf(x), ay = fm_fabsf(y), a = ax < ay ? ax / (ay + 1e-9f) : ay / (ax + 1e-9f), s = a * a, r;
-    r = ((-0.0464964749f * s + 0.15931422f) * s - 0.327622764f) * s * a + a;   /* atan on [0, 1] */
+    r = ((-0.0464964749f * s + 0.15931422f) * s - 0.327622764f) * s * a + a;
     if (ay > ax)
         r = 1.57079637f - r;
     if (x < 0.0f)
@@ -556,8 +497,6 @@ static float turns(float y, float x)
     return r * (1.0f / FM_TWO_PI);
 }
 
-/* a knob: a 270-degree track from 7:30 to 4:30, anti-aliased, round ends; the value filled from
- * the start (or from the top, for a centred value) and a round handle */
 static void arc(int32_t cx, int32_t cy, int32_t r, float v, uint16_t track, uint16_t fill, uint16_t bg, int bipolar)
 {
     const float th = 3.4f, a0 = 0.375f, sweep = 0.75f;
@@ -592,14 +531,6 @@ static void arc(int32_t cx, int32_t cy, int32_t r, float v, uint16_t track, uint
     }
 }
 
-static void caps(char *d, const char *s, int n)  /* s in capitals, at most n - 1 characters */
-{
-    int i;
-    for (i = 0; i < n - 1 && s[i]; i++)
-        d[i] = (char)(s[i] >= 'a' && s[i] <= 'z' ? s[i] - 32 : s[i]);
-    d[i] = 0;
-}
-
 static uint16_t mix(uint16_t a, uint16_t b, int t)   /* t 0..16: a -> b */
 {
     int r, g, bl;
@@ -614,26 +545,15 @@ static uint16_t mix(uint16_t a, uint16_t b, int t)   /* t 0..16: a -> b */
 }
 static int q16(float x) { return x <= 0.0f ? 0 : x >= 1.0f ? 16 : (int)(x * 16.0f + 0.5f); }
 
-static void tag(int32_t *x, const char *s, uint16_t bg, uint16_t fg)
-{
-    int32_t w = text_w(&FONT_XS, s) + 10;
-    cv_round(*x, 6, w, 16, 6, bg);
-    cv_text(*x + 5, 7, &FONT_XS, s, fg);
-    *x += w + 4;
-}
-
-/* the battery (plat_battery): 0 (low) .. 3 bars, 4 a USB host powers the FM-1, -1 not read yet. The
- * simulator's "battery N" (host.c) stands in for it */
+/* the battery (plat_battery): 0 (low) .. 3 bars, 4 a USB host powers the FM-1, -1 not read yet */
 #ifdef PLAT_HOST
-static int8_t batt_host = -2;                  /* -2: plat_battery's */
+static int8_t batt_host = -2;
 static int batt(void) { return batt_host > -2 ? batt_host : plat_battery(); }
 #else
 #define batt() plat_battery()
 #endif
-#define K_LOW RGB(196, 84, 52)                 /* the battery at one bar or none */
-#define BATT_W 20                              /* the body 18 wide and its nub */
-/* lying down at the header's right, its middle on the beat light's: three bars, rust at one or none; a
- * bolt instead on USB power; nothing until it is read */
+#define K_LOW RGB(255, 110, 60)
+#define BATT_W 20
 static void draw_batt(int32_t x, int b)
 {
     static const int8_t BOLT[7][2] = {{10, 2}, {9, 2}, {8, 2}, {7, 5}, {9, 2}, {8, 2}, {7, 2}};
@@ -648,7 +568,7 @@ static void draw_batt(int32_t x, int b)
         return;
     }
     for (i = 0; i < b && i < 3; i++)
-        cv_rect(x + 2 + i * 5, 11, 4, 6, b <= 1 ? K_LOW : K_PAD);
+        cv_rect(x + 2 + i * 5, 11, 4, 6, b <= 1 ? K_LOW : K_BASS);
 }
 static const char *batt_words(int b)
 {
@@ -657,17 +577,16 @@ static const char *batt_words(int b)
     return b >= 0 && b <= 4 ? W[b] : 0;
 }
 
-/* the header: the piece in a tag, its root and mode; on the right, the battery, the tempo with a slow
- * beat light (a play triangle while resting) and a dot while there is something unsaved. Messages take
- * its place for a moment. */
+/* the header: the song in a magenta tag, its key; on the right, the battery, the tempo with a beat light (a play
+ * triangle while stopped) and a dot while there is something unsaved. Messages take its place for a moment. */
 static void draw_header(void)
 {
     char t[24];
     int msg = plat_ms() < ui.msg_until;
-    uint32_t h = hash(hash(hash(2166136261u, proj.piece | (uint32_t)proj.par[P_ROOT] << 8 | (uint32_t)proj.pool << 12),
-                           en_playing | ui.dirty << 4 | (uint32_t)msg << 5 | (uint32_t)en_ext << 6 | (uint32_t)proj.par[P_MODE] << 8),
+    uint32_t h = hash(hash(hash(2166136261u, proj.piece | (uint32_t)en_key << 8),
+                           en_playing | ui.dirty << 4 | (uint32_t)msg << 5 | (uint32_t)en_ext << 6),
                       (uint32_t)proj.par[P_TEMPO] | (ui.view == V_SETUP ? plat_cpu_pct() << 8 : 0u) |
-                      (uint32_t)(batt() + 1) << 24);
+                          (uint32_t)(batt() + 1) << 24);
     if (msg)
         h = hash(hash(h, (uint32_t)ui.msg[0][0] << 8 | ui.msg[0][1]), ui.msg_until);
     if (en_playing)
@@ -686,7 +605,7 @@ static void draw_header(void)
             draw_batt(x, batt());
             x -= 6;
         }
-        if (ui.dirty) {                            /* unsaved */
+        if (ui.dirty) {
             cv_round(x - 5, 12, 5, 5, 2, K_DIM);
             x -= 11;
         }
@@ -698,7 +617,7 @@ static void draw_header(void)
         } else {
             itoa_u((uint32_t)proj.par[P_TEMPO], t);
         }
-        if (ui.view == V_SETUP) {                 /* Setup: the audio load too */
+        if (ui.view == V_SETUP) {
             char c[12] = "CPU ";
             itoa_u(plat_cpu_pct(), c + 4);
             x -= text_w(&FONT_XS, c);
@@ -708,43 +627,33 @@ static void draw_header(void)
         x -= text_w(&FONT_S, t);
         cv_text(x, 6, &FONT_S, t, en_playing ? K_TEXT : K_DIM);
         x -= 16;
-        if (en_playing) {                         /* a slow beat light */
+        if (en_playing) {                         /* a beat light: every beat */
             int on = ((en_bars / 4u) & 1u) == 0u;
-            cv_round(x, 9, 10, 10, 5, on ? K_PAD : K_PAD_T);
+            cv_round(x, 9, 10, 10, 5, on ? K_ACC : K_LINE);
         } else {
-            int32_t j;                            /* resting: a play triangle */
+            int32_t j;
             for (j = 0; j < 5; j++)
                 cv_rect(x + 2 + j, 9 + j, 1, 11 - 2 * j, K_DIM);
         }
-        w = text_w(&FONT_B, piece_name(proj.piece)) + 12;   /* the piece, in a coral tag */
-        cv_round(4, 4, w, 20, 6, K_TEXT);
+        w = text_w(&FONT_B, piece_name(proj.piece)) + 12;
+        cv_round(4, 4, w, 20, 6, K_ACC);
         cv_text(10, 6, &FONT_B, piece_name(proj.piece), K_BG);
-        w += 10;                                  /* the root, then the mode, where they clear the right side */
-        if (w + text_w(&FONT_XS, EN_NOTE_NAME[proj.par[P_ROOT]]) + 4 <= x) {
-            w = cv_text(w, 8, &FONT_XS, EN_NOTE_NAME[proj.par[P_ROOT]], K_TEXT);
-            if (w + 3 + text_w(&FONT_XS, mode_name()) + 4 <= x)
-                cv_text(w + 3, 8, &FONT_XS, mode_name(), K_DIM);
+        w += 10;
+        if (w + text_w(&FONT_XS, EN_NOTE_NAME[(int)en_key]) + 4 <= x) {
+            w = cv_text(w, 8, &FONT_XS, EN_NOTE_NAME[(int)en_key], K_TEXT);
+            if (w + 30 <= x)
+                cv_text(w + 3, 8, &FONT_XS, "KEY", K_DIM);
         }
     }
     cv_blit(0, 0);
 }
 
-/* the garden: the scale as a ring of twelve, the chord lit in it; the four bell loops around it, each
- * a ring of its steps with its notes on it and its playhead going round; the three pulses on the
- * right, the four layers' levels on the left */
-#define CX 120
-#define CY 84
-static const int32_t LOOP_R[EN_NLOOP] = {36, 43, 50, 57};
-
-static void polar(int32_t cx, int32_t cy, float r, int i, int n, int32_t *x, int32_t *y)
-{
-    float a = (float)i * (FM_TWO_PI / (float)n);  /* step i of n, clockwise from the top */
-    float sx = fm_sinf(a) * r, sy = fm_cosf(a) * r;
-    *x = cx + (int32_t)(sx + (sx < 0.0f ? -0.5f : 0.5f));
-    *y = cy - (int32_t)(sy + (sy < 0.0f ? -0.5f : 0.5f));
-}
-
-static const char *chord_now(char *nm)          /* the chord's name, as the garden shows it ("Em7") */
+/* the main band: the form across the top (a block a section, its width its bars; the one playing lit, how far
+ * through it), the section's name and bar under it; then the bass's sixteen steps in a ring round the chord, each
+ * step's height its note; the four layers' levels on the left, the drums' grid on the right */
+#define CX 112
+#define CY 96
+static const char *chord_now(char *nm)
 {
     int pcs[EN_NPAD + 1], k;
     pcs[0] = en_chord_root;
@@ -753,99 +662,114 @@ static const char *chord_now(char *nm)          /* the chord's name, as the gard
     return en_chord_name(pcs, EN_NPAD + 1, nm);
 }
 
+static void draw_form(void)
+{
+    int n = en_song_nsec(proj.piece), i, tot = 0;
+    int32_t x = 8, wall = 224;
+    for (i = 0; i < n; i++)
+        tot += en_sec_bars(proj.piece, i);
+    for (i = 0; i < n; i++) {
+        int32_t w = (int32_t)(wall * en_sec_bars(proj.piece, i) / (tot ? tot : 1)) - 2, cur = i == en_sec;
+        if (w < 3)
+            w = 3;
+        cv_round(x, 4, w, 10, 3, cur ? (en_held ? K_HOLD : K_ACC) : (i == en_next_sec && en_playing ? K_LINE : K_PANEL));
+        if (cur && en_sec_len) {                  /* how far through */
+            int32_t f = (int32_t)((float)w * ((float)en_sec_bar + (float)en_step / 16.0f) / (float)en_sec_len);
+            cv_round(x, 4, f < 3 ? 3 : f, 10, 3, en_held ? mix(K_HOLD, K_TEXT, 6) : mix(K_ACC, K_TEXT, 6));
+        }
+        x += w + 2;
+    }
+    {
+        char t[24], b[12];
+        caps(t, en_sec_name(proj.piece, en_sec), 16);
+        cv_text(8, 17, &FONT_XS, t, en_held ? K_HOLD : K_TEXT);
+        if (en_held)
+            cv_text(10 + text_w(&FONT_XS, t), 17, &FONT_XS, " HOLD", K_HOLD);
+        itoa_u((uint32_t)en_sec_bar + 1u, b);
+        {
+            int32_t k = 0;
+            while (b[k])
+                k++;
+            b[k++] = '/';
+            itoa_u(en_sec_len, b + k);
+        }
+        cv_text(232 - text_w(&FONT_XS, b), 17, &FONT_XS, b, K_DIM);
+    }
+}
+
 static void draw_ring(void)
 {
-    uint32_t abs_pool = pool_abs(), chord = 0;
-    int i, l;
-    for (i = 0; i < EN_NPAD; i++)
-        chord |= 1u << (en_chord[i] % 12u);
-    for (l = 0; l < EN_NLOOP; l++) {
-        int len = EN_LOOP_LEN[l], s, pos = en_loop_pos[l], g = q16(en_loop_glow[l]);
-        for (s = 0; s < len; s++) {
-            int32_t x, y;
-            polar(CX, CY, (float)LOOP_R[l], s, len, &x, &y);
-            if (en_loop_note[l][s] >= 0)
-                cv_disc(x, y, 2, (s == pos && en_playing) ? mix(K_BELL, K_FROST, g / 2) : mix(K_BELL_T, K_BELL, 12));
-            else
-                cv_rect(x, y, 2, 2, K_LINE);
+    int s, lo = 127, hi = 0;
+    for (s = 0; s < EN_STEPS; s++)
+        if (en_bpat[s] >= 0) {
+            lo = en_bpat[s] < lo ? en_bpat[s] : lo;
+            hi = en_bpat[s] > hi ? en_bpat[s] : hi;
         }
-        if (en_playing) {                        /* the playhead */
-            int32_t x, y;
-            polar(CX, CY, (float)LOOP_R[l], pos, len, &x, &y);
-            cv_disc(x, y, 1 + g / 6, mix(K_DIM, K_BELL, g));
+    for (s = 0; s < EN_STEPS; s++) {
+        float a = (float)s * (FM_TWO_PI / 16.0f), r = 42.0f, sx = fm_sinf(a), sy = -fm_cosf(a);
+        int cur = en_playing && s == en_step;
+        if (en_bpat[s] >= 0) {
+            float h = hi > lo ? (float)(en_bpat[s] - lo) / (float)(hi - lo) : 0.5f, rr = 2.2f + 2.6f * h;
+            uint16_t c = cur ? mix(K_BASS, K_TEXT, q16(en_bass_glow) / 2) : mix(K_BASS_T, K_BASS, 7 + (int)(7.0f * h));
+            if (en_bacc[s])
+                disc((float)CX + sx * r, (float)CY + sy * r, rr + 1.6f, cur ? K_TEXT : K_LINE);
+            disc((float)CX + sx * r, (float)CY + sy * r, rr + (cur ? 1.2f : 0.0f), c);
+        } else {
+            disc((float)CX + sx * r, (float)CY + sy * r, cur ? 1.8f : 1.1f, cur ? K_DIM : K_LINE);
         }
     }
-    for (i = 0; i < 12; i++) {                  /* the scale: C at the top */
-        int32_t x, y;
-        int in = (int)(abs_pool >> i & 1u), ch = (int)(chord >> i & 1u);
-        polar(CX, CY, 24.0f, i, 12, &x, &y);
-        if (i == proj.par[P_ROOT])
-            cv_disc(x, y, 5, K_TEXT);           /* the root: ringed in ink */
-        if (ch)
-            cv_disc(x, y, 4, mix(K_PAD_T, K_PAD, 6 + q16(en_pad_level) * 10 / 16));
-        else if (in)
-            cv_disc(x, y, 3, mix(K_PAD_T, K_PAD, 7));
-        else
-            cv_disc(x, y, 1, K_LINE);
-    }
-    {   /* the chord's name, in the middle */
+    {   /* the chord, and the lead's note under it as it sings */
         char nm[16];
         chord_now(nm);
-        if (text_w(&FONT_B, nm) <= 38)
-            text_c(CX, CY - 8, &FONT_B, nm, en_frozen ? K_FROST : K_TEXT);
+        if (text_w(&FONT_B, nm) <= 58)
+            text_c(CX, CY - 10, &FONT_B, nm, en_held ? K_HOLD : K_TEXT);
         else
-            text_c(CX, CY - 6, &FONT_XS, nm, en_frozen ? K_FROST : K_TEXT);
+            text_c(CX, CY - 7, &FONT_XS, nm, K_TEXT);
+        if (en_lead_note && en_lead_glow > 0.08f && (en_layers & L_LEAD))
+            text_c(CX, CY + 10, &FONT_XS, EN_NOTE_NAME[en_lead_note % 12], mix(K_LEAD_T, K_LEAD, q16(en_lead_glow * 1.5f)));
     }
 }
 
-static void draw_meters(void)                    /* left: the four layers */
+static void draw_meters(void)                    /* left: bass, pad, lead, drums */
 {
-    static const uint16_t C[4] = {K_PAD, K_BELL, K_BASS, K_PULSE}, T[4] = {K_PAD_T, K_BELL_T, K_BASS_T, K_PULSE_T};
-    float lv[4], bm = 0.0f, dm = 0.0f;
+    static const uint16_t C[4] = {K_BASS, K_PAD, K_LEAD, K_DRUM}, T[4] = {K_BASS_T, K_PAD_T, K_LEAD_T, K_DRUM_T};
+    static const uint8_t L[4] = {L_BASS, L_PAD, L_LEAD, L_KICK | L_SNARE | L_HATS | L_OHAT | L_TOMS};
+    float lv[4], dm = 0.0f;
     int i;
-    for (i = 0; i < EN_NLOOP; i++)
-        bm = fm_maxf(bm, en_loop_glow[i]);
     for (i = 0; i < EN_NDRUM; i++)
         dm = fm_maxf(dm, en_drum_glow[i]);
-    lv[0] = en_pad_level * (float)proj.par[P_PAD] * 0.01f;
-    lv[1] = bm * (float)proj.par[P_BELLS] * 0.01f;
-    lv[2] = en_bass_level * (float)proj.par[P_BASS] * 0.01f;
-    lv[3] = dm * (float)proj.par[P_PULSE] * 0.01f;
+    lv[0] = en_bass_glow * (0.4f + 0.6f * en_bass_cut) * (float)proj.par[P_BASS] * 0.01f;
+    lv[1] = en_pad_level * (float)proj.par[P_PAD] * 0.01f;
+    lv[2] = en_lead_glow * (float)proj.par[P_LEAD] * 0.01f;
+    lv[3] = dm * (float)proj.par[P_DRUMS] * 0.01f;
     for (i = 0; i < 4; i++) {
-        int32_t x = 10 + i * 11, h = (int32_t)(fm_clampf(lv[i], 0.0f, 1.0f) * 80.0f + 0.5f);
-        cv_round(x, 46, 7, 86, 3, T[i]);
+        int32_t x = 8 + i * 10, h = (int32_t)(fm_clampf(lv[i], 0.0f, 1.0f) * 84.0f + 0.5f);
+        cv_round(x, 46, 6, 90, 3, (en_layers & L[i]) ? T[i] : K_PANEL);
         if (h > 0)
-            cv_round(x, 46 + 86 - h - 2, 7, h + 2, 3, C[i]);
+            cv_round(x, 46 + 90 - h - 2, 6, h + 2, 3, C[i]);
     }
 }
 
-static void draw_pulse(void)                     /* right: the three Euclidean rings */
+static void draw_drums(void)                     /* right: kick, snare, closed hat, open hat, tom; a cell a step */
 {
-    int d;
+    int d, s;
     for (d = 0; d < EN_NDRUM; d++) {
-        int32_t cx = 212, cy = 52 + d * 34, s, n = EN_DRUM_N[d];
+        int32_t y = 52 + d * 15;
+        uint32_t p = en_dpat[d];
         int g = q16(en_drum_glow[d]);
-        uint32_t p = en_drum_pat[d];
-        for (s = 0; s < n; s++) {
-            int32_t x, y;
-            int cur = en_playing && s == en_drum_pos[d];
-            polar(cx, cy, 13.0f, s, n, &x, &y);
-            if ((p >> s & 1u) && en_pulse_rest)   /* sitting a few bars out: faded */
-                cv_disc(x, y, 2, K_LINE);
-            else if (p >> s & 1u)
-                cv_disc(x, y, cur ? 3 : 2, cur ? K_PULSE : mix(K_PULSE_T, K_PULSE, 10));
-            else if (cur)
-                cv_disc(x, y, 1, K_DIM);
-            else
-                cv_rect(x, y, 2, 2, K_LINE);
+        for (s = 0; s < EN_STEPS; s++) {
+            int32_t x = 168 + s * 4;
+            int cur = en_playing && s == en_step, on = (int)(p >> s & 1u);
+            uint16_t c = on ? (cur ? mix(K_DRUM, K_TEXT, g / 2) : mix(K_DRUM_T, K_DRUM, s % 4 == 0 ? 12 : 8))
+                            : (cur ? K_DIM : (s % 4 == 0 ? K_LINE : K_PANEL));
+            cv_rect(x, y, 3, on ? 8 : 3, c);
+            if (!on)
+                cv_rect(x, y + 5, 3, 3, c);
         }
-        if (g)
-            cv_disc(cx, cy, 1 + g / 4, mix(K_BG, K_PULSE, g));
     }
 }
 
-/* a button's card (help_tick): its name, then what it does, in the garden's place. A line starting with a
- * space goes on from the one before (a screen reader joins them: sp_line) */
+/* a button's card (help_tick): its name, then what it does */
 #define HELP_LINES 4
 static const char *const BTN_LABEL[NB] = {"FX", "SEL", "ENV", "LFO", "EDIT", "GLO", "HOME", "SAVE", "ARP", "SEQ",
                                           "PLAY", "REC", "OCT-", "OCT+"};
@@ -854,18 +778,18 @@ static int help_lines(int b, const char *l[HELP_LINES])
     int n = 0;
 #define L(t) (l[n++] = (t))
     switch (b) {
-    case B_HOME: L("THE GARDEN"); L("TEMPO, EVOLVE, MOTION, DRIFT"); L("+ SELECT: TEMPO"); break;
-    case B_ENV: L("THE PAD"); L("LEVEL, SWELL, BRIGHT,"); L("COLOUR"); break;
-    case B_ARP: L("THE BELLS"); L("LEVEL, DENSITY, TONE,"); L("OCTAVE"); break;
-    case B_LFO: L("THE BASS"); L("LEVEL, OCTAVE, GLIDE, FIFTH"); break;
-    case B_SEQ: L("THE PULSE"); L("LEVEL, HITS, SWING, HATS"); break;
-    case B_FX: L("THE SPACE"); L("ECHO, ECHO TIME, REVERB,"); L("SIZE"); break;
-    case B_GLO: L("SETUP"); L("ROOT, TUNE, MIDI OUT, LIGHTS"); break;
-    case B_EDIT: L("THE NEXT CHORD,"); L("ON THE NEXT BAR"); break;
-    case B_REC: L("FREEZE: THE CHORD HOLDS"); L(" AND THE REVERB RINGS ON"); L("AGAIN: THAW"); break;
-    case B_OCTDN: L("THE BELLS AN OCTAVE DOWN"); L("WITH OCT+, 5 S: UPDATE MODE"); break;
-    case B_OCTUP: L("THE BELLS AN OCTAVE UP"); L("WITH OCT-, 5 S: UPDATE MODE"); break;
-    case B_SAVE: L("SAVES ALL EIGHT PIECES"); L("KEEP HOLDING: THE PIECE"); L(" BACK TO ITS RECIPE"); break;
+    case B_HOME: L("THE SONG"); L("TEMPO, EVOLVE, MOTION,"); L(" ARRANGE"); L("+ SELECT: TEMPO"); break;
+    case B_ENV: L("THE BASS SEQUENCE"); L("LEVEL, CUTOFF, EMPHASIS,"); L(" DECAY"); break;
+    case B_ARP: L("THE LEAD"); L("LEVEL, VOICE, BUSY, GLIDE"); break;
+    case B_LFO: L("THE PAD"); L("LEVEL, COLOUR, BRIGHT,"); L(" PHASER"); break;
+    case B_SEQ: L("THE DRUMS"); L("LEVEL, FILLS, HATS, SWING"); break;
+    case B_FX: L("THE SPACE"); L("ECHO, TIME, FEEDBACK,"); L(" REVERB"); break;
+    case B_GLO: L("SETUP"); L("KEY, TUNE, MIDI OUT, LIGHTS"); break;
+    case B_EDIT: L("THE NEXT SECTION,"); L("ON THE NEXT BAR"); break;
+    case B_REC: L("HOLD: THE SECTION"); L(" REPEATS"); L("AGAIN: LET IT GO ON"); break;
+    case B_OCTDN: L("THE BASS AN OCTAVE DOWN"); L("WITH OCT+, 5 S: UPDATE MODE"); break;
+    case B_OCTUP: L("THE BASS AN OCTAVE UP"); L("WITH OCT-, 5 S: UPDATE MODE"); break;
+    case B_SAVE: L("SAVES ALL THE SONGS"); L("KEEP HOLDING: THE SONG"); L(" BACK TO ITS RECIPE"); break;
     default: break;
     }
 #undef L
@@ -877,18 +801,19 @@ static void draw_help(void)
     const char *l[HELP_LINES];
     int n = help_lines(ui.help - 1, l), k;
     cv_round(16, 14, 208, 116, 6, K_PANEL);
-    cv_round(16, 14, 208, 26, 6, K_TEXT);
-    cv_rect(16, 34, 208, 6, K_TEXT);
+    cv_round(16, 14, 208, 26, 6, K_ACC);
+    cv_rect(16, 34, 208, 6, K_ACC);
     text_c(120, 18, &FONT_B, BTN_LABEL[ui.help - 1], K_BG);
     for (k = 0; k < n; k++)
-        text_c(120, 56 + k * 20, &FONT_S, l[k] + (l[k][0] == ' '), K_TEXT);
+        text_c(120, 50 + k * 20, &FONT_S, l[k] + (l[k][0] == ' '), K_TEXT);
 }
 
 static void draw_main(void)
 {
-    uint32_t h = hash(2166136261u, pool_abs() | (uint32_t)proj.par[P_ROOT] << 12 | (uint32_t)en_frozen << 16 | proj.piece << 24 |
-                                        (uint32_t)en_playing << 17 | (uint32_t)proj.par[P_MODE] << 20), i;
-    if (ui.frame % 3u)                           /* the garden moves slowly: 20 frames a second is plenty */
+    uint32_t h = hash(2166136261u, proj.piece | (uint32_t)en_sec << 8 | (uint32_t)en_sec_bar << 12 |
+                                       (uint32_t)en_held << 20 | (uint32_t)en_playing << 21 | (uint32_t)en_layers << 24),
+             i;
+    if (ui.frame % 2u)                           /* 30 frames a second */
         return;
     if (ui.help) {
         h = hash(0x48454C50u, ui.help);
@@ -900,41 +825,29 @@ static void draw_main(void)
         }
         return;
     }
+    h = hash(h, en_step | (uint32_t)en_next_sec << 8 | (uint32_t)en_key << 16);
     for (i = 0; i < EN_NPAD; i++)
         h = hash(h, en_chord[i]);
-    for (i = 0; i < EN_NLOOP; i++) {
-        uint32_t s;
-        h = hash(h, en_loop_pos[i] | (uint32_t)q16(en_loop_glow[i]) << 8);
-        for (s = 0; s < EN_LOOP_LEN[i]; s++)
-            h = hash(h, (uint32_t)(en_loop_note[i][s] >= 0));
-    }
+    for (i = 0; i < EN_STEPS; i++)
+        h = hash(h, (uint32_t)(uint8_t)en_bpat[i] | (uint32_t)en_bacc[i] << 8);
     for (i = 0; i < EN_NDRUM; i++)
-        h = hash(h, en_drum_pos[i] | (uint32_t)q16(en_drum_glow[i]) << 8 | en_drum_pat[i] << 13 | (uint32_t)en_pulse_rest << 31);
-    h = hash(h, (uint32_t)(en_drift * 40.0f) | (uint32_t)q16(en_pad_level) << 8 | (uint32_t)q16(en_bass_level) << 13);
+        h = hash(h, en_dpat[i] ^ (uint32_t)q16(en_drum_glow[i]) << 20);
+    h = hash(h, (uint32_t)q16(en_pad_level) | (uint32_t)q16(en_bass_glow) << 5 | (uint32_t)q16(en_lead_glow) << 10 |
+                    (uint32_t)en_lead_note << 16);
     for (i = 0; i < 4; i++)
-        h = hash(h, (uint32_t)proj.par[i]);
+        h = hash(h, (uint32_t)proj.par[i * 4 + 4]);
     if (h == ui.sig[1])
         return;
     ui.sig[1] = h;
     cv_begin(240, MAIN_H, K_BG);
-    if (en_frozen) {                             /* the way to the next chord, top right (held: frozen) */
-        cv_text(232 - text_w(&FONT_XS, "held"), 4, &FONT_XS, "held", K_FROST);
-    } else {
-        int32_t w = 30, f = (int32_t)(en_drift * (float)w + 0.5f);
-        cv_round(232 - w, 8, w, 6, 3, K_LINE);
-        if (f > 0)
-            cv_round(232 - w, 8, f < 6 ? 6 : f, 6, 3, K_PAD);
-    }
+    draw_form();
     draw_ring();
     draw_meters();
-    draw_pulse();
+    draw_drums();
     cv_blit(0, MAIN_Y);
 }
 
-/* the knob strip (X0X's): a rule with the page's name and five page dots at its right end; under
- * it a cell a knob: its name, a ring (or pips, for a switch of a few positions), the value. The
- * knob being turned is drawn on a tint. Only redrawn when what it shows changes (the rings cost a
- * square root and an arctangent per pixel). */
+/* the knob strip (X0X's, by way of AMB-1) */
 static void draw_knobs(void)
 {
     uint32_t h = hash(2166136261u, ui.view | (uint32_t)ui.touched << 8), i;
@@ -946,7 +859,7 @@ static void draw_knobs(void)
         return;
     ui.sig[2] = h;
     cv_begin(240, KNB_H, K_BG);
-    {   /* the rule; at its right end, where you are: the page, then the dots */
+    {
         char t[12];
         int k;
         int32_t xd = 237 - NVIEWS * 6, xt;
@@ -961,7 +874,7 @@ static void draw_knobs(void)
         int k = VIEW_KNOB[ui.view][i], lo, hi, v, hot = now_touch && ui.touched == (int)i;
         int32_t x = (int32_t)i * 60, cx = x + 30;
         char t[16];
-        uint16_t bg = hot ? K_PANEL : K_BG, fill = hot ? K_ACC : K_PAD;
+        uint16_t bg = hot ? K_PANEL : K_BG, fill = hot ? K_ACC : K_BASS;
         if (k == K_NONE)
             continue;
         if (i)
@@ -972,7 +885,7 @@ static void draw_knobs(void)
         v = knob_get(k);
         caps(t, KNOB_LABEL[ui.view][i], sizeof t);
         text_c(cx, 12, &FONT_XS, t, hot ? K_TEXT : K_DIM);
-        if (k != K_CPU && hi - lo < 6) {         /* a switch: its positions as pips */
+        if (k != K_CPU && hi - lo < 6) {
             int n = hi - lo + 1, j, pw = n > 4 ? 6 : 9, gap = 3, w0 = n * (pw + gap) - gap;
             for (j = 0; j < n; j++)
                 cv_round(cx - w0 / 2 + j * (pw + gap), 33, pw, 8, 2, j == v - lo ? fill : K_LINE);
@@ -985,24 +898,27 @@ static void draw_knobs(void)
     cv_blit(0, KNB_Y);
 }
 
+/* the lights: the page's button, PLAY while playing, REC while held; on the keys, the chord's notes */
 static void leds(void)
 {
-    uint32_t b = 0, k = 0, i, ap = pool_abs();
+    uint32_t b = 0, k = 0, i, ch = 0;
     b |= 1u << VIEW_BTN[ui.view];
     if (en_playing)
         b |= 1u << B_PLAY;
-    if (en_frozen)
+    if (en_held)
         b |= 1u << B_REC;
+    for (i = 0; i < EN_NPAD; i++)
+        ch |= 1u << (en_chord[i] % 12u);
     if (proj.leds)
         for (i = 0; i < NKEYS; i++)
-            if (ap >> ((5u + i) % 12u) & 1u)
+            if (ch >> ((5u + i) % 12u) & 1u)
                 k |= 1u << i;
     plat_glow(proj.leds == 1);
     plat_leds(b, k);
 }
 
-/* AUTOSAVE: a few seconds after a change, while resting and quiet, nothing touched (a flash erase
- * silences the audio for a moment: never while the garden grows; SAVE saves then) */
+/* AUTOSAVE: a few seconds after a change, while stopped and quiet, nothing touched (a flash erase silences the
+ * audio for a moment: never while playing; SAVE saves then) */
 #define AUTOSAVE_QUIET 4000u
 static void autosave(void)
 {
@@ -1016,26 +932,22 @@ static void autosave(void)
 }
 
 /* ------------------------------------------------------ screen reader --- */
-/* The screen as text for a screen reader on the computer (announce.c; fm1-reader): a page once it settles,
- * with its knobs; a knob's value as it turns; a help card as it comes up; the chord as it moves (queued: the
- * garden moves it by itself, every 20 s at the quickest); growing and resting from MIDI, and a MIDI clock
- * arriving or going; what a button did (say). WHERE (the reader asks, or it has just started listening) is
- * the whole screen in two: the page, its knobs and the header, then the garden (the chord, the scale).
- * Nothing is built while no reader listens. */
+/* The screen as text for a screen reader on the computer (announce.c; fm1-reader): a page once it settles, with
+ * its knobs; a knob's value as it turns; a help card; the section as it changes and the chord as it moves (queued);
+ * playing and stopping from MIDI; what a button did. WHERE is the whole screen in two: the page, its knobs and the
+ * header, then the song (the section, the chord, what plays). Nothing is built while no reader listens. */
 static struct {
-    uint8_t view, help, ext, started;
+    uint8_t view, help, ext, started, sec;
     int16_t val[4];
-    uint32_t chord;                            /* the chord's name, hashed */
+    uint32_t chord;
 } sp;
 static char sp_buf[ANN_MAX + 1];
 static uint32_t sp_n;
-/* the chord names (en_chord_name's, after the root) in words: "m" and "M7" differ only in capitals, which
- * the words file ignores */
 static const char *const CHORD_Q[][2] = {
-    {"", "major"}, {"m", "minor"}, {"7", "7"}, {"M7", "major 7"}, {"m7", "minor 7"}, {"6", "6"},
-    {"m6", "minor 6"}, {"add9", "add 9"}, {"madd9", "minor add 9"}, {"aug", "augmented"}, {"dim", "diminished"},
-    {"dim7", "diminished 7"}, {"m7b5", "half diminished"}, {"mM7", "minor major 7"}, {"sus2", "suspended 2"},
-    {"sus4", "suspended 4"}, {"7sus4", "7 suspended 4"}, {"5", "5"},
+    {"", "major"}, {"m", "minor"}, {"7", "7"}, {"M7", "major 7"}, {"m7", "minor 7"}, {"m11", "minor 11"},
+    {"6", "6"}, {"m6", "minor 6"}, {"add9", "add 9"}, {"madd9", "minor add 9"}, {"aug", "augmented"},
+    {"dim", "diminished"}, {"dim7", "diminished 7"}, {"m7b5", "half diminished"}, {"mM7", "minor major 7"},
+    {"sus2", "suspended 2"}, {"sus4", "suspended 4"}, {"7sus4", "7 suspended 4"}, {"5", "5"},
 };
 #define NCHORD_Q (sizeof CHORD_Q / sizeof CHORD_Q[0])
 
@@ -1057,43 +969,15 @@ static int sp_same(const char *a, const char *b)
         a++, b++;
     return *a == *b;
 }
-
-/* a value as it is said: Drift in minutes and seconds (the screen's "1:05", "45s"), the rest as shown */
-static void sp_value(int k)
+static void sp_knob(int view, int i)
 {
     char t[16];
-    knob_text(k, t);
-    if (k == P_DRIFT) {
-        uint32_t m = 0, s = 0, i;
-        for (i = 0; t[i] >= '0' && t[i] <= '9'; i++)
-            s = s * 10u + (uint32_t)(t[i] - '0');
-        if (t[i] == ':') {
-            m = s;
-            s = 0;
-            for (i++; t[i] >= '0' && t[i] <= '9'; i++)
-                s = s * 10u + (uint32_t)(t[i] - '0');
-        }
-        if (m) {
-            sp_int(m);
-            sp_cat(m == 1u ? " minute" : " minutes");
-            if (!s)
-                return;
-            sp_cat(" ");
-        }
-        sp_int(s);
-        sp_cat(s == 1u ? " second" : " seconds");
-        return;
-    }
-    sp_cat(t);
-}
-static void sp_knob(int view, int i)           /* "Swell 60": the name the page gives it, then its value */
-{
     sp_cat(KNOB_LABEL[view][i]);
     sp_cat(" ");
-    sp_value(VIEW_KNOB[view][i]);
+    knob_text(VIEW_KNOB[view][i], t);
+    sp_cat(t);
 }
-
-static void sp_chord_q(int root, const char *q)   /* "E minor 7" */
+static void sp_chord_q(int root, const char *q)
 {
     uint32_t i;
     sp_cat(EN_NOTE_NAME[root % 12]);
@@ -1105,7 +989,7 @@ static void sp_chord_q(int root, const char *q)   /* "E minor 7" */
         }
     sp_cat(q);
 }
-static void sp_chord(void)                     /* the chord in the middle of the garden */
+static void sp_chord(void)
 {
     char nm[16];
     const char *q = chord_now(nm), *r = EN_NOTE_NAME[en_chord_root % 12u];
@@ -1114,7 +998,6 @@ static void sp_chord(void)                     /* the chord in the middle of the
     sp_chord_q(en_chord_root % 12u, q);
 }
 
-/* the page: its name and its knobs; all: the header too (the piece, its key, the tempo, growing or resting) */
 static void sp_page(int all)
 {
     int i;
@@ -1128,19 +1011,17 @@ static void sp_page(int all)
     }
     if (!all)
         return;
-    sp_cat(". Piece ");
+    sp_cat(". Song ");
     sp_cat(piece_name(proj.piece));
-    sp_cat(", ");
-    sp_cat(EN_NOTE_NAME[proj.par[P_ROOT]]);
-    sp_cat(" ");
-    sp_cat(mode_name());
+    sp_cat(", key of ");
+    sp_cat(EN_NOTE_NAME[(int)en_key]);
     if (en_ext) {
         sp_cat(", tempo EXT");
-    } else if (ui.view != V_GARDEN) {          /* (the Garden's first knob says it) */
+    } else if (ui.view != V_SONG) {
         sp_cat(", tempo ");
         sp_int((uint32_t)proj.par[P_TEMPO]);
     }
-    sp_cat(sp_tp.playing ? ", growing" : ", resting");
+    sp_cat(sp_tp.playing ? ", playing" : ", stopped");
     if (ui.dirty)
         sp_cat(", not saved yet");
     if (ui.view == V_SETUP) {
@@ -1154,41 +1035,44 @@ static void sp_page(int all)
     }
 }
 
-/* the garden: the chord and how far to the next, the scale from the root up ("F and F sharp": one letter's
- * two notes joined, so they are heard as two), the pulse sitting out */
-static void sp_garden(void)
+static void sp_section(void)                   /* "Section Chorus, bar 3 of 8" */
 {
-    uint32_t ap = pool_abs();
-    int i, last = -1;
+    sp_cat("Section ");
+    sp_cat(en_sec_name(proj.piece, en_sec));
+    if (en_held)
+        sp_cat(", held");
+    sp_cat(", bar ");
+    sp_int((uint32_t)en_sec_bar + 1u);
+    sp_cat(" of ");
+    sp_int(en_sec_len);
+}
+static void sp_song(void)                      /* the section, the chord, what plays */
+{
+    static const char *const LN[4] = {"bass", "pad", "lead", "drums"};
+    static const uint8_t LM[4] = {L_BASS, L_PAD, L_LEAD, L_KICK | L_SNARE | L_HATS | L_OHAT | L_TOMS};
+    int i, any = 0;
     sp_n = 0;
     sp_buf[0] = 0;
-    sp_cat("Chord ");
+    sp_section();
+    sp_cat(". Chord ");
     sp_chord();
-    if (en_frozen) {
-        sp_cat(", frozen");
-    } else {
-        sp_cat(", next chord ");
-        sp_int((uint32_t)(fm_clampf(en_drift, 0.0f, 1.0f) * 100.0f + 0.5f));
-        sp_cat("% of the way");
-    }
-    sp_cat(". Scale");
-    for (i = 0; i < 12; i++) {
-        int pc = (proj.par[P_ROOT] + i) % 12;
-        if (ap >> pc & 1u) {
-            sp_cat(last < 0 ? " " : EN_NOTE_NAME[last][0] == EN_NOTE_NAME[pc][0] ? " and " : ", ");
-            sp_cat(EN_NOTE_NAME[pc]);
-            last = pc;
+    sp_cat(". Playing:");
+    for (i = 0; i < 4; i++)
+        if (en_layers & LM[i]) {
+            sp_cat(any ? ", " : " ");
+            sp_cat(LN[i]);
+            any = 1;
         }
-    }
-    if (en_pulse_rest && proj.par[P_PULSE])
-        sp_cat(". Pulse resting");
+    if (!any)
+        sp_cat(" nothing");
+    sp_cat(". Pattern ");
+    sp_cat(EN_PATTERN_NAME[proj.par[P_PATTERN]]);
 }
 
-/* a help card: its button, then its lines ("ENV button. THE PAD. LEVEL, SWELL, BRIGHT, COLOUR") */
 static void sp_line(const char *s)
 {
     char p = sp_n ? sp_buf[sp_n - 1] : 0;
-    if (*s == ' ')                             /* it goes on from the line before */
+    if (*s == ' ')
         s++;
     else if (p != ',' && p != ':')
         sp_cat(".");
@@ -1207,16 +1091,16 @@ static void sp_help(void)
         sp_line(l[k]);
 }
 
-static void sp_piece_text(void)                /* "PIECE Departures, C# Ionian, tempo 60" */
+static void sp_piece_text(void)                /* "SONG Heaven, after The Number One Song in Heaven, key of Ab, tempo 130" */
 {
     sp_n = 0;
     sp_buf[0] = 0;
-    sp_cat("PIECE ");
+    sp_cat("SONG ");
     sp_cat(piece_name(proj.piece));
-    sp_cat(", ");
+    sp_cat(", after ");
+    sp_cat(en_song_after(proj.piece));
+    sp_cat(", key of ");
     sp_cat(EN_NOTE_NAME[proj.par[P_ROOT]]);
-    sp_cat(" ");
-    sp_cat(mode_name());
     sp_cat(", tempo ");
     sp_int((uint32_t)proj.par[P_TEMPO]);
 }
@@ -1247,6 +1131,7 @@ static void sp_snap(void)
     sp.help = ui.help;
     sp.ext = en_ext;
     sp.chord = sp_chord_sig();
+    sp.sec = en_sec;
 }
 
 static void speak(void)
@@ -1258,7 +1143,7 @@ static void speak(void)
         sp_said = 0;
         return;
     }
-    if (!sp.started || where) {                       /* everything on the screen, in two */
+    if (!sp.started || where) {
         sp.started = 1;
         sp_snap();
         if (ui.help) {
@@ -1268,22 +1153,22 @@ static void speak(void)
         } else {
             sp_page(1);
             ann_say(sp_buf, 0, ANN_NOW);
-            sp_garden();
+            sp_song();
         }
         ann_say(sp_buf, 0, 0);
         sp_said = 0;
         return;
     }
-    if (sp_said) {                                    /* a button said what it did (and what it changed) */
+    if (sp_said) {
         sp_said = 0;
         sp_snap();
         return;
     }
-    if (en_playing != sp_tp.playing && now - sp_tp.play_t > 150u) {   /* MIDI start / stop */
+    if (en_playing != sp_tp.playing && now - sp_tp.play_t > 150u) {
         sp_tp.playing = en_playing;
-        ann_say(en_playing ? "GROWING" : "RESTING", 0, 0);
+        ann_say(en_playing ? "PLAYING" : "STOPPED", 0, 0);
     }
-    if (en_ext != sp.ext) {                           /* a MIDI clock arrived, or stopped */
+    if (en_ext != sp.ext) {
         sp.ext = en_ext;
         sp_n = 0;
         sp_cat("Tempo ");
@@ -1293,7 +1178,7 @@ static void speak(void)
             sp_int((uint32_t)proj.par[P_TEMPO]);
         ann_say(sp_buf, 0, 0);
     }
-    if (ui.help != sp.help) {                         /* a help card: at once */
+    if (ui.help != sp.help) {
         sp.help = ui.help;
         if (ui.help) {
             sp_help();
@@ -1301,13 +1186,13 @@ static void speak(void)
             return;
         }
     }
-    if (ui.view != sp.view) {                         /* a new page: said when it settles */
+    if (ui.view != sp.view) {
         sp_snap();
         sp_page(0);
         ann_later(sp_buf, ANN_NOW, 200u, now);
         return;
     }
-    for (i = 0; i < 4; i++) {                         /* a knob turning */
+    for (i = 0; i < 4; i++) {
         int v = knob_get(VIEW_KNOB[ui.view][i]);
         if (v != sp.val[i]) {
             sp.val[i] = (int16_t)v;
@@ -1320,8 +1205,15 @@ static void speak(void)
         sp_knob(ui.view, changed);
         ann_later(sp_buf, ANN_NOW, 120u, now);
     }
+    if (en_sec != sp.sec) {                           /* a new section: queued */
+        sp.sec = en_sec;
+        sp_n = 0;
+        sp_cat("Section ");
+        sp_cat(en_sec_name(proj.piece, en_sec));
+        ann_say(sp_buf, 0, 0);
+    }
     c = sp_chord_sig();
-    if (c != sp.chord) {                              /* the chord moved: queued, after what is being said */
+    if (c != sp.chord) {
         sp.chord = c;
         sp_n = 0;
         sp_cat("Chord ");
@@ -1331,19 +1223,16 @@ static void speak(void)
 }
 
 #ifdef PLAT_HOST
-/* every page, knob value, help card, chord and message as a screen reader gets them (the "speakdump"
- * command): KIND <tab> the text sent (fm1-reader/tools/audit.mjs puts it in words with web/words/ and checks it) */
 static void sp_print(const char *kind, const char *t) { printf("%s\t%s\n", kind, t); }
 static void speak_dump(void)
 {
     static const char *const MSG[][2] = {{"UPDATE MODE IN", "3.."}, {"UPDATE MODE", "CANCELLED"},
-                                         {"NEXT CHORD", "ON THE BAR"}, {"NEXT CHORD", 0}, {"RESTING", 0},
-                                         {"GROWING", 0}, {"FREEZE", "ON"}, {"FREEZE", "OFF"}, {"SAVED", 0}};
-    static const char *const WARN[][2] = {{"THE ROOT STAYS", "(SETUP)"}, {"3 NOTES", "AT LEAST"},
-                                          {"NOT SAVED", "FLASH ERROR"}};
+                                         {"NEXT SECTION", "ON THE BAR"}, {"NEXT SECTION", 0}, {"STOPPED", 0},
+                                         {"PLAYING", 0}, {"HOLD", "ON"}, {"HOLD", "OFF"}, {"SAVED", 0}};
+    static const char *const WARN[][2] = {{"NOT SAVED", "FLASH ERROR"}};
     project_t keep = proj;
     uint8_t keep_view = ui.view, keep_help = ui.help, keep_dirty = ui.dirty, keep_play = sp_tp.playing;
-    uint8_t keep_ext = en_ext, keep_frozen = en_frozen, keep_rest = en_pulse_rest;
+    uint8_t keep_ext = en_ext;
     int v, i, x, lo, hi;
     char t[48];
     for (v = 0; v < NVIEWS; v++) {
@@ -1365,26 +1254,20 @@ static void speak_dump(void)
             proj = keep;
         }
     }
-    for (x = 0; x < 8; x++) {                         /* WHERE: growing, resting, unsaved, a clock, frozen, custom */
+    for (x = 0; x < 4; x++) {
         ui.view = (uint8_t)(x * 3 % NVIEWS);
         sp_tp.playing = (uint8_t)(x & 1);
         ui.dirty = (uint8_t)(x >> 1 & 1);
         en_ext = (uint8_t)(x == 3);
-        en_frozen = (uint8_t)(x == 5);
-        en_pulse_rest = (uint8_t)(x == 2);
-        proj.pool = x == 6 ? 0xFFFu : x == 7 ? 0x91u : keep.pool;
-        proj.par[P_ROOT] = (int16_t)(x * 5 % 12);
         sp_page(1);
         sp_print("WHERE", sp_buf);
-        sp_garden();
+        sp_song();
         sp_print("WHERE", sp_buf);
     }
     proj = keep;
     ui.dirty = keep_dirty;
     sp_tp.playing = keep_play;
     en_ext = keep_ext;
-    en_frozen = keep_frozen;
-    en_pulse_rest = keep_rest;
     ui.view = keep_view;
     for (i = 0; i < NB; i++) {
         const char *l[HELP_LINES];
@@ -1411,38 +1294,36 @@ static void speak_dump(void)
         sp_print("WARN", t);
     }
     for (x = 0; x < 12; x++) {
-        msg_text("ADDED", EN_NOTE_NAME[x], t);
-        sp_print("MSG", t);
-        msg_text("REMOVED", EN_NOTE_NAME[x], t);
+        msg_text("KEY", EN_NOTE_NAME[x], t);
         sp_print("MSG", t);
     }
-    for (x = 0; x < EN_NMODES; x++) {
-        msg_text("MODE", EN_MODE_NAME[x], t);
+    for (x = 0; x < EN_NPATTERNS; x++) {
+        msg_text("PATTERN", EN_PATTERN_NAME[x], t);
         sp_print("MSG", t);
     }
-    for (x = -2; x <= 2; x++) {
+    for (x = -1; x <= 1; x++) {
         char o[8];
         en_param_text(P_BOCT, x, o);
-        msg_text("BELL OCTAVE", o, t);
-        sp_print("MSG", t);
-    }
-    for (x = 30; x <= 120; x += 45) {
-        char o[8];
-        itoa_u((uint32_t)x, o);
-        msg_text("TEMPO", o, t);
+        msg_text("BASS OCTAVE", o, t);
         sp_print("MSG", t);
     }
     for (x = 0; x < NPIECES; x++) {
+        int s;
         project_piece(x);
         sp_piece_text();
         sp_print("MSG", sp_buf);
         msg_text("RESET", piece_name(x), t);
         sp_print("MSG", t);
+        for (s = 0; s < en_song_nsec(x); s++) {
+            sp_n = 0;
+            sp_cat("Section ");
+            sp_cat(en_sec_name(x, s));
+            sp_print("MSG", sp_buf);
+        }
     }
     proj = keep;
     sp_print("MSG", "Tempo EXT");
-    sp_print("MSG", "Tempo 72");
-    for (x = 0; x <= 4; x++)                          /* the battery, at the end of WHERE's first part */
+    for (x = 0; x <= 4; x++)
         sp_print("WHERE", batt_words(x));
 }
 #endif
@@ -1453,7 +1334,7 @@ void ui_init(void)
     ui.touched = -1;
     lcd_fill(0, 0, 240, 240, K_BG);
     if (!en_playing)
-        en_play(1);                              /* it grows from the start */
+        en_play(1);                              /* it plays from the start */
     sp_tp.playing = 1;
     sp_tp.play_t = plat_ms();
 }

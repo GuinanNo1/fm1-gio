@@ -1,18 +1,18 @@
 #!/usr/bin/env python3
 # SPDX-License-Identifier: MPL-2.0
 # Copyright (C) 2026 Charles Vestal
-"""Make the AMB-1 site for GitHub Pages (https://charlesvestal.github.io/fm1-amb/):
+"""Make the MOR-1 site for GitHub Pages (https://YOUR-NAME.github.io/fm1-mor/):
 
-  index.html                  what AMB-1 is, and the ways in: try, install, manual, download, source
+  index.html                  what MOR-1 is, and the ways in: try, install, manual, download, source
   img/                        screenshots (docs/img)
-  emu/                        AMB-1 in the browser (app/build/emu, from ./build.sh --web)
+  emu/                        MOR-1 in the browser (app/build/emu, from ./build.sh --web)
   words/                      the screen reader's words files (app/web/words, from app/words.tsv)
   install/index.html          fm1-base's web installer (base/web/installer.html, with fm1pkg.js, fm1ota.js and
                               the package's metadata inlined; Chrome or Edge, Web MIDI)
   manual/index.html, img/     the manual (fm1-base's tools/manual_html.py, from docs/MANUAL.md)
-  firmware/amb-VERSION.fwsc   the package the installer writes; also the download
+  firmware/mor-VERSION.fwsc   the package the installer writes; also the download
 
-  tools/make_pages.py app/build/amb-1.0.fwsc 1.0 OUT_DIR
+  tools/make_pages.py app/build/mor-1.0.fwsc 1.0 OUT_DIR
 
 The package must be a release build (./build.sh --release X.Y): its identity, FM-1_7XXYYZZ, is what
 the installer checks the download against and what the FM-1 reports after the install."""
@@ -30,15 +30,15 @@ BASE = SRC / "base"
 sys.path.insert(0, str(BASE / "tools"))
 from make_site import MBOOT_VERSION, product_of, read_conf, strip_module  # noqa: E402  (fm1-base's: the package format)
 
-REPO = "https://github.com/charlesvestal/fm1-amb"
+REPO = "https://github.com/YOUR-NAME/fm1-mor"
 
 LANDING = """<!doctype html>
 <html lang="en">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>AMB-1 · An ambient garden for the FM-1</title>
-<meta name="description" content="A generative ambient machine for the M-VAVE FM-1, inspired by Brian Eno's Music for Airports: breathing voices, bells on tape loops of unequal length, a slow tide.">
+<title>MOR-1 · Electronic disco for the FM-1</title>
+<meta name="description" content="A generative electronic disco machine for the M-VAVE FM-1, after Giorgio Moroder's Munich sound.">
 <meta name="theme-color" content="#fdf9e4">
 <style>
 /* the colours of Ambient 1: Music for Airports (1978), as the manual: the page a shade lighter than the
@@ -75,16 +75,16 @@ code { font-size: .9em; }
 </head>
 <body>
 <main>
-<h1>AMB-1</h1>
-<p class="sub">An ambient garden for the M-VAVE FM-1</p>
+<h1>MOR-1</h1>
+<p class="sub">A generative electronic disco machine for the M-VAVE FM-1</p>
 <p class="lede">A generative ambient machine, inspired by Brian Eno's <i>Music for Airports</i>. It plays itself from the moment it's switched on. You don't perform it, you tend it: pick a
 piece and a scale, take notes out, put them back, and let it grow.</p>
 <div class="shots">
-  <img src="img/screen-garden.png" width="240" height="240" alt="AMB-1's screen: the scale as a ring with the chord Dm7, the four bell loops around it, the pulse rings on the right">
-  <img src="img/screen-voices.png" width="240" height="240" alt="AMB-1's screen: the piece Voices, F Aeolian, the chord Fm7">
-  <img src="img/screen-frozen.png" width="240" height="240" alt="AMB-1's screen: frozen, the chord held">
+  <img src="img/screen-garden.png" width="240" height="240" alt="MOR-1's screen: the scale as a ring with the chord Dm7, the four bell loops around it, the pulse rings on the right">
+  <img src="img/screen-voices.png" width="240" height="240" alt="MOR-1's screen: the piece Voices, F Aeolian, the chord Fm7">
+  <img src="img/screen-frozen.png" width="240" height="240" alt="MOR-1's screen: frozen, the chord held">
 </div>
-<nav class="ways" aria-label="Get AMB-1">
+<nav class="ways" aria-label="Get MOR-1">
   <a href="emu/"><strong>Try it in the browser</strong><span>The same code the FM-1 runs, with sound. Mouse, touch or keyboard; no FM-1 needed.</span></a>
   <a href="install/"><strong>Install <em class="v">v__VERSION__</em></strong><span>From Chrome or Edge, with the FM-1 connected by USB. Nothing to install on the computer.</span></a>
   <a href="manual/"><strong>Manual</strong><span>Getting started in a few minutes, then everything else.</span></a>
@@ -104,7 +104,7 @@ piece and a scale, take notes out, put them back, and let it grow.</p>
 put it back. A slow tide between sparse and full, and rests now and then, keep it moving for hours.</p>
 <p class="small">To go back to the official firmware, use the installer's "Back to the stock firmware", or
 M-VAVE's updater, M-UPGRADE, from <a href="https://www.m-vave.com/download">m-vave.com/download</a>.
-M-VAVE and FM-1 are trademarks of their owners. AMB-1 is not affiliated with M-VAVE or Brian Eno.</p>
+M-VAVE and FM-1 are trademarks of their owners. MOR-1 is not affiliated with M-VAVE or Brian Eno.</p>
 </main>
 </body>
 </html>
@@ -119,7 +119,7 @@ def main(pkg, version, out):
         raise SystemExit(f"{pkg}: identity {product!r}: make a release build (./build.sh --release X.Y)")
     if b"FELUCCA-LOADER-1" not in raw:
         raise SystemExit(f"{pkg}: no update loader in it")
-    name = f"amb-{re.sub(r'[^A-Za-z0-9.-]', '-', version)}.fwsc"
+    name = f"mor-{re.sub(r'[^A-Za-z0-9.-]', '-', version)}.fwsc"
     if out.exists():
         shutil.rmtree(out)
     for d in ("install", "manual", "firmware"):
@@ -130,7 +130,7 @@ def main(pkg, version, out):
     page = (BASE / "web" / "installer.html").read_text(encoding="utf-8")
     lib = strip_module((BASE / "web" / "fm1pkg.js").read_text(encoding="utf-8")) + "\n" + \
         strip_module((BASE / "web" / "fm1ota.js").read_text(encoding="utf-8"))
-    # m-bootloader (MIT), which the installer offers to install after AMB-1, with its licence (as fm1-base's make_site)
+    # m-bootloader (MIT), which the installer offers to install after MOR-1, with its licence (as fm1-base's make_site)
     boot = BASE / "web" / "m-bootloader" / f"fm1-uboot-{MBOOT_VERSION}.fwsc"
     boot_name = f"m-bootloader-{MBOOT_VERSION}.fwsc"
     shutil.copy(boot, out / "firmware" / boot_name)
@@ -142,16 +142,16 @@ def main(pkg, version, out):
     for mark in ("/*LIB*/", "/*META*/", "/*APP*/"):
         if page.count(mark) != 1:
             raise SystemExit(f"base/web/installer.html must contain {mark} once")
-    for key, val in (("NAME", "AMB-1"), ("REPO", REPO), ("REPO_SHORT", re.sub(r"^https?://", "", REPO)),
+    for key, val in (("NAME", "MOR-1"), ("REPO", REPO), ("REPO_SHORT", re.sub(r"^https?://", "", REPO)),
                      ("LICENSE", conf.get("licence", "MPL-2.0")), ("CREDITS", " " + conf.get("credits", ""))):
         page = page.replace("{{" + key + "}}", val)
-    # the firmware's own steps around an install (fm1.toml install_app; base/web/installer.html APP): AMB-1 has none
+    # the firmware's own steps around an install (fm1.toml install_app; base/web/installer.html APP): MOR-1 has none
     app_js = (SRC / "app" / conf["install_app"]).read_text(encoding="utf-8") if conf.get("install_app") else "null"
     (out / "install" / "index.html").write_text(page.replace("/*LIB*/", lib).replace("/*META*/", meta)
                                                 .replace("/*APP*/", app_js), encoding="utf-8")
     # the manual (a complete page; its images beside it)
     subprocess.run([sys.executable, str(BASE / "tools" / "manual_html.py"), str(SRC / "docs" / "MANUAL.md"),
-                    str(out / "manual" / "index.html"), "--name", "AMB-1", "--repo", REPO,
+                    str(out / "manual" / "index.html"), "--name", "MOR-1", "--repo", REPO,
                     "--tagline", conf.get("tagline", "")], check=True, capture_output=True)
     shutil.copytree(SRC / "docs" / "img", out / "manual" / "img")
     # the landing page and its screenshots

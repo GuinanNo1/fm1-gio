@@ -1,0 +1,15 @@
+# the battery in the header: nothing until read, then its bars; a bolt on USB power
+wait 300
+battery -1
+wait 200
+shot batt_none.png
+battery 1
+wait 200
+expect battery 1
+shot batt_low.png
+battery 4
+wait 200
+shot batt_usb.png
+listen
+where
+said On USB power

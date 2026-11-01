@@ -1,0 +1,48 @@
+# a first look and listen: it plays from power-on, the form moves, the pages
+wav first.wav
+wait 200
+expect playing 1
+expect piece 0
+expect section 0
+expect key 0
+# Feel at 126: a bar is 1.9 s; the intro's 8 bars, then the verse
+wait 16500
+expect section 1
+expect sixteenths >130
+shot verse.png
+wait 30000
+expect section 2
+shot chorus.png
+wavstop
+expect peak_db_max -0.5
+expect peak_db_min -30
+tap ENV
+wait 100
+shot bass.png
+tap ARP
+wait 100
+shot lead.png
+tap LFO
+wait 100
+shot pad.png
+tap SEQ
+wait 100
+shot drums.png
+tap FX
+wait 100
+shot space.png
+tap GLO
+wait 100
+shot setup.png
+# PLAY stops; the tails ring out; PLAY again starts the song from the top
+tap PLAY
+wait 200
+expect playing 0
+wait 8000
+peakreset
+wait 500
+expect peak_db_max -60
+tap PLAY
+wait 200
+expect playing 1
+expect section 0

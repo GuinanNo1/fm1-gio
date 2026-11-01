@@ -1,7 +1,7 @@
 /* SPDX-License-Identifier: MPL-2.0
- * Copyright (C) 2026 Charles Vestal */
-/* AMB-1 on fm1-base: the app's unity build (compiled into fm1-base's, after the platform) and the glue between
- * fm1-base's contract (app.h) and AMB-1's parts: the project (project.c), the UI (ui.c) and the engine (dsp/amb.c,
+ * Copyright (C) 2026 Charles Vestal, Ian Guinan */
+/* MOR-1 on fm1-base: the app's unity build (compiled into fm1-base's, after the platform) and the glue between
+ * fm1-base's contract (app.h) and MOR-1's parts: the project (project.c), the UI (ui.c) and the engine (dsp/mor.c,
  * its own -O2 unit). */
 #include "project.c"
 #include "ui.c"

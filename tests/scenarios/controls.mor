@@ -1,0 +1,56 @@
+# the panel: the keys move the key, EDIT the next section, REC holds, ALGORITHM the pattern, OCT the bass,
+# HOME + SELECT the tempo (110 .. 130)
+wait 500
+tapkey 4
+wait 100
+expect par24 9
+expect key 9
+tapkey 2
+wait 100
+expect key 7
+# EDIT: the next section on the next bar
+expect section 0
+tap EDIT
+wait 2500
+expect section 1
+# REC: the section holds; the verse's 16 bars come and go, it stays
+tap REC
+wait 100
+expect held 1
+wait 40000
+expect section 1
+shot hold.png
+tap REC
+wait 100
+expect held 0
+# ALGORITHM: the pattern
+turn ALGO 4
+expect par27 4
+wait 2000
+shot gallop.png
+turn ALGO -4
+expect par27 0
+# OCT: the bass's octave, from -1 to +1
+tap OCT+
+expect par28 1
+tap OCT+
+expect par28 1
+tap OCT-
+tap OCT-
+expect par28 -1
+tap OCT+
+# the tempo, with HOME held: never past 130
+press HOME
+spin SELECT 10
+release HOME
+expect par0 130
+press HOME
+spin SELECT -40
+release HOME
+expect par0 110
+# MIDI in: a note on channel 1 moves the key; a clock drives the grid
+midi 90 3E 64
+wait 100
+expect key 2
+clock 96
+expect ext 1

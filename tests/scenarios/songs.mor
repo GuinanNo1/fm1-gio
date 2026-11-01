@@ -1,0 +1,45 @@
+# the songs: PRESETS picks one, each remembers its settings, SAVE held puts one back to its recipe
+wait 500
+expect piece 0
+expect par0 126
+# Feel's bass down (the Bass page: ENV)
+tap ENV
+spin K1 -10
+expect par4 75
+# Click: 113, A minor
+turn PRESET 1
+expect piece 1
+expect par0 113
+expect par24 9
+wait 300
+expect key 9
+expect section 0
+wait 6000
+shot click.png
+# Heaven: 130, Ab, from its slow first half
+turn PRESET 2
+expect piece 3
+expect par0 130
+expect par24 8
+wait 3000
+expect key 8
+shot heaven.png
+# Lover: the robot
+turn PRESET 4
+expect piece 7
+expect par9 2
+# Express: 128, D minor
+turn PRESET 1
+expect piece 8
+expect par0 128
+expect par24 2
+# round to Feel: as it was left
+turn PRESET 1
+expect piece 0
+expect par4 75
+# SAVE held: Feel's recipe again
+press SAVE
+wait 1800
+release SAVE
+expect par4 85
+expect piece 0

@@ -1,6 +1,6 @@
-# Building AMB-1
+# Building MOR-1
 
-AMB-1 is an app on [fm1-base](https://github.com/charlesvestal/fm1-base) (`base/`, a git submodule, with
+MOR-1 is an app on [fm1-base](https://github.com/charlesvestal/fm1-base) (`base/`, a git submodule, with
 felucca-bsp inside it). Clone with `--recursive`, or after cloning:
 
 ```
@@ -12,9 +12,9 @@ makes, in `app/build/`:
 
 | File | What |
 | --- | --- |
-| `amb.bin` | the firmware app |
+| `mor.bin` | the firmware app |
 | `loader/ota.bin` | the update loader (felucca-bsp's) |
-| `amb.fwsc` | the installable package (app + loader) |
+| `mor.fwsc` | the installable package (app + loader) |
 
 ## Prerequisites (macOS)
 
@@ -38,9 +38,9 @@ On Linux x86-64 the toolchain runs natively and no container is needed.
 ## Build
 
 ```
-./build.sh                    # app/build/amb.fwsc
-./build.sh --release X.Y      # app/build/amb-X.Y.fwsc, identity FM-1_7XXYYZZ
-./build.sh --host             # the simulator: app/build/host/amb_host
+./build.sh                    # app/build/mor.fwsc
+./build.sh --release X.Y      # app/build/mor-X.Y.fwsc, identity FM-1_4XXYYZZ
+./build.sh --host             # the simulator: app/build/host/mor_host
 ./build.sh --web              # the browser emulator: app/build/emu/
 web/app/build.sh              # the web app (the engine alone, for phone and desktop): app/build/app/
 ```
@@ -52,24 +52,24 @@ stays in felucca-bsp, and that no double-precision code is linked.
 ## Tests
 
 ```
-sh tests/run_tests.sh             # AMB-1's
+sh tests/run_tests.sh             # MOR-1's
 sh base/tests/run_tests.sh        # fm1-base's own
 ```
 
-AMB-1's: the instrument (`tests/host/amb_test.c`); the update path against `app/build/amb.fwsc`; the browser
-builds in Node; and the whole app in the simulator (`tests/scenarios/*.amb`: the pieces, the scale, Motion, the
-help cards, the screen reader, an AMB-1 0.9 project carried over), with audio and screenshots in
+MOR-1's: the instrument (`tests/host/mor_test.c`); the update path against `app/build/mor.fwsc`; the browser
+build in Node; and the whole app in the simulator (`tests/scenarios/*.mor`: the songs, the form, the panel, the
+screen reader, persistence), with audio and screenshots in
 `app/build/scenarios/`.
 
-`app/build/host/amb_host SCRIPT OUTDIR` runs one script. The commands are listed at the top of
-`base/host/plat_host.c`, and AMB-1's own checks and commands at the top of `app/host.c`.
+`app/build/host/mor_host SCRIPT OUTDIR` runs one script. The commands are listed at the top of
+`base/host/plat_host.c`, and MOR-1's own checks and commands at the top of `app/host.c`.
 
 ## Install
 
 From the command line (needs `pip3 install mido python-rtmidi`):
 
 ```
-python3 base/tools/fm1_install.py app/build/amb.fwsc
+python3 base/tools/fm1_install.py app/build/mor.fwsc
 ```
 
 Installing firmware is at your own risk. Hold OCT− and OCT+ for 5 seconds for the update mode. If the FM-1 no
@@ -84,10 +84,10 @@ A release is built on GitHub from its tag, so anyone can check that the package 
 The builder checks out the tagged commit, installs JieLi's Linux toolchain and the AC79 SDK at its fixed tag, runs
 `./build.sh --release X.Y` (with fm1-base and felucca-bsp at the commits this one links) and `tests/run_tests.sh` (a
 failing test stops the release; the browser builds' tests need Emscripten, which the builder does not have, and are
-skipped there), then signs build provenance for `amb-X.Y.fwsc` and `amb-X.Y-app.bin`. The Firmware Hub shows such
+skipped there), then signs build provenance for `mor-X.Y.fwsc` and `mor-X.Y-app.bin`. The Firmware Hub shows such
 packages as built from source.
 
-1. Write the notes first, as a draft: `gh release create vX.Y --draft --title "AMB-1 X.Y" --notes-file NOTES.md`
+1. Write the notes first, as a draft: `gh release create vX.Y --draft --title "MOR-1 X.Y" --notes-file NOTES.md`
    (the workflow keeps a draft's notes; without one it makes a draft from the commits).
 2. Push the tag: `git tag vX.Y && git push origin vX.Y`. The workflow builds, tests, attests, checks the SHA-256 sums
    and the signatures against the builder, the tag and the commit, then publishes the draft. A tag with a suffix
@@ -95,13 +95,13 @@ packages as built from source.
    on a branch (Actions, Run workflow) builds and attests a development package, in the run's `packages` artifact.
 3. The site from that package: `gh release download vX.Y --pattern '*.fwsc' --dir app/build --clobber`, then
    `tools/publish_pages.sh X.Y`: it builds the browser emulator and the site (landing page, emulator, fm1-base's web
-   installer, manual, the words files, the firmware) with `tools/make_pages.py` from `app/build/amb-X.Y.fwsc`, and
-   pushes it to the `gh-pages` branch, which GitHub Pages serves at <https://charlesvestal.github.io/fm1-amb/>.
+   installer, manual, the words files, the firmware) with `tools/make_pages.py` from `app/build/mor-X.Y.fwsc`, and
+   pushes it to the `gh-pages` branch, which GitHub Pages serves at <https://YOUR-NAME.github.io/fm1-mor/>.
 
 To check a downloaded package yourself (GitHub CLI, signed in):
 
 ```sh
-tag=vX.Y repo=charlesvestal/fm1-amb
+tag=vX.Y repo=YOUR-NAME/fm1-mor
 gh release download "$tag" --repo "$repo" --dir build/verify --pattern '*.fwsc'
 git fetch origin "refs/tags/$tag:refs/tags/$tag"
 gh attestation verify "build/verify/amb-${tag#v}.fwsc" --repo "$repo" \
@@ -112,5 +112,5 @@ gh attestation verify "build/verify/amb-${tag#v}.fwsc" --repo "$repo" \
 The same checks the `-app.bin`. `SHA256SUMS` comes with the downloads; a checksum alone proves nothing about where a
 package was built.
 
-A local release build (`./build.sh --release X.Y`, package `app/build/amb-X.Y.fwsc`; its identity FM-1_7XXYYZZ is
+A local release build (`./build.sh --release X.Y`, package `app/build/mor-X.Y.fwsc`; its identity FM-1_4XXYYZZ is
 what the installer checks) is still how to try one on the FM-1 before tagging.

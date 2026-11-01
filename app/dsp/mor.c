@@ -1,0 +1,1992 @@
+/* SPDX-License-Identifier: MPL-2.0
+ * Copyright (C) 2026 Charles Vestal, Ian Guinan */
+/* The instrument (mor.h). One compilation unit, -O2. From AMB-1's engine: the plate, the tape echo, voice leading,
+ * the command queue and the clock; the rest is MOR-1's. */
+#include "mor.h"
+#include "fastmath.h"
+
+#if defined EN_HOST || defined PLAT_HOST
+#define EN_POOL
+#else
+#define EN_POOL __attribute__((section(".pool")))
+#endif
+#define BARRIER() __asm__ volatile("" ::: "memory")
+
+const char *const EN_NOTE_NAME[12] = {"C", "C#", "D", "Eb", "E", "F", "F#", "G", "Ab", "A", "Bb", "B"};
+const char *const EN_PATTERN_NAME[EN_NPATTERNS] = {"Song", "Pump", "Pump 16", "Arpeggio", "Gallop", "Octaves", "Slow"};
+enum { A_SONG, A_PUMP, A_PUMP16, A_ARP, A_GALLOP, A_OCT, A_SLOW };
+
+static const en_param_t PARAMS[P_NPARAMS] = {
+    {"Tempo", 110, 130, 122}, {"Evolve", 0, 100, 40}, {"Motion", 0, 100, 50}, {"Arrange", 0, 100, 40},
+    {"Bass", 0, 100, 80},     {"Cutoff", 0, 100, 45}, {"Emphasis", 0, 100, 45}, {"Decay", 0, 100, 35},
+    {"Lead", 0, 100, 50},     {"Voice", 0, 2, 0},     {"Busy", 0, 100, 45},   {"Glide", 0, 100, 30},
+    {"Pad", 0, 100, 55},      {"Colour", 0, 2, 0},    {"Bright", 0, 100, 50}, {"Phaser", 0, 100, 40},
+    {"Drums", 0, 100, 70},    {"Fills", 0, 100, 40},  {"Hats", 0, 100, 55},   {"Swing", 0, 100, 0},
+    {"Echo", 0, 100, 45},     {"Echo time", 0, 5, 0}, {"Feedback", 0, 100, 35}, {"Reverb", 0, 100, 40},
+    {"Key", 0, 11, 0},        {"Tune", -50, 50, 0},   {"MIDI out", 0, 1, 1},
+    {"Pattern", 0, EN_NPATTERNS - 1, 0}, {"Bass oct", -1, 1, 0}, {"Lead oct", -1, 1, 0},
+};
+const en_param_t *en_param_info(int i) { return (i >= 0 && i < P_NPARAMS) ? &PARAMS[i] : &PARAMS[0]; }
+
+static const char *const ETIME_NAME[6] = {"1/16", "1/8", "1/8.", "1/4", "1/4.", "1/2"};
+static const float ETIME_BEATS[6] = {0.25f, 0.5f, 0.75f, 1.0f, 1.5f, 2.0f};
+static const char *const LVOICE_NAME[3] = {"Saw", "Square", "Robot"};
+static const char *const PCOLOUR_NAME[3] = {"Strings", "Choir", "Saws"};
+
+static char *itoa_s(int v, char *b)
+{
+    char t[8];
+    int n = 0, neg = v < 0;
+    if (neg)
+        v = -v;
+    do {
+        t[n++] = (char)('0' + v % 10);
+        v /= 10;
+    } while (v && n < 6);
+    if (neg)
+        *b++ = '-';
+    while (n)
+        *b++ = t[--n];
+    *b = 0;
+    return b;
+}
+
+void en_param_text(int i, int v, char *b)
+{
+    static const char *const ONOFF[2] = {"Off", "On"};
+    const char *s = 0;
+    if (i == P_ETIME)
+        s = ETIME_NAME[(unsigned)v < 6u ? v : 0];
+    else if (i == P_MIDI)
+        s = ONOFF[v ? 1 : 0];
+    else if (i == P_LVOICE)
+        s = LVOICE_NAME[(unsigned)v < 3u ? v : 0];
+    else if (i == P_PCOLOUR)
+        s = PCOLOUR_NAME[(unsigned)v < 3u ? v : 0];
+    else if (i == P_PATTERN)
+        s = EN_PATTERN_NAME[(unsigned)v < EN_NPATTERNS ? v : 0];
+    else if (i == P_ROOT)
+        s = EN_NOTE_NAME[(unsigned)v < 12u ? v : 0];
+    if (s) {
+        int k = 0;
+        while (s[k] && k < 9) {
+            b[k] = s[k];
+            k++;
+        }
+        b[k] = 0;
+        return;
+    }
+    if (i == P_SWING) {                          /* as a swing percentage: 50% (straight) .. 75% */
+        b = itoa_s(50 + v / 4, b);
+        *b++ = '%';
+        *b = 0;
+        return;
+    }
+    if ((i == P_TUNE || i == P_BOCT || i == P_LOCT) && v > 0)
+        *b++ = '+';
+    itoa_s(v, b);
+}
+
+/* ------------------------------------------------------------- chords --- */
+enum { Q_MAJ, Q_MIN, Q_7, Q_M7, Q_MIN7, Q_MIN11, Q_SUS4, Q_POW, Q_N };
+static const int8_t QT[Q_N][4] = {{0, 4, 7, -1}, {0, 3, 7, -1}, {0, 4, 7, 10}, {0, 4, 7, 11},
+                                  {0, 3, 7, 10}, {0, 3, 10, 5}, {0, 5, 7, -1}, {0, 7, -1, -1}};
+
+int en_chord_tones(int root, int q, int *pcs)
+{
+    int n = 0, i;
+    q = (unsigned)q < Q_N ? q : 0;
+    for (i = 0; i < 4; i++)
+        if (QT[q][i] >= 0)
+            pcs[n++] = ((root + QT[q][i]) % 12 + 12) % 12;
+    return n;
+}
+
+static int nearest(int from, int pc, int lo, int hi)    /* the note of class pc nearest from, in lo..hi */
+{
+    int n = from + ((pc - from) % 12 + 12) % 12;          /* at or above */
+    if (n - from > 6)
+        n -= 12;
+    while (n < lo)
+        n += 12;
+    while (n > hi)
+        n -= 12;
+    return n;
+}
+
+void en_voice_lead(const int *from, const int *pcs, int nt, int *to, int lo, int hi)
+{
+    static const uint8_t PERM[24][4] = {
+        {0, 1, 2, 3}, {0, 1, 3, 2}, {0, 2, 1, 3}, {0, 2, 3, 1}, {0, 3, 1, 2}, {0, 3, 2, 1},
+        {1, 0, 2, 3}, {1, 0, 3, 2}, {1, 2, 0, 3}, {1, 2, 3, 0}, {1, 3, 0, 2}, {1, 3, 2, 0},
+        {2, 0, 1, 3}, {2, 0, 3, 1}, {2, 1, 0, 3}, {2, 1, 3, 0}, {2, 3, 0, 1}, {2, 3, 1, 0},
+        {3, 0, 1, 2}, {3, 0, 2, 1}, {3, 1, 0, 2}, {3, 1, 2, 0}, {3, 2, 0, 1}, {3, 2, 1, 0}};
+    int t[4], p, v, best = 1 << 30;
+    for (v = 0; v < 4; v++)
+        t[v] = pcs[v < nt ? v : v - nt];                   /* fewer tones: the first ones doubled */
+    for (p = 0; p < 24; p++) {
+        int c = 0, n[4], a, b;
+        for (v = 0; v < 4; v++) {
+            n[v] = nearest(from[v], t[PERM[p][v]], lo, hi);
+            c += n[v] > from[v] ? n[v] - from[v] : from[v] - n[v];
+        }
+        for (a = 0; a < 4; a++)                            /* no two voices on one note */
+            for (b = a + 1; b < 4; b++)
+                if (n[a] == n[b])
+                    c += 40;
+        if (c < best) {
+            best = c;
+            for (v = 0; v < 4; v++)
+                to[v] = n[v];
+        }
+    }
+}
+
+const char *en_chord_name(const int *pcs, int n, char *buf)
+{
+    uint32_t iv = 0;
+    int i, k = 0, third, fifth;
+    const char *q = "", *r = EN_NOTE_NAME[pcs[0] % 12];
+    for (i = 1; i < n; i++)
+        iv |= 1u << ((pcs[i] - pcs[0] + 12) % 12);
+    third = iv >> 4 & 1u ? 4 : iv >> 3 & 1u ? 3 : 0;
+    fifth = iv >> 7 & 1u ? 7 : iv >> 6 & 1u ? 6 : iv >> 8 & 1u ? 8 : 0;
+    if (third == 4) {
+        q = fifth == 8 ? "aug" : iv >> 11 & 1u ? "M7" : iv >> 10 & 1u ? "7" : iv >> 9 & 1u ? "6"
+            : iv >> 2 & 1u ? "add9" : "";
+    } else if (third == 3) {
+        if (fifth == 6)
+            q = iv >> 10 & 1u ? "m7b5" : iv >> 9 & 1u ? "dim7" : "dim";
+        else if (!fifth && (iv >> 5 & 1u) && (iv >> 10 & 1u))
+            q = "m11";
+        else
+            q = iv >> 10 & 1u ? "m7" : iv >> 11 & 1u ? "mM7" : iv >> 9 & 1u ? "m6" : iv >> 2 & 1u ? "madd9" : "m";
+    } else {
+        q = iv >> 5 & 1u ? (iv >> 10 & 1u ? "7sus4" : "sus4") : iv >> 2 & 1u ? "sus2" : "5";
+    }
+    while (*r)
+        buf[k++] = *r++;
+    while (*q)
+        buf[k++] = *q++;
+    buf[k] = 0;
+    return buf;
+}
+
+/* --------------------------------------------------------------- songs --- */
+/* A song: its recipe (every parameter), a scale for the lead, and a form. A section: its bars, which chord
+ * changes (prog), its layers, a bass shape (0: the song's), flags and a transposition in semitones. A chord: its
+ * root in semitones above the key, its quality, its length in beats; a progression ends at a 0 length and loops for
+ * the section. After the last section the song goes back to loop_to. */
+enum { F_HALF = 1, F_BUILD = 2, F_BREAK = 4, F_CLICK = 8, F_TOMS = 16 };
+enum { M_MAJOR, M_MINOR, M_DORIAN };
+static const uint16_t MODE_POOL[3] = {0xAB5u, 0x5ADu, 0x6ADu};   /* bit i: i semitones above the key */
+typedef struct {
+    int8_t r;
+    uint8_t q, beats;
+} ch_t;
+typedef struct {
+    const char *name;
+    uint8_t bars, prog, layers, pat, flags;
+    int8_t tr;
+} sec_t;
+#define NPROG 5
+#define PROG_MAX 8
+typedef struct {
+    const char *name, *after;
+    int16_t v[P_NPARAMS];
+    uint8_t mode, pat, nsec, loop_to;
+    sec_t sec[EN_MAXSEC];
+    ch_t prog[NPROG][PROG_MAX];
+} song_t;
+
+#define DR (L_KICK | L_SNARE | L_HATS | L_OHAT)
+#define ALL (L_BASS | L_PAD | L_LEAD | DR)
+#define GR (L_BASS | L_PAD | DR)
+
+/* recipes:    Tem Evo Mot Arr  Bas Cut Emp Dec  Led Voi Bus Gli  Pad Col Bri Pha  Drm Fil Hat Swi  Ech ET Fbk Rev  Key Tun MI  Pat BO LO */
+static const song_t SONGS[EN_NSONGS] = {
+    {"Feel", "I Feel Love", {126, 40, 55, 35, 85, 42, 50, 35, 40, 0, 35, 30, 45, 2, 45, 45, 70, 30, 55, 0, 60, 0, 30, 35, 0, 0, 1, 0, 0, 0},
+     M_MAJOR, A_PUMP, 7, 1,
+     {{"Intro", 8, 0, L_BASS | L_HATS, 0, F_BUILD, 0},
+      {"Verse", 16, 0, L_BASS | L_PAD | L_KICK | L_HATS | L_OHAT, 0, 0, 0},
+      {"Chorus", 8, 1, ALL, 0, 0, 0},
+      {"Shift", 8, 0, L_BASS | L_PAD | L_LEAD | L_KICK | L_HATS | L_OHAT, 0, 0, -2},
+      {"Verse", 16, 0, L_BASS | L_PAD | L_KICK | L_HATS | L_OHAT | L_SNARE, 0, 0, 0},
+      {"Chorus", 8, 1, ALL, 0, 0, 0},
+      {"Break", 8, 0, L_BASS | L_PAD | L_HATS, 0, F_BREAK, 0}},
+     {{{0, Q_MAJ, 16}}, {{0, Q_MAJ, 8}, {3, Q_MAJ, 8}, {5, Q_MAJ, 8}, {7, Q_MAJ, 8}}}},
+    {"Click", "Giorgio by Moroder", {113, 35, 50, 30, 80, 48, 35, 30, 50, 0, 55, 25, 55, 0, 55, 25, 70, 45, 50, 0, 25, 1, 30, 40, 9, 0, 1, 0, 0, 0},
+     M_MINOR, A_ARP, 6, 2,
+     {{"Click", 8, 2, L_HATS, 0, F_CLICK, 0},
+      {"Arpeggio", 8, 0, L_BASS | L_HATS, 0, F_BUILD | F_CLICK, 0},
+      {"Disco", 16, 0, GR, 0, 0, 0},
+      {"Strings", 8, 1, L_BASS | L_PAD | L_KICK, 0, 0, 0},
+      {"Fills", 8, 0, GR | L_TOMS, 0, F_TOMS, 0},
+      {"House", 16, 0, ALL, 0, 0, 0}},
+     {{{0, Q_MIN, 8}, {7, Q_MIN, 8}}, {{0, Q_MIN, 8}, {8, Q_MAJ, 8}}, {{0, Q_MIN, 16}}}},
+    {"Mutant", "Supernature", {123, 45, 60, 35, 80, 38, 58, 40, 45, 1, 40, 40, 50, 1, 40, 55, 65, 35, 45, 0, 40, 2, 45, 45, 5, 0, 1, 0, 0, 0},
+     M_MINOR, A_GALLOP, 6, 2,
+     {{"Dawn", 8, 0, L_PAD, 0, F_BUILD, 0},
+      {"Sequence", 8, 0, L_BASS | L_PAD, 0, F_BUILD, 0},
+      {"Groove", 16, 0, GR, 0, 0, 0},
+      {"Theme", 16, 1, ALL, 0, 0, 0},
+      {"Bridge", 8, 2, L_BASS | L_PAD | L_KICK | L_SNARE, 0, 0, 0},
+      {"Theme", 16, 1, ALL, 0, 0, 0}},
+     {{{0, Q_MIN, 16}}, {{0, Q_MIN, 8}, {8, Q_MAJ, 8}}, {{5, Q_MIN, 8}, {0, Q_MIN, 8}}}},
+    {"Heaven", "The Number One Song in Heaven", {130, 35, 45, 25, 75, 45, 40, 30, 50, 0, 45, 30, 60, 1, 50, 35, 70, 40, 55, 0, 30, 1, 30, 40, 8, 0, 1, 0, 0, 0},
+     M_MAJOR, A_PUMP16, 6, 0,
+     {{"Slow", 16, 0, L_PAD | L_BASS | L_KICK | L_SNARE | L_LEAD, A_SLOW, F_HALF, 0},
+      {"Slow", 16, 0, L_PAD | L_BASS | L_KICK | L_SNARE | L_HATS | L_LEAD, A_SLOW, F_HALF, 0},
+      {"Lift", 4, 2, L_PAD | L_BASS | L_SNARE | L_TOMS, A_SLOW, F_BUILD | F_HALF | F_TOMS, 0},
+      {"Fast", 16, 1, ALL, 0, 0, 0},
+      {"Vamp", 16, 2, ALL, 0, 0, 0},
+      {"Fast", 16, 1, ALL, 0, 0, 0}},
+     {{{0, Q_MAJ, 8}, {7, Q_MAJ, 8}, {9, Q_MIN11, 8}, {7, Q_MAJ, 8}},
+      {{0, Q_MAJ, 4}, {7, Q_MAJ, 4}, {2, Q_MAJ, 4}, {0, Q_MAJ, 4}}, {{9, Q_MIN11, 16}}}},
+    {"Clock", "Beat the Clock", {126, 40, 45, 30, 80, 50, 40, 25, 45, 1, 65, 20, 45, 2, 55, 20, 75, 50, 75, 0, 30, 0, 25, 35, 0, 0, 1, 0, 0, 0},
+     M_MAJOR, A_PUMP16, 9, 1,
+     {{"Intro", 4, 4, L_BASS | L_KICK | L_HATS, 0, F_BUILD, 0},
+      {"Verse", 8, 0, GR, 0, 0, 0},
+      {"Pre", 4, 1, GR | L_LEAD, 0, 0, 0},
+      {"Chorus", 8, 2, ALL, 0, 0, 0},
+      {"Turn", 4, 3, GR | L_TOMS, 0, F_TOMS, 0},
+      {"Verse", 8, 0, GR, 0, 0, 3},
+      {"Pre", 4, 1, GR | L_LEAD, 0, 0, 3},
+      {"Chorus", 8, 2, ALL, 0, 0, 3},
+      {"Outro", 4, 4, GR, 0, 0, 3}},
+     {{{7, Q_MAJ, 4}, {5, Q_MAJ, 4}}, {{9, Q_MIN, 4}, {2, Q_MIN, 4}, {7, Q_MAJ, 4}, {0, Q_MAJ, 4}},
+      {{7, Q_MAJ, 8}, {4, Q_MIN7, 4}, {7, Q_MAJ, 4}}, {{0, Q_MAJ, 8}, {3, Q_MAJ, 8}}, {{0, Q_MAJ, 16}}}},
+    {"Energy", "Menergy", {123, 40, 50, 35, 85, 45, 60, 25, 45, 0, 50, 25, 50, 2, 60, 30, 75, 40, 60, 0, 30, 2, 35, 35, 0, 0, 1, 0, 0, 0},
+     M_MINOR, A_OCT, 6, 1,
+     {{"Intro", 8, 0, L_BASS | L_KICK | L_HATS, 0, F_BUILD, 0},
+      {"Groove", 16, 0, GR, 0, 0, 0},
+      {"Lift", 8, 1, ALL, 0, 0, 0},
+      {"Groove", 16, 2, ALL, 0, 0, 0},
+      {"Break", 8, 0, L_BASS | L_PAD, 0, F_BREAK, 0},
+      {"Build", 4, 0, L_BASS | L_PAD | L_SNARE, 0, F_BUILD, 0}},
+     {{{0, Q_MIN, 16}}, {{8, Q_MAJ, 8}, {10, Q_MAJ, 8}}, {{0, Q_MIN, 8}, {10, Q_MAJ, 8}}}},
+    {"Fly", "Magic Fly", {126, 40, 60, 30, 70, 42, 45, 35, 70, 0, 40, 75, 55, 0, 45, 45, 65, 35, 50, 0, 35, 3, 35, 45, 9, 0, 1, 0, 0, 0},
+     M_MINOR, A_OCT, 5, 1,
+     {{"Liftoff", 8, 2, L_PAD | L_BASS, 0, F_BUILD, 0},
+      {"Theme", 16, 0, ALL, 0, 0, 0},
+      {"Drift", 8, 1, L_BASS | L_PAD | L_KICK | L_HATS | L_OHAT, 0, 0, 0},
+      {"Theme", 16, 0, ALL, 0, 0, 0},
+      {"Space", 8, 2, L_PAD | L_LEAD | L_BASS, 0, F_BREAK, 0}},
+     {{{0, Q_MIN, 8}, {8, Q_MAJ, 4}, {10, Q_MAJ, 4}}, {{0, Q_MIN, 8}, {5, Q_MIN, 8}}, {{0, Q_MIN, 16}}}},
+    {"Lover", "Automatic Lover", {130, 40, 45, 30, 80, 46, 50, 25, 55, 2, 55, 15, 45, 0, 50, 30, 75, 40, 60, 0, 35, 0, 30, 35, 0, 0, 1, 0, 0, 0},
+     M_MINOR, A_PUMP16, 5, 1,
+     {{"Intro", 8, 2, L_BASS | L_KICK | L_HATS, 0, F_BUILD, 0},
+      {"Verse", 16, 0, GR | L_LEAD, 0, 0, 0},
+      {"Hook", 8, 1, ALL, 0, 0, 0},
+      {"Robot", 8, 2, L_BASS | L_LEAD | L_KICK | L_HATS, 0, 0, 0},
+      {"Hook", 8, 1, ALL, 0, 0, 0}},
+     {{{0, Q_MIN, 8}, {10, Q_MAJ, 8}}, {{8, Q_MAJ, 4}, {10, Q_MAJ, 4}, {0, Q_MIN, 8}}, {{0, Q_MIN, 16}}}},
+    {"Express", "Chase", {128, 40, 60, 30, 85, 44, 55, 30, 50, 1, 50, 30, 50, 0, 50, 70, 75, 45, 60, 0, 45, 0, 30, 35, 2, 0, 1, 0, 0, 0},
+     M_MINOR, A_PUMP16, 7, 1,
+     {{"Intro", 8, 0, L_BASS, 0, F_BUILD, 0},
+      {"Chase", 16, 0, L_BASS | L_KICK | L_HATS | L_OHAT, 0, 0, 0},
+      {"Strings", 16, 0, GR, 0, 0, 0},
+      {"Theme", 16, 1, ALL, 0, 0, 0},
+      {"Pursuit", 8, 0, GR | L_TOMS, 0, F_TOMS | F_BUILD, 0},
+      {"Theme", 16, 1, ALL, 0, 0, 0},
+      {"Run", 8, 2, L_BASS | DR | L_LEAD, 0, F_BUILD, 0}},
+     {{{0, Q_MIN, 16}}, {{0, Q_MIN, 8}, {8, Q_MAJ, 4}, {10, Q_MAJ, 4}}, {{0, Q_MIN, 8}, {10, Q_MAJ, 8}}}},
+};
+
+static unsigned song_ok(int i) { return (unsigned)i < EN_NSONGS ? (unsigned)i : 0u; }
+const char *en_song_name(int i) { return SONGS[song_ok(i)].name; }
+const char *en_song_after(int i) { return SONGS[song_ok(i)].after; }
+void en_song_recipe(int i, int16_t *par)
+{
+    int p;
+    for (p = 0; p < P_NPARAMS; p++)
+        par[p] = SONGS[song_ok(i)].v[p];
+}
+int en_song_nsec(int i) { return SONGS[song_ok(i)].nsec; }
+const char *en_sec_name(int s, int k)
+{
+    const song_t *g = &SONGS[song_ok(s)];
+    return (unsigned)k < g->nsec ? g->sec[k].name : "";
+}
+int en_sec_bars(int s, int k)
+{
+    const song_t *g = &SONGS[song_ok(s)];
+    return (unsigned)k < g->nsec ? g->sec[k].bars : 0;
+}
+
+/* ------------------------------------------------------------ commands --- */
+enum { C_SET, C_PLAY, C_NEXT, C_HOLD, C_SEED, C_PANIC, C_CLOCK, C_SONG };
+#define QN 64u
+static uint32_t q[QN];
+static volatile uint32_t q_w, q_r;
+static void post(uint32_t c, int a, int b)
+{
+    uint32_t w = q_w;
+    if (w - q_r >= QN)
+        return;                                   /* full: dropped (never, at the UI's rate) */
+    q[w % QN] = c << 24 | ((uint32_t)a & 0xFFu) << 16 | ((uint32_t)b & 0xFFFFu);
+    BARRIER();
+    q_w = w + 1;
+}
+void en_set(int p, int v) { post(C_SET, p, v); }
+void en_play(int on) { post(C_PLAY, on, 0); }
+void en_next(void) { post(C_NEXT, 0, 0); }
+void en_hold(int on) { post(C_HOLD, on, 0); }
+void en_seed(uint32_t s) { post(C_SEED, 0, (int)(s & 0xFFFFu)); }
+void en_panic(void) { post(C_PANIC, 0, 0); }
+void en_clock(int msg) { post(C_CLOCK, msg, 0); }
+void en_song(int i) { post(C_SONG, i, 0); }
+
+/* -------------------------------------------------------------- state --- */
+volatile uint8_t en_playing, en_ext, en_held;
+volatile uint8_t en_song_i, en_sec, en_sec_bar, en_sec_len, en_next_sec;
+volatile uint8_t en_layers;
+volatile int8_t en_key;
+volatile uint8_t en_chord[EN_NPAD], en_chord_root, en_chord_n;
+volatile uint8_t en_step;
+volatile int8_t en_bpat[EN_STEPS];
+volatile uint8_t en_bacc[EN_STEPS];
+volatile float en_bass_glow, en_lead_glow, en_pad_level, en_bass_cut;
+volatile uint8_t en_lead_note;
+volatile float en_drum_glow[EN_NDRUM];
+volatile uint32_t en_dpat[EN_NDRUM];
+volatile uint32_t en_bars;
+volatile float en_arc;
+
+static int16_t par[P_NPARAMS];
+static float tunefac = 1.0f;
+static uint32_t rng = 0x9E3779B9u;
+
+static uint32_t rnd(void)                       /* Marsaglia's xorshift (Xorshift RNGs, 2003): shifts 13, 17, 5 */
+{
+    uint32_t x = rng;
+    x = x ^ (x << 13);
+    x = x ^ (x >> 17);
+    rng = x ^ (x << 5);
+    return rng;
+}
+static float frand(void) { return (float)(rnd() >> 8) * (1.0f / 16777216.0f); }
+static int irand(int n) { return n > 0 ? (int)((rnd() >> 8) % (uint32_t)n) : 0; }
+
+static void midi(uint32_t st, uint32_t d1, uint32_t d2)
+{
+    if (par[P_MIDI])
+        en_midi_out(st, d1, d2);
+}
+
+static float mtof(float n) { return 440.0f * tunefac * fm_exp2f((n - 69.0f) * (1.0f / 12.0f)); }
+
+#define SN 1024
+static float sint[SN + 1];
+static inline float sine(float ph)              /* ph in turns, any value >= 0 */
+{
+    float x = (ph - (float)(int)ph) * (float)SN;
+    int i = (int)x;
+    float f = x - (float)i;
+    return sint[i] + (sint[i + 1] - sint[i]) * f;
+}
+
+static inline float blep_saw(float t, float dt)  /* a band-limited saw, -1..1, phase t in turns */
+{
+    float y = 2.0f * t - 1.0f;
+    if (t < dt) {
+        float x = t / dt;
+        y -= x + x - x * x - 1.0f;
+    } else if (t > 1.0f - dt) {
+        float x = (t - 1.0f) / dt;
+        y -= x * x + x + x + 1.0f;
+    }
+    return y;
+}
+static inline float blep_sq(float t, float dt)   /* a square: two saws half a turn apart */
+{
+    float u = t + 0.5f;
+    if (u >= 1.0f)
+        u -= 1.0f;
+    return 0.5f * (blep_saw(t, dt) - blep_saw(u, dt));
+}
+
+static void svf_coefs(float *c, float f, float k)   /* TPT SVF (Zavalishin): a1, a2, a3, k */
+{
+    float g = fm_tanf(FM_PI * fm_clampf(f, 30.0f, 16000.0f) * (1.0f / EN_SR));
+    c[0] = 1.0f / (1.0f + g * (g + k));
+    c[1] = g * c[0];
+    c[2] = g * c[1];
+    c[3] = k;
+}
+/* one sample: s holds the two states; returns the low-pass, *bp the band-pass */
+static inline float svf(const float *c, float *s, float x, float *bp)
+{
+    float v3 = x - s[1], v1 = c[0] * s[0] + c[1] * v3, v2 = s[1] + c[1] * s[0] + c[2] * v3;
+    s[0] = 2.0f * v1 - s[0];
+    s[1] = 2.0f * v2 - s[1];
+    *bp = v1;
+    return v2;
+}
+
+/* --------------------------------------------------- slow random motion --- */
+#define NMOD 6
+static struct {
+    float v, tgt, rate;
+    uint32_t left;
+} mod[NMOD];
+static void mods_step(uint32_t n)
+{
+    int i;
+    for (i = 0; i < NMOD; i++) {
+        if (mod[i].left <= n) {
+            float secs = 6.0f + 26.0f * frand();
+            mod[i].tgt = frand() * 2.0f - 1.0f;
+            mod[i].left = (uint32_t)(secs * EN_SR);
+            mod[i].rate = (float)n / (secs * EN_SR * 0.5f);
+        } else {
+            mod[i].left -= n;
+        }
+        mod[i].v += (mod[i].tgt - mod[i].v) * fm_minf(mod[i].rate, 1.0f);
+    }
+}
+static float motion, evolve, arrange, arcm;
+static float arc, arc_tgt;
+static uint32_t arc_left;
+
+/* ------------------------------------------------------------- the form --- */
+static const song_t *song = &SONGS[0];
+static int si, sbar, slen, srep;                /* the section, its bar, its length, repeats in a row */
+static uint8_t layers, hold, next_req;
+static int8_t cyc_tr;                           /* the cycle's move: the whole song in another key for a while */
+static int chord_q, chord_r, chord_pcs[4], chord_nt;   /* the chord: quality, root (pitch class), tones */
+static int key;                                 /* the key now: Key + the section's and the cycle's moves */
+static uint32_t sixteenth;
+
+static const sec_t *sec_now(void) { return &song->sec[si]; }
+static int sec_pat(void)
+{
+    const sec_t *s = sec_now();
+    if (par[P_PATTERN] > 0)
+        return par[P_PATTERN];
+    return s->pat ? s->pat : song->pat;
+}
+
+/* --------------------------------------------------------------- bass --- */
+/* the shapes, a sixteenth a character: R root, 3 third, 5 fifth, 7 seventh (or octave), O octave, U fifth an
+ * octave up; '.' rest. Upper case and digits as they are; the accent mask beside */
+static const char *const SHAPE[EN_NPATTERNS] = {
+    "", "R.O.R.O.R.O.R.O.", "RORORORORORO5O7O", "R35OR35OO53RO53R", "R.RRO.OOR.RR5.57", "R.O.R.OOR.O.R.OO",
+    "R...5...O...5..."};
+static const uint16_t ACCENT[EN_NPATTERNS] = {0, 0x1111u, 0x1111u, 0x0101u, 0x1111u, 0x4444u, 0x1111u};
+static int8_t bcode[EN_STEPS], bbase[EN_STEPS];  /* the pattern now, and its shape (codes: -1 rest, 0..5) */
+static uint16_t bacc;
+static int bpat_shape;
+
+static int code_of(char c)
+{
+    switch (c) {
+    case 'R': return 0;
+    case '3': return 1;
+    case '5': return 2;
+    case '7': return 3;
+    case 'O': return 4;
+    case 'U': return 5;
+    default: return -1;
+    }
+}
+static int bass_interval(int code)              /* semitones above the chord's root */
+{
+    int third = (chord_q == Q_MIN || chord_q == Q_MIN7 || chord_q == Q_MIN11) ? 3 : chord_q == Q_SUS4 ? 5
+                : chord_q == Q_POW ? 7 : 4;
+    int sev = chord_q == Q_7 || chord_q == Q_MIN7 || chord_q == Q_MIN11 ? 10 : chord_q == Q_M7 ? 11 : 12;
+    static const int8_t I[6] = {0, 0, 7, 0, 12, 19};
+    return code == 1 ? third : code == 3 ? sev : I[code];
+}
+static int bass_note(int code)
+{
+    int n = 36 + chord_r + 12 * par[P_BOCT] + bass_interval(code);
+    if (chord_r > 6)
+        n -= 12;                                  /* the root in E1..F#2 .. kept low and near */
+    return n;
+}
+static void bass_shape(int a)                   /* a shape into the pattern, its home */
+{
+    int i;
+    a = a > 0 && a < EN_NPATTERNS ? a : A_PUMP;
+    bpat_shape = a;
+    for (i = 0; i < EN_STEPS; i++)
+        bbase[i] = bcode[i] = (int8_t)code_of(SHAPE[a][i]);
+    bacc = ACCENT[a];
+}
+static void bass_publish(void)
+{
+    int i;
+    for (i = 0; i < EN_STEPS; i++) {
+        en_bpat[i] = (int8_t)(bcode[i] >= 0 ? bass_note(bcode[i]) : -1);
+        en_bacc[i] = (uint8_t)(bacc >> i & 1u);
+    }
+}
+static void bass_evolve(void)                   /* a bar: a weak step changes, or one goes back home */
+{
+    int s;
+    if (frand() < evolve * 0.3f) {
+        s = 1 + 2 * irand(8);                    /* an off sixteenth or an off eighth */
+        if (frand() < 0.5f)
+            s = 2 + 4 * irand(4);
+        if (bcode[s] >= 0) {
+            static const int8_t ALT[5] = {0, 4, 2, 3, 5};
+            bcode[s] = frand() < evolve * 0.4f ? (int8_t)-1 : ALT[irand(5)];
+        } else if (bpat_shape != A_SLOW) {
+            bcode[s] = (int8_t)(frand() < 0.5f ? 0 : 4);   /* a ghost note */
+        }
+    }
+    if (frand() < 0.2f) {                        /* and home again, a step at a time */
+        s = irand(EN_STEPS);
+        bcode[s] = bbase[s];
+    }
+}
+
+typedef struct {
+    float ph[3], inc[3];
+    float s[4];                                 /* the ladder */
+    float amp, aenv, fenv, adec, fdec, rel;
+    float g, k;                                 /* the ladder's coefficients (every 16 samples) */
+    int32_t gate;                               /* samples left of the gate */
+    float acc;
+    uint8_t on, note;
+} bass_t;
+static bass_t bass;
+static float bass_vol, bcut, breso, bdec, build;
+
+static void bass_trigger(int n, int accent, int32_t len)
+{
+    float f = mtof((float)n);
+    if (bass.note && en_playing)
+        midi(0x80, bass.note, 0);
+    bass.inc[0] = f * 0.99654f * (1.0f / EN_SR);   /* -6 and +6 cents */
+    bass.inc[1] = f * 1.00347f * (1.0f / EN_SR);
+    bass.inc[2] = f * 0.5f * (1.0f / EN_SR);       /* the square, an octave down */
+    bass.aenv = 1.0f;
+    bass.fenv = 1.0f;
+    bass.acc = accent ? 1.0f : 0.0f;
+    bass.gate = len;
+    bass.on = 1;
+    bass.note = (uint8_t)n;
+    en_bass_glow = 1.0f;
+    midi(0x90, (uint32_t)n, accent ? 110u : 85u);
+}
+
+static void bass_coefs(void)                    /* every 16 samples: the cutoff from the knob, envelope, sweeps */
+{
+    float oct = 1.2f + 6.3f * bcut + (2.2f + 1.3f * bass.acc) * bass.fenv + 1.1f * arcm + 1.6f * build, fc;
+    if (sec_now()->flags & F_BREAK)
+        oct -= 0.8f;
+    fc = fm_clampf(55.0f * fm_exp2f(oct), 40.0f, 15000.0f);
+    bass.g = 1.0f - fm_expf(-FM_TWO_PI * fc * (1.0f / EN_SR));
+    bass.k = breso * 0.92f;
+    en_bass_cut = fm_clampf((oct - 1.2f) * (1.0f / 9.0f), 0.0f, 1.0f);
+}
+
+/* ---------------------------------------------------------------- pad --- */
+typedef struct {
+    float ph[2], inc[2];
+    float note, target, amp, hf, vib;
+    float fs[4], c1[4], c2[4];                  /* the choir's two formants */
+    uint8_t hand, midi_note;
+} pad_t;
+static pad_t pad[EN_NPAD];
+static float pad_vol, pad_gain, pad_gate, bright, phaser_d;
+static int pcolour;
+static const float PAD_PAN[EN_NPAD] = {-0.6f, -0.2f, 0.2f, 0.6f};
+static const float VOWEL[3][2] = {{480.0f, 900.0f}, {730.0f, 1090.0f}, {530.0f, 1840.0f}};
+
+static void pad_retarget(void)                  /* the chord to the four voices, voice-led */
+{
+    int from[4], to[4], i;
+    for (i = 0; i < EN_NPAD; i++)
+        from[i] = (int)(pad[i].target + 0.5f);
+    en_voice_lead(from, chord_pcs, chord_nt, to, 53, 76);
+    for (i = 0; i < EN_NPAD; i++) {
+        if ((float)to[i] != pad[i].target && pad[i].amp > 0.002f && !pad[i].hand)
+            pad[i].hand = 1;                     /* a new note: out quickly, in a little slower */
+        else if (pad[i].amp <= 0.002f)
+            pad[i].note = (float)to[i];
+        pad[i].target = (float)to[i];
+        en_chord[i] = (uint8_t)to[i];
+    }
+    en_chord_root = (uint8_t)chord_pcs[0];
+    en_chord_n = (uint8_t)chord_nt;
+}
+
+static void pad_midi(pad_t *v)
+{
+    if (!en_playing)
+        return;
+    if (v->midi_note)
+        midi(0x81, v->midi_note, 0);
+    v->midi_note = (uint8_t)v->note;
+    if (layers & L_PAD)
+        midi(0x91, v->midi_note, 70);
+    else
+        v->midi_note = 0;
+}
+
+static void pad_coefs(pad_t *v, int i)          /* every 32 samples: handoffs, pitch, the choir's vowel */
+{
+    float f;
+    if (v->hand == 1) {
+        v->hf -= 32.0f / (0.03f * EN_SR);
+        if (v->hf <= 0.0f) {
+            v->hf = 0.0f;
+            v->hand = 2;
+            v->note = v->target;
+            pad_midi(v);
+        }
+    } else if (v->hand == 2) {
+        v->hf += 32.0f / (0.12f * EN_SR);
+        if (v->hf >= 1.0f) {
+            v->hf = 1.0f;
+            v->hand = 0;
+        }
+    }
+    v->vib += (5.2f + 0.31f * (float)i) * 32.0f / EN_SR;
+    if (v->vib >= 1.0f)
+        v->vib -= 1.0f;
+    f = mtof(v->note + 0.07f * sine(v->vib) + 0.05f * motion * mod[i].v);
+    if (pcolour == 2) {                         /* saws: wider */
+        v->inc[0] = f * 0.99135f * (1.0f / EN_SR);
+        v->inc[1] = f * 1.00870f * (1.0f / EN_SR);
+    } else {
+        v->inc[0] = f * 0.99538f * (1.0f / EN_SR);
+        v->inc[1] = f * 1.00463f * (1.0f / EN_SR);
+    }
+    if (pcolour == 1) {
+        float vw = fm_clampf(bright * 0.01f + 0.3f * arcm, 0.0f, 1.0f) * 1.999f, f1, f2;
+        int a = (int)vw;
+        vw -= (float)a;
+        f1 = VOWEL[a][0] + (VOWEL[a + 1][0] - VOWEL[a][0]) * vw;
+        f2 = VOWEL[a][1] + (VOWEL[a + 1][1] - VOWEL[a][1]) * vw;
+        svf_coefs(v->c1, f1 * (1.0f + 0.03f * (float)i), 0.4f);
+        svf_coefs(v->c2, f2 * (1.0f - 0.02f * (float)i), 0.3f);
+    }
+}
+
+/* the phaser: four first-order all-passes a side, swept in quadrature, fed back */
+static float ph_s[2][4], ph_fb[2], ph_a[2], ph_lfo;
+static float padl[256], padr[256], plp[4];
+
+/* --------------------------------------------------------------- lead --- */
+#define PH_BARS 4
+static uint16_t ph_on[PH_BARS];                 /* the phrase: onsets a bar */
+static int8_t ph_deg[PH_BARS][EN_STEPS];        /* each onset's degree (scale steps above the key) */
+static uint8_t ph_len[PH_BARS][EN_STEPS];       /* its length in sixteenths */
+static uint8_t ph_rest[PH_BARS];                /* a bar left out: an answer's room */
+typedef struct {
+    float ph[2], inc, pitch, target, amp, env, vib_t, s[2], c[4], fs[4], fc1[4], fc2[4];
+    int32_t gate;
+    uint8_t on, note;
+} lead_t;
+static lead_t lead;
+static float lead_vol, glide_k;
+static int lvoice;
+
+static int scale_steps[7];
+static void scale_set(void)
+{
+    int i, m = 0;
+    for (i = 0; i < 12; i++)
+        if (MODE_POOL[song->mode] >> i & 1u)
+            scale_steps[m++] = i;
+}
+static int deg_note(int d)                      /* a degree (0 = the key's note at C4..B4) to MIDI */
+{
+    int oct = d >= 0 ? d / 7 : -((6 - d) / 7), s = d - 7 * oct;
+    return 60 + key + scale_steps[s] + 12 * oct + 12 * par[P_LOCT];
+}
+
+static int pick_onsets(void)                    /* a bar's rhythm, by Busy */
+{
+    static const uint8_t W[EN_STEPS] = {6, 1, 2, 1, 5, 1, 3, 1, 5, 1, 2, 1, 4, 1, 3, 2};
+    int n = 1 + (int)((float)par[P_BUSY] * 0.06f + frand() * 1.5f), i, k;
+    uint16_t m = 0;
+    if (n > 8)
+        n = 8;
+    for (k = 0; k < n * 4 && __builtin_popcount(m) < n; k++) {
+        i = irand(EN_STEPS);
+        if (irand(7) < W[i] + (par[P_BUSY] > 60 ? 1 : 0))
+            m |= (uint16_t)(1u << i);
+    }
+    if (!m)
+        m = 1u;
+    return m;
+}
+static void bar_degrees(int b, int start)       /* a stepwise walk through a bar's onsets */
+{
+    int d = start, s;
+    for (s = 0; s < EN_STEPS; s++)
+        if (ph_on[b] >> s & 1u) {
+            ph_deg[b][s] = (int8_t)d;
+            {
+                float r = frand();
+                int st = r < 0.55f ? 1 : r < 0.82f ? 2 : 3 + irand(2);
+                d += frand() < 0.5f ? st : -st;
+                if (d < 2)
+                    d = 2 + irand(2);
+                if (d > 12)
+                    d = 11 - irand(2);
+            }
+        }
+}
+static void bar_lengths(int b)                  /* each note to the next, or short */
+{
+    int s, last = -1;
+    for (s = 0; s < EN_STEPS; s++)
+        if (ph_on[b] >> s & 1u) {
+            if (last >= 0)
+                ph_len[b][last] = (uint8_t)(s - last);
+            last = s;
+        }
+    if (last >= 0)
+        ph_len[b][last] = (uint8_t)(EN_STEPS - last);
+    for (s = 0; s < EN_STEPS; s++)
+        if ((ph_on[b] >> s & 1u) && (lvoice == 2 || frand() < 0.25f) && ph_len[b][s] > 1)
+            ph_len[b][s] = (uint8_t)(ph_len[b][s] > 2 ? 2 : 1);   /* staccato (the robot always) */
+}
+static void lead_phrase(void)                   /* A, A', B, A'' (or A, rest, A', rest when sparse) */
+{
+    int b, s, start = 5 + irand(4);
+    ph_on[0] = (uint16_t)pick_onsets();
+    bar_degrees(0, start);
+    bar_lengths(0);
+    ph_on[1] = ph_on[0];
+    for (s = 0; s < EN_STEPS; s++) {
+        ph_deg[1][s] = ph_deg[0][s];
+        ph_len[1][s] = ph_len[0][s];
+    }
+    for (s = EN_STEPS - 1; s >= 0; s--)         /* A': its last note answers */
+        if (ph_on[1] >> s & 1u) {
+            ph_deg[1][s] = (int8_t)(ph_deg[1][s] + (frand() < 0.5f ? -2 : 2));
+            break;
+        }
+    ph_on[2] = (uint16_t)pick_onsets();
+    bar_degrees(2, start + (frand() < 0.5f ? 2 : -2));
+    bar_lengths(2);
+    ph_on[3] = ph_on[0];
+    for (s = 0; s < EN_STEPS; s++) {
+        ph_deg[3][s] = ph_deg[0][s];
+        ph_len[3][s] = ph_len[0][s];
+    }
+    for (b = 0; b < PH_BARS; b++)
+        ph_rest[b] = 0;
+    if (par[P_BUSY] < 50 && frand() < 0.7f - 0.01f * (float)par[P_BUSY]) {
+        ph_rest[1] = 1;                         /* call, room, call, room */
+        ph_rest[3] = 1;
+    }
+}
+static void lead_vary(void)                     /* Evolve, at each repeat of the phrase */
+{
+    int b = irand(PH_BARS), s;
+    if (frand() < evolve * 0.6f)
+        for (s = 0; s < EN_STEPS; s++)
+            if ((ph_on[b] >> s & 1u) && frand() < 0.3f) {
+                ph_deg[b][s] = (int8_t)(ph_deg[b][s] + (frand() < 0.5f ? 1 : -1));
+                break;
+            }
+    if (frand() < evolve * 0.2f) {
+        ph_on[2] = (uint16_t)pick_onsets();
+        bar_degrees(2, 5 + irand(5));
+        bar_lengths(2);
+    }
+}
+static int lead_pitch(int d, int strong)        /* a degree, on the chord: snapped to it on the strong steps */
+{
+    int n = deg_note(d), i, best = n, bd = 99;
+    for (i = 0; i < chord_nt; i++) {
+        int c = nearest(n, chord_pcs[i], 0, 127), dd = c > n ? c - n : n - c;
+        if (dd < bd) {
+            bd = dd;
+            best = c;
+        }
+    }
+    if (strong || bd == 1)                      /* a semitone off the chord is a clash: on it */
+        n = best;
+    return n;
+}
+static void lead_note(int n, int32_t len)
+{
+    if (lead.on && lead.note && en_playing)
+        midi(0x82, lead.note, 0);
+    if (!lead.on || lead.env < 0.05f) {          /* from silence: no glide; Magic Fly's swoop when Glide is high */
+        lead.pitch = (float)n - (par[P_GLIDE] > 60 ? 5.0f : 0.0f);
+        lead.vib_t = 0.0f;
+    }
+    lead.target = (float)n;
+    lead.gate = len;
+    lead.on = 1;
+    lead.note = (uint8_t)n;
+    en_lead_note = (uint8_t)n;
+    en_lead_glow = 1.0f;
+    midi(0x92, (uint32_t)n, 96);
+}
+
+/* --------------------------------------------------------------- drums --- */
+enum { D_KICK, D_SNARE, D_HAT, D_OHAT, D_TOM };
+typedef struct {
+    float ph, inc, inc_end, amp, adec, x1, x2, s[2], c[4], mph[4], att, tone, tdec, pend;
+    int32_t wait;
+    uint8_t on;
+} drum_t;
+static drum_t drum[EN_NDRUM];
+static uint32_t dpat[EN_NDRUM];
+static float dvel[EN_NDRUM][EN_STEPS];
+static float drum_vol, swing, hat_f = 0.9f, hat_open = 0.35f, step_len, pulse_left;
+static uint32_t noise = 22222u;
+static const uint8_t DRUM_GM[EN_NDRUM] = {36, 39, 42, 46, 45};
+static const float HAT_INC[4] = {304.4f / EN_SR, 369.6f / EN_SR, 522.7f / EN_SR, 800.0f / EN_SR};
+static uint8_t fill_bar;                        /* this bar ends in a fill */
+
+static float nz(void)
+{
+    noise = noise * 1664525u + 1013904223u;
+    return (float)(int32_t)noise * (1.0f / 2147483648.0f);
+}
+
+static void drum_fire(int d, float vel)
+{
+    drum_t *v = &drum[d];
+    v->on = 1;
+    v->amp = vel;
+    v->att = 0.0f;
+    switch (d) {
+    case D_KICK:                                 /* a sine from 150 Hz down to 48, a click on top */
+        v->ph = 0.0f;
+        v->inc = 150.0f / EN_SR;
+        v->inc_end = 48.0f / EN_SR;
+        v->adec = fm_expf(-6.9f / (0.32f * EN_SR));
+        v->tone = 1.0f;
+        break;
+    case D_SNARE:                                /* noise through a band-pass, and a short body */
+        v->ph = 0.0f;
+        v->inc = 185.0f / EN_SR;
+        v->adec = fm_expf(-6.9f / (0.2f * EN_SR));
+        v->tone = 1.0f;
+        v->tdec = fm_expf(-6.9f / (0.07f * EN_SR));
+        svf_coefs(v->c, 1700.0f, 1.1f);
+        break;
+    case D_HAT:
+        v->adec = fm_expf(-6.9f / (0.045f * EN_SR));
+        drum[D_OHAT].adec = fm_expf(-6.9f / (0.02f * EN_SR));   /* it chokes the open one */
+        break;
+    case D_OHAT:
+        v->adec = fm_expf(-6.9f / (hat_open * EN_SR));
+        break;
+    default:                                     /* a syndrum: a sine falling an octave */
+        v->ph = 0.0f;
+        v->adec = fm_expf(-6.9f / (0.45f * EN_SR));
+        break;
+    }
+    en_drum_glow[d] = 1.0f;
+    midi(0x99, DRUM_GM[d], (uint32_t)fm_clampf(vel * 110.0f, 1.0f, 127.0f));
+    midi(0x89, DRUM_GM[d], 0);
+}
+static void tom_pitch(float f0)
+{
+    drum[D_TOM].inc = f0 / EN_SR;
+    drum[D_TOM].inc_end = f0 * 0.45f / EN_SR;
+}
+static void drum_hit(int d, float vel, int off)  /* off: an off sixteenth, which Swing delays */
+{
+    int32_t w = off ? (int32_t)(swing * step_len) : 0;
+    if (w > 0) {
+        drum[d].wait = w;
+        drum[d].pend = vel;
+    } else {
+        drum_fire(d, vel);
+    }
+}
+static int32_t drums_wait(void)
+{
+    int32_t m = 0;
+    int d;
+    for (d = 0; d < EN_NDRUM; d++)
+        if (drum[d].wait > 0 && (!m || drum[d].wait < m))
+            m = drum[d].wait;
+    return m;
+}
+static void drums_wait_step(int32_t k)
+{
+    int d;
+    for (d = 0; d < EN_NDRUM; d++)
+        if (drum[d].wait > 0 && (drum[d].wait -= k) <= 0) {
+            drum[d].wait = 0;
+            drum_fire(d, drum[d].pend);
+        }
+}
+
+/* a bar's drums, from the section's layers and flags, the knobs and the fill */
+static void drums_bar(void)
+{
+    const sec_t *s = sec_now();
+    int i, half = (s->flags & F_HALF) != 0, last = sbar == slen - 1, fills = par[P_FILLS];
+    for (i = 0; i < EN_NDRUM; i++)
+        dpat[i] = 0;
+    for (i = 0; i < EN_STEPS; i++) {
+        int beat = (i & 3) == 0;
+        if (layers & L_KICK) {
+            if (half ? (i == 0 || i == 8) : beat) {
+                dpat[D_KICK] |= 1u << i;
+                dvel[D_KICK][i] = i == 0 ? 1.0f : 0.92f;
+            }
+        }
+        if (layers & L_SNARE) {
+            if (half ? i == 8 : (i == 4 || i == 12)) {
+                dpat[D_SNARE] |= 1u << i;
+                dvel[D_SNARE][i] = 0.85f;
+            }
+        }
+        if (layers & L_HATS) {
+            int on = (s->flags & F_CLICK) ? beat : par[P_HATS] >= 35 ? 1 : (i & 1) == 0;
+            if (half && !(s->flags & F_CLICK))
+                on = (i & 1) == 0;
+            if (on) {
+                dpat[D_HAT] |= 1u << i;
+                dvel[D_HAT][i] = (s->flags & F_CLICK) ? 0.7f : (i & 3) == 2 ? 0.75f : (i & 1) ? 0.35f : 0.55f;
+            }
+        }
+        if ((layers & L_OHAT) && !half && (i & 3) == 2) {   /* the disco "tss" off the beat */
+            dpat[D_OHAT] |= 1u << i;
+            dpat[D_HAT] &= ~(1u << i);
+            dvel[D_OHAT][i] = 0.7f;
+        }
+    }
+    /* Evolve: a syndrum now and then on the last sixteenths, a ghost snare */
+    if ((layers & (L_SNARE | L_TOMS)) && frand() < evolve * 0.12f * (0.4f + 0.012f * (float)fills)) {
+        i = frand() < 0.5f ? 14 : 15;
+        dpat[D_TOM] |= 1u << i;
+        dvel[D_TOM][i] = 0.6f;
+    }
+    if ((layers & L_SNARE) && !half && frand() < evolve * 0.2f) {
+        i = frand() < 0.5f ? 7 : 15;
+        dpat[D_SNARE] |= 1u << i;
+        dvel[D_SNARE][i] = 0.3f;
+    }
+    /* the fill: the last bar of a section, the more the higher Fills; toms for a TOMS section or high Fills */
+    fill_bar = 0;
+    if (last && (layers & (L_SNARE | L_KICK | L_TOMS)) && !hold && frand() < 0.15f + 0.85f * (float)fills * 0.01f) {
+        int from = fills > 60 || (s->flags & F_TOMS) ? 8 : 12, toms = (layers & L_TOMS) || fills > 70;
+        fill_bar = 1;
+        for (i = from; i < EN_STEPS; i++) {
+            float v = 0.45f + 0.5f * (float)(i - from) / (float)(EN_STEPS - from);
+            if (toms && (i & 1) == 0) {
+                dpat[D_TOM] |= 1u << i;
+                dvel[D_TOM][i] = v;
+            } else {
+                dpat[D_SNARE] |= 1u << i;
+                dvel[D_SNARE][i] = v * 0.9f;
+            }
+            dpat[D_OHAT] &= ~(1u << i);
+        }
+    }
+    /* a build: the snare in eighths, then sixteenths, rising, over its last two bars */
+    if ((s->flags & F_BUILD) && slen >= 2 && sbar >= slen - 2 && !hold) {
+        int fine = sbar == slen - 1;
+        for (i = 0; i < EN_STEPS; i++)
+            if (fine || (i & 1) == 0) {
+                dpat[D_SNARE] |= 1u << i;
+                dvel[D_SNARE][i] = 0.3f + 0.5f * ((float)(sbar - (slen - 2)) * 16.0f + (float)i) / 32.0f;
+            }
+    }
+    for (i = 0; i < EN_NDRUM; i++)
+        en_dpat[i] = dpat[i];
+}
+
+/* ------------------------------------------------------------ harmony --- */
+static void chord_at(int beat)                  /* the chord on beat `beat` of the section (its progression loops) */
+{
+    const ch_t *p = song->prog[sec_now()->prog];
+    int tot = 0, i, b, r, qq;
+    for (i = 0; i < PROG_MAX && p[i].beats; i++)
+        tot += p[i].beats;
+    if (!tot)
+        return;
+    b = beat % tot;
+    for (i = 0; i < PROG_MAX && p[i].beats; i++) {
+        if (b < p[i].beats)
+            break;
+        b -= p[i].beats;
+    }
+    if (i >= PROG_MAX || !p[i].beats)
+        i = 0;
+    r = ((key + p[i].r) % 12 + 12) % 12;
+    qq = p[i].q;
+    if (r == chord_r && qq == chord_q && chord_nt)
+        return;
+    chord_r = r;
+    chord_q = qq;
+    chord_nt = en_chord_tones(r, qq, chord_pcs);
+    pad_retarget();
+    bass_publish();
+}
+
+static void key_set(void)
+{
+    key = ((par[P_ROOT] + sec_now()->tr + cyc_tr) % 12 + 12) % 12;
+    en_key = (int8_t)key;
+}
+
+static void section_enter(int i)                /* a section from its first bar */
+{
+    const sec_t *s;
+    si = i;
+    s = sec_now();
+    sbar = 0;
+    slen = s->bars;
+    layers = s->layers;
+    build = 0.0f;
+    /* Arrange: a layer out for this section, or the lead in where it wasn't */
+    if (si && frand() < arrange * 0.35f) {
+        static const uint8_t DROP[4] = {L_LEAD, L_PAD, L_HATS | L_OHAT, L_SNARE};
+        uint8_t d = DROP[irand(4)];
+        if ((layers & d) && (layers & ~d & (L_BASS | L_PAD)))
+            layers = (uint8_t)(layers & ~d);
+    } else if (si && !(layers & L_LEAD) && (layers & L_KICK) && frand() < arrange * 0.25f) {
+        layers |= L_LEAD;
+    }
+    key_set();
+    chord_nt = 0;
+    chord_at(0);
+    if (bpat_shape != sec_pat())
+        bass_shape(sec_pat());
+    bass_publish();
+    if (layers & L_LEAD)
+        lead_phrase();
+    en_sec = (uint8_t)si;
+    en_sec_len = (uint8_t)slen;
+    en_sec_bar = 0;
+    en_layers = layers;
+    en_next_sec = (uint8_t)(si + 1 < song->nsec ? si + 1 : song->loop_to);
+}
+
+static void section_next(void)                  /* the end of a section: where next */
+{
+    int n = si + 1, wrapped = 0;
+    if (hold && !next_req) {
+        n = si;
+    } else if (!next_req && si && frand() < arrange * 0.22f && srep < 1 && slen <= 16) {
+        n = si;                                  /* once more */
+    } else if (!next_req && frand() < arrange * 0.12f && song->nsec > song->loop_to + 1) {
+        n = song->loop_to + irand(song->nsec - song->loop_to);   /* elsewhere in the loop */
+    }
+    if (n >= song->nsec) {
+        n = song->loop_to;
+        wrapped = 1;
+    }
+    next_req = 0;
+    srep = n == si ? srep + 1 : 0;
+    if (wrapped) {                               /* a new cycle: maybe all of it in another key, maybe home */
+        if (cyc_tr && frand() < 0.6f)
+            cyc_tr = 0;
+        else if (!cyc_tr && frand() < arrange * 0.3f) {
+            static const int8_t MOVE[4] = {2, 1, 3, -2};
+            cyc_tr = MOVE[irand(4)];
+        }
+    }
+    section_enter(n);
+}
+
+/* ------------------------------------------------------------- the grid --- */
+static void lead_step(int st)
+{
+    int b = sbar % PH_BARS;
+    if (!(layers & L_LEAD) || ph_rest[b]) {
+        return;
+    }
+    if (ph_on[b] >> st & 1u) {
+        int n = lead_pitch(ph_deg[b][st], (st & 3) == 0);
+        lead_note(n, (int32_t)((float)ph_len[b][st] * step_len * 0.92f));
+    }
+}
+
+static void tick(void)
+{
+    int st = (int)(sixteenth & 15u), d;
+    if (st == 0) {                               /* a bar */
+        if (sixteenth && (++sbar >= slen || next_req))
+            section_next();                      /* the end of the section, or EDIT: on this bar */
+        else if (sbar)
+            bass_evolve();
+        if ((sbar % PH_BARS) == 0 && sbar && (layers & L_LEAD))
+            lead_vary();
+        if (sec_now()->flags & F_BUILD)
+            build = (float)(sbar + 1) / (float)slen;
+        en_sec_bar = (uint8_t)sbar;
+        drums_bar();
+        bass_publish();
+    }
+    if ((st & 3) == 0)
+        chord_at(sbar * 4 + st / 4);
+    en_step = (uint8_t)st;
+    /* the bass: its step */
+    if ((layers & L_BASS) && bcode[st] >= 0) {
+        int acc = (int)(bacc >> st & 1u), len16 = 1, k;
+        for (k = st + 1; k < EN_STEPS && bcode[k] < 0 && len16 < 4; k++)
+            len16++;
+        if (bpat_shape == A_SLOW)
+            len16 = 3;
+        bass_trigger(bass_note(bcode[st]), acc, (int32_t)((float)len16 * step_len * (0.45f + 0.004f * (float)par[P_DECAY])));
+    }
+    lead_step(st);
+    for (d = 0; d < EN_NDRUM; d++)
+        if (dpat[d] >> st & 1u) {
+            if (d == D_TOM) {
+                float f0 = fill_bar && st >= 8 ? 260.0f - 9.0f * (float)(st - 8) : 220.0f;
+                tom_pitch(f0);
+            }
+            drum_hit(d, dvel[d][st] * (0.9f + 0.15f * frand()), st & 1);
+        }
+    sixteenth++;
+    en_bars = sixteenth;
+}
+
+/* ------------------------------------------------- reverb: Dattorro's plate --- */
+/* J. Dattorro, "Effect Design, Part 1", JAES 1997 (as in AMB-1 and FoMni): a predelay, four input diffusers, then
+ * a figure-eight tank of two halves. The paper's lengths are for 29761 Hz; DS() scales them to 44.1 kHz. */
+#define DS(n) (((n) * 14818 + 5000) / 10000)
+#define PRE_N 882                                    /* 20 ms */
+#define EXC DS(16)
+enum { L_PRE, L_IN1, L_IN2, L_IN3, L_IN4, L_APL, L_D1L, L_AP2L, L_D2L, L_APR, L_D1R, L_AP2R, L_D2R, L_N };
+static const int DL_LEN[L_N] = {PRE_N, DS(142), DS(107), DS(379), DS(277), DS(672) + EXC + 2, DS(4453), DS(1800),
+                                DS(3720), DS(908) + EXC + 2, DS(4217), DS(2656), DS(3163)};
+#define DL_TOTAL (PRE_N + DS(142) + DS(107) + DS(379) + DS(277) + DS(672) + DS(4453) + DS(1800) + DS(3720) + DS(908) + \
+                  DS(4217) + DS(2656) + DS(3163) + 2 * (EXC + 2))
+static float pl_buf[DL_TOTAL] EN_POOL;
+typedef struct {
+    float *b;
+    int n, i;
+} dl_t;
+static dl_t dl[L_N];
+static float pl_bw, pl_damp_l, pl_damp_r, pl_decay = 0.72f, lfo_s, lfo_c = 1.0f;
+
+static inline float tap(const dl_t *d, int k)
+{
+    int j = d->i - k;
+    return d->b[j < 0 ? j + d->n : j];
+}
+static inline void push(dl_t *d, float x)
+{
+    d->b[d->i] = x;
+    if (++d->i >= d->n)
+        d->i = 0;
+}
+static inline float allpass(dl_t *d, int len, float x, float g)
+{
+    float z = tap(d, len), v = x - g * z;
+    push(d, fm_flush(v));
+    return z + g * v;
+}
+static inline float allpass_mod(dl_t *d, float len, float x, float g)
+{
+    int k = (int)len;
+    float f = len - (float)k, z = tap(d, k) + (tap(d, k + 1) - tap(d, k)) * f, v = x - g * z;
+    push(d, fm_flush(v));
+    return z + g * v;
+}
+static inline void reverb(float in, float *ol, float *or_)
+{
+    float x, a, b, fb_l = tap(&dl[L_D2R], DS(3163)), fb_r = tap(&dl[L_D2L], DS(3720));
+    push(&dl[L_PRE], in);
+    x = tap(&dl[L_PRE], PRE_N);
+    pl_bw += 0.55f * (x - pl_bw);
+    x = allpass(&dl[L_IN1], DS(142), pl_bw, 0.75f);
+    x = allpass(&dl[L_IN2], DS(107), x, 0.75f);
+    x = allpass(&dl[L_IN3], DS(379), x, 0.625f);
+    x = allpass(&dl[L_IN4], DS(277), x, 0.625f);
+    {
+        float s = lfo_s + 0.0001f * lfo_c, c = lfo_c - 0.0001f * s;
+        lfo_s = s;
+        lfo_c = c;
+    }
+    a = allpass_mod(&dl[L_APL], (float)DS(672) + (float)EXC * lfo_s, x + pl_decay * fb_l, -0.7f);
+    push(&dl[L_D1L], a);
+    b = tap(&dl[L_D1L], DS(4453));
+    pl_damp_l += 0.4f * (b - pl_damp_l);
+    b = allpass(&dl[L_AP2L], DS(1800), pl_damp_l * pl_decay, 0.5f);
+    push(&dl[L_D2L], b);
+    a = allpass_mod(&dl[L_APR], (float)DS(908) + (float)EXC * lfo_c, x + pl_decay * fb_r, -0.7f);
+    push(&dl[L_D1R], a);
+    b = tap(&dl[L_D1R], DS(4217));
+    pl_damp_r += 0.4f * (b - pl_damp_r);
+    b = allpass(&dl[L_AP2R], DS(2656), pl_damp_r * pl_decay, 0.5f);
+    push(&dl[L_D2R], b);
+    *ol = 0.6f * (tap(&dl[L_D1R], DS(266)) + tap(&dl[L_D1R], DS(2974)) - tap(&dl[L_AP2R], DS(1913)) +
+                  tap(&dl[L_D2R], DS(1996)) - tap(&dl[L_D1L], DS(1990)) - tap(&dl[L_AP2L], DS(187)) -
+                  tap(&dl[L_D2L], DS(1066)));
+    *or_ = 0.6f * (tap(&dl[L_D1L], DS(353)) + tap(&dl[L_D1L], DS(3627)) - tap(&dl[L_AP2L], DS(1228)) +
+                   tap(&dl[L_D2L], DS(2673)) - tap(&dl[L_D1R], DS(2111)) - tap(&dl[L_AP2R], DS(335)) -
+                   tap(&dl[L_D2R], DS(121)));
+}
+static void plate_init(void)
+{
+    float *p = pl_buf;
+    int k, i;
+    for (k = 0; k < L_N; k++) {
+        dl[k].b = p;
+        dl[k].n = DL_LEN[k];
+        dl[k].i = 0;
+        p += DL_LEN[k];
+    }
+    for (i = 0; i < DL_TOTAL; i++)
+        pl_buf[i] = 0.0f;
+    pl_bw = pl_damp_l = pl_damp_r = 0.0f;
+    lfo_s = 0.0f;
+    lfo_c = 1.0f;
+}
+
+/* ---------------------------------------------------- echo: the tape --- */
+/* AMB-1's tape at a quarter rate (11 kHz, 16-bit): each repeat darker and thinner. Two heads: the first at the echo's
+ * time, on the right (I Feel Love's dry note left, its repeat right); the second at twice it, on the left. The first
+ * feeds back. */
+#define TAPE_N 62000
+#define TAPE_SR 11025.0f
+static int16_t tape[TAPE_N] EN_POOL;
+static int tape_w, tape_ph;
+static float tape_acc, tape_lp, tape_hp, tape_p1, tape_p2, tape_c1, tape_c2;
+static float echo_send, echo_len, echo_len_t, echo_fb, rev_send;
+
+static inline float tape_read(float d)
+{
+    int k = (int)d, i0, i1;
+    float f = d - (float)k, a, c;
+    i0 = tape_w - k;
+    i1 = i0 - 1;
+    if (i0 < 0)
+        i0 += TAPE_N;
+    if (i1 < 0)
+        i1 += TAPE_N;
+    a = (float)tape[i0];
+    c = (float)tape[i1];
+    return (a + (c - a) * f) * (1.0f / 12000.0f);
+}
+static inline int16_t s16(float x)
+{
+    x *= 12000.0f;
+    return (int16_t)(x > 32767.0f ? 32767.0f : x < -32767.0f ? -32767.0f : x);
+}
+static void echo_time(void)
+{
+    float beat, t;
+    if (par[P_TEMPO] <= 0)
+        return;
+    beat = 60.0f / (float)par[P_TEMPO];
+    t = ETIME_BEATS[(unsigned)par[P_ETIME] < 6u ? par[P_ETIME] : 0] * beat;
+    if (2.0f * t * TAPE_SR > (float)(TAPE_N - 8))
+        t = (float)(TAPE_N - 8) / (2.0f * TAPE_SR);
+    echo_len_t = t * TAPE_SR;
+    if (echo_len <= 0.0f)
+        echo_len = echo_len_t;
+}
+static inline void echoes(float in, float *el, float *er)
+{
+    tape_acc += in;
+    if (++tape_ph >= 4) {
+        float h1, h2;
+        tape_ph = 0;
+        echo_len += (echo_len_t - echo_len) * 0.002f;
+        h1 = tape_read(echo_len * (1.0f + 0.002f * motion * mod[5].v));
+        h2 = tape_read(2.0f * echo_len);
+        tape_lp += 0.6f * (h1 - tape_lp);
+        tape_hp += 0.04f * (tape_lp - tape_hp);
+        if (++tape_w >= TAPE_N)
+            tape_w = 0;
+        tape[tape_w] = s16(tape_acc * 0.25f + echo_fb * (tape_lp - tape_hp));
+        tape_acc = 0.0f;
+        tape_p1 = tape_c1;
+        tape_p2 = tape_c2;
+        tape_c1 = h1;
+        tape_c2 = h2;
+    }
+    {
+        float f = (float)tape_ph * 0.25f, h1 = tape_p1 + (tape_c1 - tape_p1) * f, h2 = tape_p2 + (tape_c2 - tape_p2) * f;
+        *el = 0.25f * h1 + 0.6f * h2;
+        *er = h1 + 0.2f * h2;
+    }
+}
+
+/* ---------------------------------------------------------- parameters --- */
+static int pulse;
+static uint32_t ext_age;
+static void tempo_set(void) { step_len = EN_SR * 60.0f / ((float)par[P_TEMPO] * 4.0f); }
+
+static void apply(int p, int v)
+{
+    const en_param_t *pi = &PARAMS[p];
+    if (v < pi->lo)
+        v = pi->lo;
+    if (v > pi->hi)
+        v = pi->hi;
+    par[p] = (int16_t)v;
+    switch (p) {
+    case P_TEMPO:
+        tempo_set();
+        echo_time();
+        break;
+    case P_EVOLVE: evolve = (float)v * 0.01f; break;
+    case P_MOTION: motion = (float)v * 0.01f; break;
+    case P_ARRANGE: arrange = (float)v * 0.01f; break;
+    case P_BASS: bass_vol = (float)(v * v) * 0.0001f; break;
+    case P_CUTOFF: bcut = (float)v * 0.01f; break;
+    case P_RESO: breso = (float)v * 0.01f; break;
+    case P_DECAY:
+        bdec = (float)v * 0.01f;
+        bass.adec = fm_expf(-6.9f / ((0.07f + 0.6f * bdec * bdec) * EN_SR));
+        bass.fdec = fm_expf(-6.9f / ((0.04f + 0.35f * bdec) * EN_SR));
+        break;
+    case P_LEAD: lead_vol = (float)(v * v) * 0.0001f; break;
+    case P_LVOICE: lvoice = v; break;
+    case P_GLIDE: glide_k = 1.0f / ((0.004f + 0.0022f * (float)v) * EN_SR); break;   /* 4 .. 225 ms */
+    case P_PAD: pad_vol = (float)(v * v) * 0.0001f; break;
+    case P_PCOLOUR: pcolour = v; break;
+    case P_BRIGHT: bright = (float)v; break;
+    case P_PHASER: phaser_d = (float)v * 0.01f; break;
+    case P_DRUMS: drum_vol = (float)(v * v) * 0.0001f; break;
+    case P_HATS:
+        hat_f = 0.55f + 0.0070f * (float)v;
+        hat_open = 0.45f - 0.0025f * (float)v;
+        break;
+    case P_SWING: swing = (float)v * 0.005f; break;
+    case P_ECHO: echo_send = (float)(v * v) * 0.0001f; break;
+    case P_ETIME: echo_time(); break;
+    case P_FEEDBACK: echo_fb = 0.85f * (float)v * 0.01f; break;
+    case P_REVERB: rev_send = (float)(v * v) * 0.0001f; break;
+    case P_TUNE: tunefac = fm_exp2f((float)v * (1.0f / 1200.0f)); break;
+    case P_ROOT:
+    case P_BOCT:
+        if (chord_nt) {                          /* now: the chord again in the new key */
+            int r = chord_r;
+            key_set();
+            chord_nt = 0;
+            chord_r = r + 100;
+            chord_at(sbar * 4 + (int)(sixteenth & 15u) / 4);
+        }
+        break;
+    case P_PATTERN:
+        if (chord_nt) {
+            bass_shape(sec_pat());
+            bass_publish();
+        }
+        break;
+    case P_MIDI:
+        if (!v)
+            en_midi_out(0xB0, 123, 0);
+        break;
+    default: break;
+    }
+}
+
+static void notes_off(void)
+{
+    int i;
+    for (i = 0; i < 3; i++)
+        en_midi_out(0xB0 | (uint32_t)i, 123, 0);
+    en_midi_out(0xB9, 123, 0);
+    for (i = 0; i < EN_NPAD; i++)
+        pad[i].midi_note = 0;
+    bass.note = 0;
+    lead.note = 0;
+}
+static void quiet(void)
+{
+    int i;
+    for (i = 0; i < EN_NDRUM; i++)
+        drum[i].on = 0, drum[i].wait = 0;
+    for (i = 0; i < EN_NPAD; i++)
+        pad[i].amp = 0.0f;
+    bass.on = 0;
+    bass.amp = 0.0f;
+    lead.on = 0;
+    lead.amp = lead.env = 0.0f;
+    notes_off();
+}
+
+static void song_start(int i)                   /* a song from its first section, its first bar */
+{
+    song = &SONGS[song_ok(i)];
+    en_song_i = (uint8_t)song_ok(i);
+    scale_set();
+    cyc_tr = 0;
+    srep = 0;
+    hold = 0;
+    en_held = 0;
+    next_req = 0;
+    sixteenth = 0;
+    pulse = 0;
+    bpat_shape = -1;
+    section_enter(0);
+    drums_bar();
+}
+
+void en_init(void)
+{
+    int i;
+    rng = 0x9E3779B9u;                           /* from the same state every time: a seed decides the rest */
+    en_playing = 0;
+    en_ext = 0;
+    ext_age = 0;
+    pad_gate = 0.0f;
+    pulse_left = 0.0f;
+    noise = 22222u;
+    arc = arc_tgt = 0.0f;
+    arc_left = 0;
+    ph_lfo = 0.0f;
+    for (i = 0; i < 4; i++)
+        plp[i] = ph_s[0][i] = ph_s[1][i] = 0.0f;
+    ph_fb[0] = ph_fb[1] = 0.0f;
+    tape_acc = tape_lp = tape_hp = tape_p1 = tape_p2 = tape_c1 = tape_c2 = 0.0f;
+    {
+        static const bass_t B0;
+        static const lead_t L0;
+        static const drum_t D0;
+        bass = B0;
+        lead = L0;
+        for (i = 0; i < EN_NDRUM; i++)
+            drum[i] = D0;
+    }
+    for (i = 0; i <= SN; i++)
+        sint[i] = fm_sinf((float)i * (FM_TWO_PI / (float)SN));
+    plate_init();
+    for (i = 0; i < TAPE_N; i++)
+        tape[i] = 0;
+    tape_w = tape_ph = 0;
+    echo_len = 0.0f;
+    q_r = q_w = 0;
+    for (i = 0; i < NMOD; i++) {
+        mod[i].v = mod[i].tgt = 0.0f;
+        mod[i].left = 0;
+    }
+    for (i = 0; i < EN_NPAD; i++) {
+        static const pad_t P0;
+        pad[i] = P0;
+        pad[i].note = pad[i].target = (float)(55 + 5 * i);
+        pad[i].amp = 0.0f;
+        pad[i].hf = 1.0f;
+        pad[i].hand = 0;
+        pad[i].ph[0] = 0.13f * (float)i;
+        pad[i].ph[1] = 0.37f + 0.2f * (float)i;
+        pad[i].vib = 0.25f * (float)i;
+        pad[i].midi_note = 0;
+    }
+    arcm = 0.0f;
+    pad_gain = 0.0f;
+    for (i = 0; i < P_NPARAMS; i++)              /* every value first: one applied may read another */
+        par[i] = PARAMS[i].def;
+    for (i = 0; i < P_NPARAMS; i++)
+        apply(i, PARAMS[i].def);
+    song_start(0);
+    for (i = 0; i < EN_NPAD; i++)
+        pad[i].note = pad[i].target, pad[i].hand = 0;
+}
+
+/* ------------------------------------------------------------ transport --- */
+static void clock_pulse(void)
+{
+    if (pulse == 0)
+        tick();
+    if (!en_ext)
+        midi(0xF8, 0, 0);
+    if (++pulse >= 6)
+        pulse = 0;
+}
+static void play_start(int from_top)
+{
+    int i;
+    if (from_top)
+        song_start(en_song_i);
+    pulse_left = 0.0f;
+    en_playing = 1;
+    pad_gate = 1.0f;
+    for (i = 0; i < EN_NPAD; i++)
+        pad_midi(&pad[i]);
+    if (!en_ext)
+        midi(from_top ? 0xFA : 0xFB, 0, 0);
+}
+static void play_stop(void)
+{
+    int d;
+    for (d = 0; d < EN_NDRUM; d++)
+        drum[d].wait = 0;
+    en_playing = 0;
+    pad_gate = 0.0f;
+    bass.gate = 0;
+    lead.gate = 0;
+    if (!en_ext)
+        midi(0xFC, 0, 0);
+    notes_off();
+}
+
+static void drain(void)
+{
+    while (q_r != q_w) {
+        uint32_t c = q[q_r % QN];
+        int a = (int)(c >> 16 & 0xFFu), b = (int)(int16_t)(c & 0xFFFFu);
+        BARRIER();
+        q_r++;
+        switch (c >> 24) {
+        case C_SET:
+            if (a < P_NPARAMS)
+                apply(a, b);
+            break;
+        case C_PLAY:
+            if (a && !en_playing)
+                play_start(1);
+            else if (!a && en_playing)
+                play_stop();
+            break;
+        case C_NEXT: next_req = 1; break;
+        case C_HOLD:
+            hold = (uint8_t)(a != 0);
+            en_held = hold;
+            break;
+        case C_SEED:
+            rng ^= (uint32_t)(b & 0xFFFF) * 2654435761u;
+            if (!rng)
+                rng = 1u;
+            break;
+        case C_CLOCK:
+            en_ext = 1;
+            ext_age = 0;
+            if (a == EN_CLK_TICK) {
+                if (en_playing)
+                    clock_pulse();
+            } else if (a == EN_CLK_START) {
+                play_start(1);
+            } else if (a == EN_CLK_CONTINUE) {
+                if (!en_playing)
+                    play_start(0);
+            } else if (en_playing) {
+                play_stop();
+            }
+            break;
+        case C_PANIC: quiet(); break;
+        case C_SONG:
+            if (en_playing)
+                notes_off();
+            song_start(a);
+            break;
+        }
+    }
+}
+
+/* --------------------------------------------------------------- render --- */
+#define BLK 256
+static float mixl[BLK], mixr[BLK], rsend[BLK], esend[BLK];
+
+static void render_bass(uint32_t n)
+{
+    uint32_t j;
+    const float g = bass_vol * 1.0f;
+    bass_t *v = &bass;
+    float p0 = v->ph[0], p1 = v->ph[1], p2 = v->ph[2], s0 = v->s[0], s1 = v->s[1], s2 = v->s[2], s3 = v->s[3];
+    float a = v->amp, ae = v->aenv, fe = v->fenv;
+    if (!v->on && a < 1e-5f) {
+        v->amp = 0.0f;
+        return;
+    }
+    for (j = 0; j < n; j++) {
+        float x, tgt, y;
+        if (!(j & 15u)) {
+            v->fenv = fe;
+            bass_coefs();
+        }
+        if (v->gate > 0) {
+            v->gate--;
+            tgt = 0.22f + 0.78f * ae;            /* the decay, to a low sustain */
+            ae *= v->adec;
+        } else {
+            tgt = 0.0f;
+        }
+        fe *= v->fdec;
+        a += (tgt - a) * (tgt > a ? 0.06f : 0.0035f);   /* ~0.4 ms attack, ~6 ms release */
+        x = 0.5f * blep_saw(p0, v->inc[0]) + 0.42f * blep_saw(p1, v->inc[1]) + 0.45f * blep_sq(p2, v->inc[2]);
+        p0 += v->inc[0];
+        if (p0 >= 1.0f)
+            p0 -= 1.0f;
+        p1 += v->inc[1];
+        if (p1 >= 1.0f)
+            p1 -= 1.0f;
+        p2 += v->inc[2];
+        if (p2 >= 1.0f)
+            p2 -= 1.0f;
+        /* the ladder: four one-poles, the input through a tanh with the resonance fed back */
+        x = fm_tanhf(1.2f * (x - 4.0f * v->k * s3));
+        s0 += v->g * (x - s0);
+        s1 += v->g * (s0 - s1);
+        s2 += v->g * (s1 - s2);
+        s3 += v->g * (s2 - s3);
+        y = s3 * (1.0f + 1.6f * v->k) * a * g;
+        mixl[j] += y;
+        mixr[j] += y * 0.78f;                    /* the dry note a little left */
+        esend[j] += y;
+        rsend[j] += y * 0.06f;
+    }
+    v->ph[0] = p0;
+    v->ph[1] = p1;
+    v->ph[2] = p2;
+    v->s[0] = fm_flush(s0);
+    v->s[1] = fm_flush(s1);
+    v->s[2] = fm_flush(s2);
+    v->s[3] = fm_flush(s3);
+    v->amp = a;
+    v->aenv = ae;
+    v->fenv = fe;
+    if (v->gate <= 0 && a < 1e-4f)
+        v->on = 0;
+}
+
+static void pad_bus(uint32_t n)                 /* a low-pass, then the phaser */
+{
+    const float fc = fm_clampf(900.0f * fm_exp2f(bright * 0.035f + 0.7f * arcm + (pcolour == 2 ? 0.6f * mod[4].v * motion : 0.0f)),
+                               300.0f, 12000.0f);
+    const float c = 1.0f - fm_expf(-FM_TWO_PI * fc * (1.0f / EN_SR));
+    const float d = phaser_d, fb = 0.25f + 0.45f * d;
+    uint32_t j;
+    int k, ch;
+    for (j = 0; j < n; j++) {
+        float in[2], o[2];
+        if (!(j & 31u)) {                        /* the sweep: 0.12 .. 0.5 Hz, 250 Hz .. 2.2 kHz */
+            ph_lfo += (0.12f + 0.25f * motion + 0.12f * mod[3].v * motion) * 32.0f / EN_SR;
+            if (ph_lfo >= 1.0f)
+                ph_lfo -= 1.0f;
+            for (ch = 0; ch < 2; ch++) {
+                float lf = 0.5f + 0.5f * sine(ph_lfo + 0.25f * (float)ch), f = 250.0f * fm_exp2f(3.1f * lf);
+                float t = fm_tanf(FM_PI * f * (1.0f / EN_SR));
+                ph_a[ch] = (t - 1.0f) / (t + 1.0f);
+            }
+        }
+        plp[0] += c * (padl[j] - plp[0]);
+        plp[1] += c * (plp[0] - plp[1]);
+        plp[2] += c * (padr[j] - plp[2]);
+        plp[3] += c * (plp[2] - plp[3]);
+        in[0] = plp[1];
+        in[1] = plp[3];
+        for (ch = 0; ch < 2; ch++) {
+            float x = in[ch] + fb * ph_fb[ch], a = ph_a[ch];
+            for (k = 0; k < 4; k++) {            /* y = a x + s; s = x - a y */
+                float y = a * x + ph_s[ch][k];
+                ph_s[ch][k] = x - a * y;
+                x = y;
+            }
+            ph_fb[ch] = fm_flush(x);
+            o[ch] = in[ch] + d * x;
+        }
+        mixl[j] += o[0] * 0.8f;
+        mixr[j] += o[1] * 0.8f;
+        rsend[j] += (o[0] + o[1]) * 0.45f;
+    }
+    for (k = 0; k < 4; k++) {
+        plp[k] = fm_flush(plp[k]);
+        ph_s[0][k] = fm_flush(ph_s[0][k]);
+        ph_s[1][k] = fm_flush(ph_s[1][k]);
+    }
+}
+
+static void render_pad(uint32_t n)
+{
+    int i;
+    float lvl = 0.0f, gate = pad_gate * ((layers & L_PAD) ? 1.0f : 0.0f);
+    uint32_t j;
+    const float g = pad_vol * 0.36f;
+    for (j = 0; j < n; j++)
+        padl[j] = padr[j] = 0.0f;
+    pad_gain += (gate - pad_gain) * fm_minf((float)n / ((gate > 0.0f ? 0.8f : 1.5f) * EN_SR), 1.0f);
+    if (pad_gain < 1e-4f && gate <= 0.0f) {
+        for (i = 0; i < EN_NPAD; i++)
+            pad[i].amp = 0.0f;
+        en_pad_level = 0.0f;
+        pad_bus(n);
+        return;
+    }
+    for (i = 0; i < EN_NPAD; i++) {
+        pad_t *v = &pad[i];
+        float p0 = v->ph[0], p1 = v->ph[1], amp = v->amp, tgt = 0.0f, gl, gr, f[4];
+        for (j = 0; j < 4; j++)
+            f[j] = v->fs[j];
+        gl = fm_cosf((PAD_PAN[i] + 1.0f) * (FM_PI / 4.0f)) * g;
+        gr = fm_sinf((PAD_PAN[i] + 1.0f) * (FM_PI / 4.0f)) * g;
+        for (j = 0; j < n; j++) {
+            float x;
+            if (!(j & 31u)) {
+                pad_coefs(v, i);
+                tgt = pad_gain * v->hf;
+            }
+            if (pcolour == 1) {                  /* a choir: a soft triangle and a little saw through two formants */
+                float bp1, bp2, l1;
+                x = (p0 < 0.5f ? 4.0f * p0 - 1.0f : 3.0f - 4.0f * p0) + 0.4f * blep_saw(p1, v->inc[1]);
+                l1 = svf(v->c1, f, x, &bp1);
+                svf(v->c2, f + 2, x, &bp2);
+                x = (bp1 * v->c1[3] + 0.5f * bp2 * v->c2[3] + 0.35f * l1) * 0.5f;
+            } else {                             /* strings and saws: two saws */
+                x = 0.5f * (blep_saw(p0, v->inc[0]) + blep_saw(p1, v->inc[1]));
+            }
+            p0 += v->inc[0];
+            if (p0 >= 1.0f)
+                p0 -= 1.0f;
+            p1 += v->inc[1];
+            if (p1 >= 1.0f)
+                p1 -= 1.0f;
+            amp += (tgt - amp) * 0.004f;
+            x *= amp;
+            padl[j] += x * gl;
+            padr[j] += x * gr;
+        }
+        for (j = 0; j < 4; j++)
+            v->fs[j] = fm_flush(f[j]);
+        v->ph[0] = p0;
+        v->ph[1] = p1;
+        v->amp = amp;
+        lvl = fm_maxf(lvl, amp);
+    }
+    en_pad_level = lvl;
+    pad_bus(n);
+}
+
+static void render_lead(uint32_t n)
+{
+    lead_t *v = &lead;
+    uint32_t j;
+    const float g = lead_vol * 0.45f;
+    float p0 = v->ph[0], p1 = v->ph[1], env = v->env, s[2] = {v->s[0], v->s[1]}, fs[4];
+    if (!v->on && env < 1e-5f) {
+        v->env = 0.0f;
+        return;
+    }
+    for (j = 0; j < 4; j++)
+        fs[j] = v->fs[j];
+    for (j = 0; j < n; j++) {
+        float x, bp, y;
+        if (!(j & 31u)) {                        /* the pitch: glide, a vibrato that comes in late */
+            float vib, f;
+            v->pitch += (v->target - v->pitch) * fm_minf(32.0f * glide_k * 4.0f, 1.0f);
+            v->vib_t += 32.0f / EN_SR;
+            if (v->vib_t > 600.0f)
+                v->vib_t -= 500.0f;                  /* whole turns of the vibrato: no jump */
+            vib = lvoice == 2 ? 0.0f : fm_clampf((v->vib_t - 0.25f) * 2.0f, 0.0f, 1.0f) * 0.22f * sine(v->vib_t * 5.6f);
+            f = mtof(v->pitch + vib);
+            v->inc = f * (1.0f / EN_SR);
+            svf_coefs(v->c, fm_clampf(f * (2.5f + 6.0f * env) * (0.8f + 0.4f * arcm), 200.0f, 14000.0f),
+                      lvoice == 1 ? 0.9f : 0.6f);
+            if (lvoice == 2) {
+                float o = 0.5f + 0.5f * sine((float)(v->note % 7) * 0.13f);
+                svf_coefs(v->fc1, 450.0f + 350.0f * o, 0.25f);
+                svf_coefs(v->fc2, 1300.0f + 900.0f * o, 0.2f);
+            }
+        }
+        if (v->gate > 0) {
+            v->gate--;
+            env += (1.0f - env) * 0.004f;
+        } else {
+            env += (0.0f - env) * 0.0015f;
+            v->on = env > 1e-4f;
+        }
+        if (lvoice == 0)
+            x = 0.55f * blep_saw(p0, v->inc) + 0.45f * blep_saw(p1, v->inc * 1.004f);
+        else
+            x = blep_sq(p0, v->inc) * 1.2f;
+        p0 += v->inc;
+        if (p0 >= 1.0f)
+            p0 -= 1.0f;
+        p1 += v->inc * 1.004f;
+        if (p1 >= 1.0f)
+            p1 -= 1.0f;
+        y = svf(v->c, s, x, &bp);
+        if (lvoice == 2) {                       /* a robot: the square through two formants, a vocoder's edge */
+            float b1, b2;
+            svf(v->fc1, fs, y, &b1);
+            svf(v->fc2, fs + 2, y, &b2);
+            y = (b1 * 2.2f + b2 * 1.6f) * 0.11f;
+        }
+        y *= env * g;
+        mixl[j] += y * 0.85f;
+        mixr[j] += y;
+        rsend[j] += y * 0.5f;
+        esend[j] += y * 0.35f;
+    }
+    v->ph[0] = p0;
+    v->ph[1] = p1;
+    v->env = env;
+    v->s[0] = fm_flush(s[0]);
+    v->s[1] = fm_flush(s[1]);
+    for (j = 0; j < 4; j++)
+        v->fs[j] = fm_flush(fs[j]);
+}
+
+static void render_hat(drum_t *v, uint32_t n, float g, float pl, float pr)
+{
+    uint32_t j;
+    int k;
+    float x1, x2, amp, att;
+    if (!v->on)
+        return;
+    x1 = v->x1, x2 = v->x2, amp = v->amp, att = v->att;
+    for (j = 0; j < n; j++) {
+        float in = 0.0f, hp, x;
+        for (k = 0; k < 4; k++) {
+            v->mph[k] += HAT_INC[k];
+            if (v->mph[k] >= 1.0f)
+                v->mph[k] -= 1.0f;
+            in += v->mph[k] < 0.5f ? 0.25f : -0.25f;
+        }
+        in = 0.4f * in + 0.7f * nz();
+        hp = in - x2 - 0.8f * x1;
+        x1 += hat_f * hp;
+        x2 += hat_f * x1;
+        x = hp * amp * att * g;
+        mixl[j] += x * pl;
+        mixr[j] += x * pr;
+        rsend[j] += x * 0.15f;
+        amp *= v->adec;
+        att += (1.0f - att) * 0.3f;
+    }
+    v->x1 = fm_flush(x1);
+    v->x2 = fm_flush(x2);
+    v->amp = amp;
+    v->att = att;
+    v->on = amp > 0.0005f;
+}
+
+static void render_drums(uint32_t n)
+{
+    uint32_t j;
+    const float g = drum_vol * 1.0f;
+    drum_t *v = &drum[D_KICK];
+    if (v->on) {
+        float ph = v->ph, inc = v->inc, amp = v->amp, cl = v->tone;
+        for (j = 0; j < n; j++) {
+            float x = (sine(ph) + 0.35f * cl * nz()) * amp * g * 0.95f;
+            mixl[j] += x;
+            mixr[j] += x;
+            ph += inc;
+            if (ph >= 1.0f)
+                ph -= 1.0f;
+            inc += (v->inc_end - inc) * 0.0009f;
+            amp *= v->adec;
+            cl *= 0.93f;
+        }
+        v->ph = ph, v->inc = inc, v->amp = amp, v->tone = cl;
+        v->on = amp > 0.0005f;
+    }
+    v = &drum[D_SNARE];
+    if (v->on) {
+        float ph = v->ph, amp = v->amp, tn = v->tone, s[2] = {v->s[0], v->s[1]};
+        for (j = 0; j < n; j++) {
+            float bp, x;
+            svf(v->c, s, nz(), &bp);
+            x = (bp * 1.6f * amp + 0.5f * sine(ph) * tn) * g * 0.42f;
+            mixl[j] += x * 0.95f;
+            mixr[j] += x;
+            rsend[j] += x * 0.5f;
+            esend[j] += x * 0.08f;
+            ph += v->inc;
+            if (ph >= 1.0f)
+                ph -= 1.0f;
+            amp *= v->adec;
+            tn *= v->tdec;
+        }
+        v->ph = ph, v->amp = amp, v->tone = tn;
+        v->s[0] = fm_flush(s[0]);
+        v->s[1] = fm_flush(s[1]);
+        v->on = amp > 0.0005f;
+    }
+    render_hat(&drum[D_HAT], n, g * 0.16f, 0.65f, 1.0f);
+    render_hat(&drum[D_OHAT], n, g * 0.13f, 1.0f, 0.7f);
+    v = &drum[D_TOM];
+    if (v->on) {
+        float ph = v->ph, inc = v->inc, amp = v->amp;
+        for (j = 0; j < n; j++) {
+            float x = sine(ph) * amp * g * 0.5f;
+            mixl[j] += x * 1.0f;
+            mixr[j] += x * 0.75f;
+            rsend[j] += x * 0.5f;
+            esend[j] += x * 0.15f;
+            ph += inc;
+            if (ph >= 1.0f)
+                ph -= 1.0f;
+            inc += (v->inc_end - inc) * 0.00012f;   /* the syndrum's fall */
+            amp *= v->adec;
+        }
+        v->ph = ph, v->inc = inc, v->amp = amp;
+        v->on = amp > 0.0005f;
+    }
+}
+
+static void render_chunk(int32_t *out, uint32_t n, float gain)
+{
+    uint32_t j;
+    const float eg = echo_send * ((sec_now()->flags & F_BREAK) ? 1.4f : 1.0f);
+    for (j = 0; j < n; j++)
+        mixl[j] = mixr[j] = rsend[j] = esend[j] = 0.0f;
+    render_pad(n);
+    render_bass(n);
+    render_lead(n);
+    render_drums(n);
+    for (j = 0; j < n; j++) {
+        float wl, wr, l, r, el, er;
+        echoes(esend[j] * eg, &el, &er);
+        reverb((rsend[j] + (el + er) * 0.25f) * rev_send * 0.9f, &wl, &wr);
+        l = (mixl[j] + 0.8f * el + 1.2f * wl) * 0.42f * gain;
+        r = (mixr[j] + 0.8f * er + 1.2f * wr) * 0.42f * gain;
+        out[2 * j] = (int32_t)(fm_tanhf(l) * 8300000.0f);
+        out[2 * j + 1] = (int32_t)(fm_tanhf(r) * 8300000.0f);
+    }
+}
+
+/* the arc: a slow tide, minutes long; Motion sets how far it goes (arc, arc_tgt, arc_left above) */
+static void control(uint32_t n)
+{
+    int i;
+    mods_step(n);
+    if (arc_left <= n) {
+        float r = frand() * 2.0f - 1.0f;
+        arc_tgt = r * (0.6f + 0.4f * frand());
+        arc_left = (uint32_t)((40.0f + 80.0f * frand()) * EN_SR);
+    } else {
+        arc_left -= n;
+    }
+    if (en_playing)
+        arc += (fm_clampf(arc_tgt, -1.0f, 1.0f) - arc) * (float)n * (1.0f / (30.0f * EN_SR));
+    arcm = arc * motion;
+    en_arc = arcm;
+    en_bass_glow *= 0.94f;
+    en_lead_glow *= 0.96f;
+    for (i = 0; i < EN_NDRUM; i++)
+        en_drum_glow[i] *= 0.92f;
+}
+
+void en_render(int32_t *out, uint32_t n, uint32_t gain_q12)
+{
+    const float gain = (float)gain_q12 * (1.0f / 4096.0f) * 2.0f;
+    drain();
+    if (en_ext && ++ext_age > 100u)
+        en_ext = 0;
+    while (n) {
+        uint32_t k = n > BLK ? BLK : n;
+        int timed = en_playing && !en_ext;
+        if (timed) {
+            if (pulse_left <= 0.0f) {
+                clock_pulse();
+                pulse_left += step_len * (1.0f / 6.0f);
+            }
+            if ((float)k > pulse_left)
+                k = (uint32_t)pulse_left + 1u;
+        }
+        if (k > n)
+            k = n;
+        {
+            int32_t w = drums_wait();
+            if (w > 0 && (uint32_t)w < k)
+                k = (uint32_t)w;
+        }
+        if (timed)
+            pulse_left -= (float)k;
+        control(k);
+        render_chunk(out, k, gain);
+        drums_wait_step((int32_t)k);
+        out += 2 * k;
+        n -= k;
+    }
+}
