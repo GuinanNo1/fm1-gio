@@ -1,13 +1,22 @@
-# the panel: the keys move the key, EDIT the next section, REC holds, ALGORITHM the pattern, OCT the bass,
-# HOME + SELECT the tempo (110 .. 130)
+# the panel: the white keys play the lead, the Setup page's Key moves the key, EDIT the next section, REC holds,
+# ALGORITHM the pattern, OCT the bass, HOME + SELECT the tempo (110 .. 130)
 wait 500
-tapkey 4
+key w2 down
+wait 100
+expect leadstep 2
+key w2 up
+wait 100
+expect leadstep -1
+expect key 0
+tap GLO
+spin K1 9
 wait 100
 expect par24 9
 expect key 9
-tapkey 2
+spin K1 -2
 wait 100
 expect key 7
+tap HOME
 # EDIT: the next section on the next bar
 expect section 0
 tap EDIT
@@ -48,9 +57,16 @@ press HOME
 spin SELECT -40
 release HOME
 expect par0 110
-# MIDI in: a note on channel 1 moves the key; a clock drives the grid
+# MIDI in: a note on channel 1 moves the key; a clock drives the grid only from the port the MIDI page names
 midi 90 3E 64
 wait 100
 expect key 2
+clock 96
+expect ext 0
+tap GLO
+tap GLO
+expect view 8
+spin K3 1
+expect par34 1
 clock 96
 expect ext 1

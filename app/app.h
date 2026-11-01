@@ -22,7 +22,7 @@
 enum { OBJ_PROJ, OBJ_PANEL, OBJ_NOBJ };
 #define APP_STORE_MAP {0xFC000u, 0xDC000u}
 #define PROJ_MAGIC 0x31524F4Du           /* "MOR1" */
-#define PROJ_FORMAT 1u
+#define PROJ_FORMAT 2u                   /* 2: the lead's echo, reverb and tone; ten lead voices */
 #define NPIECES EN_NSONGS
 
 typedef struct {

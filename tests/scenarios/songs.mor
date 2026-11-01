@@ -27,7 +27,7 @@ shot heaven.png
 # Lover: the robot
 turn PRESET 4
 expect piece 7
-expect par9 2
+expect par9 9
 # Express: 128, D minor
 turn PRESET 1
 expect piece 8

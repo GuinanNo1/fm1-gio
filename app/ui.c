@@ -4,39 +4,68 @@
  * includes it too. From AMB-1's: the input, the knobs' acceleration, the help cards, the drawing, the autosave and
  * the screen reader.
  *
- *   keys           the key: any key moves the song to its note (the chord's notes light up on the keys)
+ *   white keys     the lead, a step of the song's scale each (the chord's notes lit); a call of three notes or
+ *                  more and a pause: the lead answers, and takes it as its theme
+ *   black keys     eleven of the effects, each while held
+ *   SEL            the Effects page: the sixteen effects on the white keys (REC held: the same, for as long)
  *   PLAY           plays / stops              EDIT   the next section, on the next bar
- *   REC            HOLD: the section repeats until let go         OCT- / OCT+   the bass's octave
+ *   REC            a tap: HOLD, the section repeats until let go  OCT- / OCT+   the bass's octave
  *   ALGORITHM      the bass's pattern (Song: the song's own)      PRESETS       the song
- *   HOME ENV ARP LFO SEQ FX GLO   the pages: SONG, BASS, LEAD, PAD, DRUMS, SPACE, SETUP; SELECT steps through them
- *                  (with HOME held: the tempo)
+ *   HOME ENV ARP LFO SEQ FX GLO   the pages: SONG, BASS, LEAD (again: LEAD FX), PAD, DRUMS, SPACE, SETUP; SELECT
+ *                  steps through them (with HOME held: the tempo)
  *   KNOB 1-4       the page's four values
  *   SAVE           saves (it also saves by itself a few seconds after a change, while stopped);
  *                  held 1.5 s: the song back to its recipe */
 #include "fastmath.h"
 
-enum { V_SONG, V_BASS, V_LEAD, V_PAD, V_DRUMS, V_SPACE, V_SETUP, NVIEWS };
-static const char *const VIEW_NAME[NVIEWS] = {"Song", "Bass", "Lead", "Pad", "Drums", "Space", "Setup"};
-static const uint8_t VIEW_BTN[NVIEWS] = {B_HOME, B_ENV, B_ARP, B_LFO, B_SEQ, B_FX, B_GLO};
+enum { V_SONG, V_BASS, V_LEAD, V_LEADFX, V_PAD, V_DRUMS, V_SPACE, V_SETUP, V_MIDI, V_FXGRID, NVIEWS };
+static const char *const VIEW_NAME[NVIEWS] = {"Song", "Bass", "Lead", "Lead FX", "Pad", "Drums", "Space", "Setup",
+                                              "MIDI", "Effects"};
+static const uint8_t VIEW_BTN[NVIEWS] = {B_HOME, B_ENV, B_ARP, B_ARP, B_LFO, B_SEQ, B_FX, B_GLO, B_GLO, B_SEL};
 enum { K_LEDS = 100, K_CPU, K_NONE };
 static const uint8_t VIEW_KNOB[NVIEWS][4] = {
     {P_TEMPO, P_EVOLVE, P_MOTION, P_ARRANGE},
     {P_BASS, P_CUTOFF, P_RESO, P_DECAY},
     {P_LEAD, P_LVOICE, P_BUSY, P_GLIDE},
+    {P_LECHO, P_LREV, P_LOCT, P_LTONE},
     {P_PAD, P_PCOLOUR, P_BRIGHT, P_PHASER},
     {P_DRUMS, P_FILLS, P_HATS, P_SWING},
     {P_ECHO, P_ETIME, P_FEEDBACK, P_REVERB},
     {P_ROOT, P_TUNE, P_MIDI, K_LEDS},
+    {P_MIDI, P_MCHAN, P_MCLOCK, P_MCLKOUT},
+    {P_ECHO, P_LECHO, P_ETIME, P_FEEDBACK},
 };
 static const char *const KNOB_LABEL[NVIEWS][4] = {
     {"Tempo", "Evolve", "Motion", "Arrange"},
     {"Level", "Cutoff", "Emphasis", "Decay"},
     {"Level", "Voice", "Busy", "Glide"},
+    {"Echo", "Reverb", "Octave", "Tone"},
     {"Level", "Colour", "Bright", "Phaser"},
     {"Level", "Fills", "Hats", "Swing"},
     {"Echo", "Time", "Feedback", "Reverb"},
     {"Key", "Tune", "MIDI out", "Lights"},
+    {"MIDI out", "Channels", "Clock", "Clock out"},
+    {"Bass echo", "Lead echo", "Time", "Feedback"},
 };
+/* the black keys' effects, left to right */
+static const uint8_t BLACK_FX[11] = {FX_THROW, FX_TAPESTOP, FX_SWELL, FX_LOWPASS, FX_HIGHPASS, FX_SWEEP, FX_PHASER,
+                                     FX_FREEZE, FX_DROP, FX_STUTTER, FX_ROLL};
+/* a key (0 = F3 .. 26 = G5) as a white key's index (0..15), or as a black key's (0..10) with 0x80 set */
+static int key_role(int i)
+{
+    int k, w = 0, b = 0;
+    for (k = 0; k < i; k++) {
+        int pc = (5 + k) % 12;
+        if (pc == 1 || pc == 3 || pc == 6 || pc == 8 || pc == 10)
+            b++;
+        else
+            w++;
+    }
+    {
+        int pc = (5 + i) % 12;
+        return (pc == 1 || pc == 3 || pc == 6 || pc == 8 || pc == 10) ? 0x80 | b : w;
+    }
+}
 
 /* the screen's colours: a night club in 1977, a mirror ball over a dark floor. The bass cyan (the loudest
  * thing, the most light), the pad violet, the lead gold, the drums red; the accent magenta. Each a dim tint too. */
@@ -73,6 +102,10 @@ static struct {
     uint32_t touch_until;
     uint32_t frame;
     uint32_t sig[3];
+    uint8_t prev_view;                 /* the page before the Effects page (SEL goes back to it) */
+    uint8_t rec_grid;                  /* REC held: the effects on the white keys */
+    uint32_t fx_keys, lead_keys;       /* keys down as effects, as the lead (each keeps its role until let go) */
+    uint16_t fx_sent;
 } ui;
 
 static uint8_t sp_said;
@@ -258,6 +291,8 @@ static void set_piece(int i)                    /* the song playing kept as it i
 /* ------------------------------------------------------------ buttons --- */
 static void set_view(int v)
 {
+    if (v == V_FXGRID && ui.view != V_FXGRID)
+        ui.prev_view = ui.view;
     ui.view = (uint8_t)v;
     ui.touched = -1;
 }
@@ -265,7 +300,19 @@ static void set_view(int v)
 static void button(int b)
 {
     int v;
-    for (v = 0; v < NVIEWS; v++)
+    if (b == B_SEL) {                            /* the Effects page, and back */
+        set_view(ui.view == V_FXGRID ? ui.prev_view : V_FXGRID);
+        return;
+    }
+    if (VIEW_BTN[ui.view] == b) {                /* its page again: the button's next page (ARP: Lead FX) */
+        for (v = ui.view + 1; v < NVIEWS && VIEW_BTN[v] != b; v++)
+            ;
+        if (v < NVIEWS) {
+            set_view(v);
+            return;
+        }
+    }
+    for (v = 0; v < NVIEWS; v++)                 /* a page's button: its page */
         if (VIEW_BTN[v] == b) {
             set_view(v);
             return;
@@ -311,14 +358,19 @@ static void button(int b)
     }
 }
 
-/* MIDI in (USB and the TRS jack): a channel 1 note moves the key; clock and start / stop drive the grid */
+/* MIDI in (USB and the TRS jack): a channel 1 note moves the key; clock and start / stop drive the grid, from the port
+ * the MIDI page's Clock names (Internal: none; with no clock coming in, MOR-1 keeps its own time) */
 static void midi_in(void)
 {
     uint32_t pkt;
-    while (plat_midi_in(&pkt, 0)) {
+    int port = 0;
+    while (plat_midi_in(&pkt, &port)) {
         uint32_t st = (pkt >> 8) & 0xFFu, n = (pkt >> 16) & 0x7Fu, v = pkt >> 24;
-        if (st == 0xF8u || st == 0xFAu || st == 0xFBu || st == 0xFCu)
-            en_clock(st == 0xF8u ? EN_CLK_TICK : st == 0xFAu ? EN_CLK_START : st == 0xFBu ? EN_CLK_CONTINUE : EN_CLK_STOP);
+        if (st == 0xF8u || st == 0xFAu || st == 0xFBu || st == 0xFCu) {
+            int src = proj.par[P_MCLOCK];
+            if ((src == 1 && port == PORT_USB) || (src == 2 && port == PORT_TRS))
+                en_clock(st == 0xF8u ? EN_CLK_TICK : st == 0xFAu ? EN_CLK_START : st == 0xFBu ? EN_CLK_CONTINUE : EN_CLK_STOP);
+        }
         else if (st == 0x90u && v)
             set_key((int)(n % 12u));
     }
@@ -339,7 +391,7 @@ static void help_tick(uint32_t btn, uint32_t keys)
     if (!btn || (btn & (btn - 1u)) || keys)
         return;
     for (i = 0; i < NB; i++)
-        if (btn == 1u << i && i != B_PLAY && i != B_SEL && !(ui.btn_used & btn) && now - ui.down_t[i] >= HELP_HOLD &&
+        if (btn == 1u << i && i != B_PLAY && i != B_SEL && i != B_REC && !(ui.btn_used & btn) && now - ui.down_t[i] >= HELP_HOLD &&
             (int32_t)(ui.turn_t - ui.down_t[i]) <= 0) {
             ui.help = (uint8_t)(i + 1);
             ui.btn_used |= btn;
@@ -367,11 +419,48 @@ static void input(void)
             button((int)i);
         }
     }
+    if ((btn >> B_REC & 1u) && !ui.rec_grid && plat_ms() - ui.down_t[B_REC] >= 350u) {
+        ui.rec_grid = 1;                         /* REC held: the effects grid while it is */
+        ui.btn_used |= 1u << B_REC;
+    }
+    if (!(btn >> B_REC & 1u))
+        ui.rec_grid = 0;
     ch = keys ^ ui.keys;
     ui.keys = keys;
-    for (i = 0; i < NKEYS; i++)
-        if ((ch & keys) >> i & 1u)
-            set_key((int)((5u + i) % 12u));      /* key 0 is F3 */
+    for (i = 0; i < NKEYS; i++) {                /* white keys the lead, black keys effects; on the grid all effects */
+        uint32_t m = 1u << i;
+        int r;
+        if (!(ch & m))
+            continue;
+        r = key_role((int)i);
+        if (keys & m) {
+            if ((r & 0x80) || ui.view == V_FXGRID || ui.rec_grid) {
+                int f = (r & 0x80) ? BLACK_FX[r & 0x7F] : r;
+                ui.fx_keys |= m;
+                say("EFFECT", EN_FX_NAME[f]);
+            } else {
+                ui.lead_keys |= m;
+                en_lead_key(r, 1);
+            }
+        } else if (ui.fx_keys & m) {
+            ui.fx_keys &= ~m;
+        } else if (ui.lead_keys & m) {
+            ui.lead_keys &= ~m;
+            en_lead_key(r, 0);
+        }
+    }
+    {
+        uint16_t fx = 0;
+        for (i = 0; i < NKEYS; i++)
+            if (ui.fx_keys >> i & 1u) {
+                int r = key_role((int)i);
+                fx |= (uint16_t)(1u << ((r & 0x80) ? BLACK_FX[r & 0x7F] : r));
+            }
+        if (fx != ui.fx_sent) {
+            ui.fx_sent = fx;
+            en_fx(fx);
+        }
+    }
     if (btn || keys || ch)
         ui.act_t = plat_ms();
     midi_in();
@@ -780,11 +869,11 @@ static int help_lines(int b, const char *l[HELP_LINES])
     switch (b) {
     case B_HOME: L("THE SONG"); L("TEMPO, EVOLVE, MOTION,"); L(" ARRANGE"); L("+ SELECT: TEMPO"); break;
     case B_ENV: L("THE BASS SEQUENCE"); L("LEVEL, CUTOFF, EMPHASIS,"); L(" DECAY"); break;
-    case B_ARP: L("THE LEAD"); L("LEVEL, VOICE, BUSY, GLIDE"); break;
+    case B_ARP: L("THE LEAD"); L("LEVEL, VOICE, BUSY, GLIDE"); L("AGAIN: ITS ECHO, REVERB,"); L(" OCTAVE, TONE"); break;
     case B_LFO: L("THE PAD"); L("LEVEL, COLOUR, BRIGHT,"); L(" PHASER"); break;
     case B_SEQ: L("THE DRUMS"); L("LEVEL, FILLS, HATS, SWING"); break;
     case B_FX: L("THE SPACE"); L("ECHO, TIME, FEEDBACK,"); L(" REVERB"); break;
-    case B_GLO: L("SETUP"); L("KEY, TUNE, MIDI OUT, LIGHTS"); break;
+    case B_GLO: L("SETUP"); L("KEY, TUNE, MIDI OUT, LIGHTS"); L("AGAIN: MIDI: CHANNELS,"); L(" CLOCK, CLOCK OUT"); break;
     case B_EDIT: L("THE NEXT SECTION,"); L("ON THE NEXT BAR"); break;
     case B_REC: L("HOLD: THE SECTION"); L(" REPEATS"); L("AGAIN: LET IT GO ON"); break;
     case B_OCTDN: L("THE BASS AN OCTAVE DOWN"); L("WITH OCT+, 5 S: UPDATE MODE"); break;
@@ -808,6 +897,25 @@ static void draw_help(void)
         text_c(120, 50 + k * 20, &FONT_S, l[k] + (l[k][0] == ' '), K_TEXT);
 }
 
+/* the effects grid (SEL, or REC held): four rows of four, a white key each; lit while held */
+static void draw_grid(void)
+{
+    static const uint16_t RC[4] = {K_BASS, K_PAD, K_LEAD, K_DRUM};
+    int r, c;
+    for (r = 0; r < 4; r++)
+        for (c = 0; c < 4; c++) {
+            int f = r * 4 + c, on = (int)(en_fx_on >> f & 1u);
+            int32_t x = 4 + c * 59, y = 4 + r * 35;
+            char t[4];
+            cv_round(x, y, 56, 32, 5, on ? RC[r] : K_PANEL);
+            itoa_u((uint32_t)f + 1u, t);
+            cv_text(x + 4, y, &FONT_XS, t, on ? K_BG : K_DIM);
+            if (!c)
+                cv_text(x + 52 - text_w(&FONT_XS, EN_FX_ROW[r]), y, &FONT_XS, EN_FX_ROW[r], on ? K_BG : RC[r]);
+            text_c(x + 28, y + 15, &FONT_XS, EN_FX_NAME[f], on ? K_BG : K_TEXT);
+        }
+}
+
 static void draw_main(void)
 {
     uint32_t h = hash(2166136261u, proj.piece | (uint32_t)en_sec << 8 | (uint32_t)en_sec_bar << 12 |
@@ -821,6 +929,16 @@ static void draw_main(void)
             ui.sig[1] = h;
             cv_begin(240, MAIN_H, K_BG);
             draw_help();
+            cv_blit(0, MAIN_Y);
+        }
+        return;
+    }
+    if (ui.view == V_FXGRID || ui.rec_grid) {
+        h = hash(0x46584752u, en_fx_on | (uint32_t)ui.rec_grid << 16);
+        if (h != ui.sig[1]) {
+            ui.sig[1] = h;
+            cv_begin(240, MAIN_H, K_BG);
+            draw_grid();
             cv_blit(0, MAIN_Y);
         }
         return;
@@ -898,21 +1016,31 @@ static void draw_knobs(void)
     cv_blit(0, KNB_Y);
 }
 
-/* the lights: the page's button, PLAY while playing, REC while held; on the keys, the chord's notes */
+/* the lights: the page's button, PLAY while playing, REC while held; on the white keys the chord's notes (the lead's
+ * safe notes) and the one played, on the grid the effects on; the black keys lit, dark while held */
 static void leds(void)
 {
     uint32_t b = 0, k = 0, i, ch = 0;
+    int grid = ui.view == V_FXGRID || ui.rec_grid;
     b |= 1u << VIEW_BTN[ui.view];
     if (en_playing)
         b |= 1u << B_PLAY;
-    if (en_held)
+    if (en_held || ui.rec_grid)
         b |= 1u << B_REC;
     for (i = 0; i < EN_NPAD; i++)
         ch |= 1u << (en_chord[i] % 12u);
     if (proj.leds)
-        for (i = 0; i < NKEYS; i++)
-            if (ch >> ((5u + i) % 12u) & 1u)
+        for (i = 0; i < NKEYS; i++) {
+            int r = key_role((int)i), on;
+            if (r & 0x80)
+                on = !(ui.keys >> i & 1u);
+            else if (grid)
+                on = (int)(en_fx_on >> r & 1u) || (r & 3) == 0;
+            else
+                on = (int)(ch >> en_step_pc(r) & 1u) || (ui.keys >> i & 1u);
+            if (on)
                 k |= 1u << i;
+        }
     plat_glow(proj.leds == 1);
     plat_leds(b, k);
 }
@@ -1299,6 +1427,10 @@ static void speak_dump(void)
     }
     for (x = 0; x < EN_NPATTERNS; x++) {
         msg_text("PATTERN", EN_PATTERN_NAME[x], t);
+        sp_print("MSG", t);
+    }
+    for (x = 0; x < EN_NFX; x++) {
+        msg_text("EFFECT", EN_FX_NAME[x], t);
         sp_print("MSG", t);
     }
     for (x = -1; x <= 1; x++) {

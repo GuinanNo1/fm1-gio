@@ -1,0 +1,80 @@
+# the drop-in effects: the black keys while held; SEL, the Effects page, the white keys all sixteen; REC held, the
+# same for as long; ARP twice the Lead FX page; GLO twice the MIDI page
+wait 1000
+key b0 down
+wait 100
+expect fx 1
+key b9 down
+wait 100
+expect fx 0x1001
+key b0 up
+key b9 up
+wait 100
+expect fx 0
+# the white keys play the lead, not effects
+key w5 down
+wait 100
+expect fx 0
+expect leadstep 5
+key w5 up
+# SEL: the Effects page; white key 7 is Sweep (bit 6), white key 16 Roll
+tap SEL
+wait 100
+expect view 9
+key w6 down
+key w15 down
+wait 300
+expect fx 0x8040
+shot grid.png
+key w6 up
+key w15 up
+wait 100
+expect fx 0
+tap SEL
+expect view 0
+# REC held: the grid while held; a key held keeps its effect after REC is let go; a tap of REC still holds
+press REC
+wait 500
+key w3 down
+wait 200
+expect fx 8
+shot recgrid.png
+release REC
+wait 100
+expect held 0
+expect fx 8
+key w3 up
+wait 100
+expect fx 0
+tap REC
+wait 100
+expect held 1
+tap REC
+# ARP, ARP: Lead FX; its first knob the lead's echo
+tap ARP
+expect view 2
+tap ARP
+expect view 3
+spin K1 10
+expect par30 50
+shot leadfx.png
+tap ARP
+expect view 2
+# GLO, GLO: the MIDI page; Channels to 4, 5, 6, 11
+tap GLO
+tap GLO
+expect view 8
+spin K2 1
+expect par33 1
+shot midi.png
+wav fx.wav
+tap HOME
+key b5 down
+wait 3000
+key b5 up
+key b7 down
+wait 2000
+key b7 up
+wait 2000
+wavstop
+expect peak_db_max -0.5

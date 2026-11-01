@@ -19,7 +19,7 @@ sections with their own chord changes; it loops for ever and changes as it goes.
 5. The music
 6. The songs
 7. The pages
-8. MIDI
+8. MIDI (and 8a. Effects)
 9. Saving
 10. Troubleshooting
 11. Parameters
@@ -50,10 +50,12 @@ does the same from Chrome or Edge once a site is published.
 
 1. Switch it on. MOR-1 plays the first song, **Feel**, from its intro.
 2. Turn **PRESETS** for another song. It starts from the top of its form.
-3. Press a **key**: the song moves to that key.
-4. Turn **ALGORITHM** for another bass pattern; back to **Song** for the song's own.
-5. Press **EDIT** to move on to the next section on the next bar; press **REC** to stay in this one.
-6. Press **ENV** for the Bass page and turn KNOB 2: the cutoff opens.
+3. Play the **white keys**: the lead plays them, always in the song's scale. Play three notes or more and pause: the
+   lead answers you, and takes your notes as its theme.
+4. Hold a **black key**: an effect while you hold it (Throw, Tape stop, Sweep ...). Press **SEL** for all sixteen.
+5. Turn **ALGORITHM** for another bass pattern; back to **Song** for the song's own.
+6. Press **EDIT** to move on to the next section on the next bar; press **REC** to stay in this one.
+7. Press **ENV** for the Bass page and turn KNOB 2: the cutoff opens.
 
 ---
 
@@ -61,14 +63,16 @@ does the same from Chrome or Edge once a site is published.
 
 | Control | What it does |
 |---|---|
-| Keys | The key. Any key moves the song to its note, at once. The keys light the notes of the chord playing. |
+| White keys | The lead: each key a step of the song's scale, from its key note up. The keys of the chord playing are lit (the safest notes). Three notes or more and a pause of two beats: the lead answers (see The lead, below). On the Effects page: the sixteen effects. |
+| Black keys | Eleven effects, each while its key is held, left to right: Throw, Tape stop, Swell, Low-pass, High-pass, Sweep, Phaser, Freeze, Drop, Stutter, Roll. Lit; dark while held. |
+| SEL | The Effects page (see Effects); again: back. |
 | PLAY | Plays / stops. From stopped, the song starts from its first section. |
-| REC | HOLD: the section repeats until you press it again. |
+| REC | A tap: HOLD, the section repeats until you tap it again. Held: the effects grid on the white keys for as long as it's held. |
 | EDIT | The next section, on the next bar. |
 | OCT− / OCT+ | The bass an octave down / up (−1 to +1). |
 | ALGORITHM | The bass pattern: Song (the song's own, section by section), Pump, Pump 16, Arpeggio, Gallop, Octaves, Slow. |
 | PRESETS | The song. Each remembers its settings as you left it. |
-| HOME, ENV, ARP, LFO, SEQ, FX, GLO | The pages: Song, Bass, Lead, Pad, Drums, Space, Setup. |
+| HOME, ENV, ARP, LFO, SEQ, FX, GLO | The pages: Song, Bass, Lead, Pad, Drums, Space, Setup. ARP again: Lead FX; GLO again: MIDI. |
 | SELECT | The previous / next page. With HOME held: the tempo, 110 to 130. |
 | KNOB 1–4 | The page's four values. A quick turn speeds up; a slow one goes a step at a time. |
 | SAVE | Saves all the songs. Held 1.5 s: the song back to its recipe (then SAVE to keep that). |
@@ -114,8 +118,21 @@ low-pass and a stereo **phaser** (four stages a side, swept slowly in quadrature
 **The lead** writes a four-bar phrase for each section it plays in: a motif, the motif answered, a second motif, the
 first again; or, when **Busy** is low, a call and room for an answer. Its notes walk the song's scale, landing on the
 chord on the strong beats, never a semitone off it. With **Evolve**, a note moves or the middle bar is rewritten at
-each repeat. Voices: **Saw** (two, detuned), **Square**, **Robot** (a square through two formants, short notes, no
-vibrato). **Glide** slides between notes; past 60 it also swoops up into a phrase.
+each repeat. **Glide** slides between notes; past 60 it also swoops up into a phrase.
+
+Ten voices: **Mini** (three saws, one an octave down, through a ladder filter), **Odyssey** (a saw and a narrow pulse,
+resonant), **Synthi** (a triangle and a square, drifting), **Flute** (a sine with breath), **Theremin** (a sine, always
+gliding, its vibrato wide), **FM Lead**, **FM Brass** and **FM Reed** (two-operator FM), **Choir** (two saws through three
+vowel resonances; Tone is the vowel) and **Robot** (a square through two formants, short notes, no vibrato). The Lead FX
+page (ARP again) has the lead's own **Echo** and **Reverb** sends, its **Octave** and its **Tone**.
+
+**Playing the lead.** The white keys play it: each key a step of the song's scale from its key note up, so every note
+fits. While you play, the lead's own phrases wait. Play three notes or more and pause for two beats: what you played
+was a call, and the lead **answers** it a beat or two later in your rhythm, with notes of its own close to yours,
+ending on the chord's root or fifth. From then on your notes are the song's **theme**: the lead plays them where it
+plays, and grows the bars after them out of them (a third up, turned upside down, a third down), varied as it repeats
+with Evolve. One or two notes are just played. A new song forgets the theme. Notes are counted on the grid to the
+nearest sixteenth while the song plays.
 
 **The drums**: a kick on every beat (on 1 and 3 in a half-time section), a snare-clap on 2 and 4, closed hats in
 eighths or sixteenths (Hats), an open hat off the beat, and syndrum toms that fall in pitch. At the end of a section
@@ -172,10 +189,13 @@ tempo. *Automatic Lover* (about 132) is set to 130 to stay within MOR-1's range.
 | Song (HOME) | Tempo | Evolve | Motion | Arrange |
 | Bass (ENV) | Level | Cutoff | Emphasis | Decay |
 | Lead (ARP) | Level | Voice | Busy | Glide |
+| Lead FX (ARP again) | Echo | Reverb | Octave | Tone |
 | Pad (LFO) | Level | Colour | Bright | Phaser |
 | Drums (SEQ) | Level | Fills | Hats | Swing |
 | Space (FX) | Echo | Time | Feedback | Reverb |
 | Setup (GLO) | Key | Tune | MIDI out | Lights |
+| MIDI (GLO again) | MIDI out | Channels | Clock | Clock out |
+| Effects (SEL) | Bass echo | Lead echo | Time | Feedback |
 
 The Setup page also shows the audio's load (CPU) in the top line.
 
@@ -183,14 +203,37 @@ The Setup page also shows the audio's load (CPU) in the top line.
 
 ## 8. MIDI
 
-- **In** (USB and the TRS jack): a note on channel 1 moves the key. MIDI clock drives the grid (EXT in the top line);
-  Start plays the song from the top, Stop stops, Continue goes on.
-- **Out** (USB, when MIDI out is on): the bass on channel 1, the pad on 2, the lead on 3, the drums on 10 (General
-  MIDI: 36 kick, 39 clap, 42 and 46 hats, 45 tom), and MIDI clock.
+The MIDI page (GLO, then GLO again): **MIDI out**, **Channels**, **Clock** and **Clock out**. They belong to the FM-1, not
+to a song.
+
+- **In** (USB and the TRS jack): a note on channel 1 moves the key. **Clock** says where MIDI clock is taken from:
+  **Internal** (none: MOR-1 keeps its own time, the default), **USB** or **TRS**. From the port chosen, clock drives
+  the grid (EXT in the top line); Start plays the song from the top, Stop stops, Continue goes on. With no clock
+  coming in, MOR-1 keeps its own time.
+- **Out** (USB, when MIDI out is on; the FM-1's TRS jack is an input only): **Channels** 1, 2, 3, 10 (the default)
+  puts the bass on channel 1, the pad on 2, the lead on 3, the drums on 10; 4, 5, 6, 11 puts them on 4, 5, 6 and 11.
+  The drums are General MIDI notes: 36 kick, 39 clap, 42 and 46 hats, 45 tom. **Clock out** sends MIDI clock (and
+  start and stop) while MOR-1 keeps its own time.
 
 The FM-1 also shows up on a computer as a USB audio input: MOR-1 can be recorded over the cable.
 
 ---
+
+## 8a. Effects
+
+![The Effects page, Sweep and Roll held](img/screen-grid.png)
+
+Sixteen effects, each on while its key is held, eased in and out; any number together. **SEL** opens the Effects
+page, where the white keys play them (white key 1 is the lowest); **REC held** brings the same grid up for as long as
+it's held, and a key still held when REC is let go keeps its effect until it's let go. Eleven of them are also on the
+black keys at all times. The page's knobs are the echo's: Bass echo, Lead echo, Time, Feedback.
+
+| Row | 1 | 2 | 3 | 4 |
+|---|---|---|---|---|
+| Echo (white 1–4) | **Throw**: everything into the echo | **Time x2**: the echo's time doubled, gliding there and back | **Tape stop**: the tape slowing to a quarter, the repeats diving | **Swell**: the echo fed back to the edge |
+| Filter (5–8) | **Low-pass**: the mix down to 350 Hz | **High-pass**: the mix up to 1.3 kHz, thin | **Sweep**: the bass's filter open three octaves, Moroder's hand on the cutoff | **Phaser**: a deep phaser on everything |
+| Space (9–12) | **Reverb**: everything into the plate | **Wash**: the dry down, everything into the echo and the plate | **Freeze**: the plate stops listening and rings on | **Drop**: everything out but the bass and the kick |
+| Moves (13–16) | **Stutter**: a sixteenth of the mix caught and looped | **Gate**: the pad chopped in sixteenths | **Octave**: the bass an octave up | **Roll**: a snare every sixteenth, rising |
 
 ## 9. Saving
 
@@ -225,7 +268,12 @@ back from there.
 | Arrange | 0–100 | How freely the form goes: repeats, jumps, layers out and in, a cycle in another key |
 | Bass Level · Cutoff · Emphasis · Decay | 0–100 | The bass's level, its filter, the filter's resonance, the length of its notes and envelope |
 | Lead Level · Busy · Glide | 0–100 | The lead's level, how many notes a bar (and whether it leaves room), its portamento |
-| Lead Voice | Saw, Square, Robot | |
+| Lead Voice | Mini, Odyssey, Synthi, Flute, Theremin, FM Lead, FM Brass, FM Reed, Choir, Robot | |
+| Lead echo · Lead reverb · Tone | 0–100 | The lead's own sends to the echo and the plate; its brightness (the Choir's vowel) |
+| Lead octave | −1, 0, +1 | |
+| Channels | 1,2,3,10 or 4,5,6,11 | Bass, pad, lead, drums |
+| Clock | Internal, USB, TRS | Where MIDI clock is taken from |
+| Clock out | Off, On | |
 | Pad Level · Bright · Phaser | 0–100 | The pad's level, its brightness (the choir's vowel), the phaser's depth and feedback |
 | Pad Colour | Strings, Choir, Saws | |
 | Drums Level · Fills · Hats | 0–100 | The kit's level, how often and how long the fills, the hats' colour and density |

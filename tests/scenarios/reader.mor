@@ -26,8 +26,9 @@ wait 200
 said SONG Click, after Giorgio by Moroder, key of A, tempo 113
 turn ALGO 1
 said PATTERN Pump
-tapkey 0
-said KEY F
+key b0 down
+said EFFECT Throw
+key b0 up
 # the section moves on: said, queued
 wait 18000
 said Section Arpeggio

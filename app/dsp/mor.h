@@ -43,7 +43,9 @@ enum {
     P_DRUMS, P_FILLS, P_HATS, P_SWING,                /* the drums */
     P_ECHO, P_ETIME, P_FEEDBACK, P_REVERB,            /* space */
     P_ROOT, P_TUNE, P_MIDI,                           /* setup */
-    P_PATTERN, P_BOCT, P_LOCT,                        /* ALGORITHM, OCT- / OCT+, the lead's octave (the song's) */
+    P_PATTERN, P_BOCT, P_LOCT,                        /* ALGORITHM, OCT- / OCT+, the lead's octave */
+    P_LECHO, P_LREV, P_LTONE,                         /* the lead's own echo and reverb sends, its brightness */
+    P_MCHAN, P_MCLOCK, P_MCLKOUT,                     /* MIDI: the channel set, the clock's source, clock out */
     P_NPARAMS
 };
 typedef struct {
@@ -66,6 +68,18 @@ void en_hold(int on);                          /* the section repeats until let 
 void en_seed(uint32_t s);                      /* stir some entropy into the generators */
 void en_panic(void);                           /* everything quiet, now */
 void en_song(int i);                           /* a song: its form from the top (its parameters come by en_set) */
+/* the drop-in effects (the Effects page): bit i of the mask on while held; each eases in and out */
+enum { FX_THROW, FX_TIME, FX_TAPESTOP, FX_SWELL, FX_LOWPASS, FX_HIGHPASS, FX_SWEEP, FX_PHASER,
+       FX_REVERB, FX_WASH, FX_FREEZE, FX_DROP, FX_STUTTER, FX_GATE, FX_OCTAVE, FX_ROLL, EN_NFX };
+extern const char *const EN_FX_NAME[EN_NFX];   /* "Throw", "Time x2" ... (the grid's labels) */
+extern const char *const EN_FX_ROW[4];         /* "Echo", "Filter", "Space", "Moves" */
+void en_fx(uint32_t mask);
+extern volatile uint16_t en_fx_on;             /* (UI) the effects held now */
+/* the white keys play the lead: step 0 the key's note, then up the song's scale; three notes or more and a pause, and
+ * the lead answers and takes them as its theme */
+void en_lead_key(int step, int on);
+extern volatile int8_t en_lead_step;           /* (UI) the step held now, -1 none */
+int en_step_pc(int step);                      /* (UI) the pitch class white key `step` plays now */
 /* MIDI clock in: ticks drive the 1/16 grid (6 a step) while they keep coming */
 enum { EN_CLK_TICK, EN_CLK_START, EN_CLK_CONTINUE, EN_CLK_STOP };
 void en_clock(int msg);

@@ -3,7 +3,7 @@
 /* MOR-1 in fm1-base's host simulator (host/plat_host.c, which includes app.c and so this): MOR-1's checks for
  * "expect", its command, a reboot and the screen reader's dump.
  *
- * MOR-1's checks: playing held view piece dirty sixteenths ext section bar layers key chordroot pad_level parN
+ * MOR-1's checks: playing held view piece dirty sixteenths ext section bar layers key chordroot pad_level fx leadstep parN
  * battery (fm1-base's own: store_writes clocks_out midi_out peak_db_max peak_db_min). Its command: battery N (the
  * battery read as N, plat.h's plat_battery: -1..4; "battery off" the simulator's own, full). */
 
@@ -36,6 +36,10 @@ int app_expect(const char *what, int *got)
         g = en_key;
     else if (!strcmp(what, "chordroot"))
         g = en_chord_root;
+    else if (!strcmp(what, "fx"))                /* the effects on now, as a mask */
+        g = en_fx_on;
+    else if (!strcmp(what, "leadstep"))          /* the white key the lead plays, -1 none */
+        g = en_lead_step;
     else if (!strcmp(what, "pad_level"))
         g = (int)(en_pad_level * 100.0f);
     else if (!strncmp(what, "par", 3))           /* parN: parameter N (mor.h P_*) */

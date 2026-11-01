@@ -4,12 +4,12 @@
  * unity build, after app.h.
  *
  * The songs (their recipes are the engine's, en_song_recipe): each keeps its own settings as you leave it; Tune and
- * MIDI out are global. */
+ * the MIDI settings are global. */
 project_t proj;
 
 const char *piece_name(int i) { return en_song_name(i); }
 
-static int global_par(int p) { return p == P_TUNE || p == P_MIDI; }
+static int global_par(int p) { return p == P_TUNE || p == P_MIDI || p == P_MCHAN || p == P_MCLOCK || p == P_MCLKOUT; }
 
 static void recipe(int i, slot_t *s) { en_song_recipe(i, s->par); }
 

@@ -2,8 +2,8 @@
 
 MOR-1 turns the M-VAVE FM-1 into a generative electronic disco machine, after Giorgio Moroder's Munich sound. It
 plays itself from the moment it's switched on: a Moog-style bass sequence out in front, its repeats on the other
-side as on *I Feel Love*; strings, a choir or detuned saws through a phaser; a synth lead that writes its own
-phrases; four on the floor with claps, open hats and syndrum fills. Each song is a form (intro, verse, chorus,
+side as on *I Feel Love*; strings, a choir or detuned saws through a phaser; a synth lead (ten voices) that writes its
+own phrases, which you can play from the white keys and which answers you; four on the floor with claps, open hats and syndrum fills. Each song is a form (intro, verse, chorus,
 break) with its own chord changes, and it loops for ever, changing as it goes: a section repeated, a layer let
 out for a while, the whole song moved up a key for a cycle. You steer it: pick a song, a key, a bass pattern,
 hold a section, push it on to the next.
@@ -38,9 +38,11 @@ table in `app/dsp/mor.c` (`SONGS`), easy to correct.
 
 | | |
 |---|---|
-| Keys | The key: any key moves the song to its note (the keys light the chord) |
-| PLAY · REC · EDIT | Play / stop · hold the section · the next section, on the next bar |
-| HOME · ENV · ARP · LFO · SEQ · FX · GLO | The pages: Song, Bass, Lead, Pad, Drums, Space, Setup; KNOB 1–4 set their values |
+| White keys | The lead, in the song's scale (the chord's notes lit); a call of three notes and a pause, and the lead answers and takes it as its theme |
+| Black keys | Eleven drop-in effects, each while held |
+| SEL | The Effects page: sixteen effects on the white keys (REC held: the same, while held) |
+| PLAY · REC · EDIT | Play / stop · a tap holds the section · the next section, on the next bar |
+| HOME · ENV · ARP · LFO · SEQ · FX · GLO | The pages: Song, Bass, Lead (again: Lead FX), Pad, Drums, Space, Setup (again: MIDI); KNOB 1–4 set their values |
 | SELECT | The previous or next page; with HOME held, the tempo (110–130) |
 | ALGORITHM · PRESETS | The bass pattern · the song |
 | OCT− / OCT+ | The bass's octave |
