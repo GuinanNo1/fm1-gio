@@ -186,8 +186,7 @@ and enjoy!</p>
 </ul>
 
 <h2>Presets</h2>
-<p>Nine presets, each after a record: its tempo, key, chord changes and the shape of its arrangement. The lines are
-MOR-1's own, written as it plays.</p>
+<p>Nine presets, each lovingly influenced by ground-breaking electronic disco hits:</p>
 <ul class="songs">
   <li><b>Feel</b><span>126 BPM · C</span></li>
   <li><b>Gio</b><span>113 BPM · A minor</span></li>
