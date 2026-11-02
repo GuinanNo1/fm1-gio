@@ -5,8 +5,8 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>MOR-1 Emulator</title>
-<meta name="description" content="MOR for the M-VAVE FM-1, in the browser: the same code the FM-1 runs.">
+<title>GIO-1 Emulator</title>
+<meta name="description" content="GIO for the M-VAVE FM-1, in the browser: the same code the FM-1 runs.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;600&family=Barlow+Semi+Condensed:wght@600;700&display=swap">
@@ -109,7 +109,7 @@ header.site nav a:hover, header.site nav a[aria-current] { color: var(--magenta)
 header.site { margin-bottom: 8px; }</style>
 </head>
 <body>
-<header class="site"><a class="home" href="../index.html">MOR-1</a><nav aria-label="MOR-1"><a href="../emu/index.html" aria-current="page">Try it</a><a href="../install/index.html">Install</a><a href="../manual/index.html">Manual</a><a href="../quickstart/index.html">Quickstart</a><a href="https://github.com/GuinanNo1/fm1-gio">Source</a></nav></header>
+<header class="site"><a class="home" href="../index.html">GIO-1</a><nav aria-label="GIO-1"><a href="../emu/index.html" aria-current="page">Try it</a><a href="../install/index.html">Install</a><a href="../manual/index.html">Manual</a><a href="../quickstart/index.html">Quickstart</a><a href="https://github.com/GuinanNo1/fm1-gio">Source</a></nav></header>
 <main>
 <h2 class="sr">The FM-1</h2>
 <p class="turn">Turn your phone sideways for bigger controls.</p>
@@ -149,7 +149,7 @@ header.site { margin-bottom: 8px; }</style>
     <button type="button" id="again" disabled>Repeat last</button>
   </div>
 </details>
-<!-- MOR-1's guide under the emulator (tools/make_local_emu.py puts it after the Screen Reader section) -->
+<!-- GIO-1's guide under the emulator (tools/make_local_emu.py puts it after the Screen Reader section) -->
 <style>
 .guide { margin-top: 1.5rem; display: grid; gap: 1.25rem; max-width: 62rem; }
 .guide > div { min-width: 0; }
@@ -162,10 +162,10 @@ header.site { margin-bottom: 8px; }</style>
 .guide td:first-child { font-weight: 600; white-space: nowrap; }
 .guide .note { color: var(--muted); font-size: .9rem; }
 </style>
-<section class="guide" aria-label="MOR-1 guide">
+<section class="guide" aria-label="GIO-1 guide">
   <div>
     <h2>Getting started</h2>
-    <p>Press <b>Switch on</b>. MOR-1 plays the first song, <b>Feel</b>, from its intro. Turn <b>PRESETS</b> for
+    <p>Press <b>Switch on</b>. GIO-1 plays the first song, <b>Feel</b>, from its intro. Turn <b>PRESETS</b> for
       another song, turn <b>ALGORITHM</b> for another bass pattern. <b>SEL</b> moves on to the next section on the next
       bar, and <b>EDIT</b> shows the section's chords to change; a tap on <b>REC</b> holds the section you are in.</p>
     <p><b>Play the lead</b> on the white keys: every key is in the song's scale, and the lit ones are the chord's notes.
@@ -255,7 +255,7 @@ header.site { margin-bottom: 8px; }</style>
       </tbody>
     </table></div>
     <p class="note">Each preset has its own tempo, key, chord changes and shape; the bass lines, leads and drum
-      parts are written by MOR-1 as it plays.</p>
+      parts are written by GIO-1 as it plays.</p>
   </div>
 </section>
 <!-- what the screen says, for the computer's screen reader -->
@@ -273,7 +273,7 @@ const WHITE_K = [0, 2, 4, 6, 7, 9, 11, 12, 14, 16, 18, 19, 21, 23, 24, 26];
 const BLACK_K = [1, 3, 5, 8, 10, 13, 15, 17, 20, 22, 25];
 const BLACK_AFTER = [0, 1, 2, 4, 5, 7, 8, 9, 11, 12, 14];
 const BODY = "#3a3d42", TRAY = "#26282c", KEY_W = "#d9dadc", KEY_B = "#c9cacd", KNOB = "#1f2124", BTNC = "#2e3135", LABEL = "#e8e8ea";
-const STORE_KEY = "mor-emu-store", PREFS_KEY = "mor-emu-prefs";
+const STORE_KEY = "gio-emu-store", PREFS_KEY = "gio-emu-prefs";
 const $ = (id) => document.getElementById(id);
 const prefs = (() => { try { return JSON.parse(localStorage.getItem(PREFS_KEY) || "{}"); } catch { return {}; } })();
 const savePrefs = () => { try { localStorage.setItem(PREFS_KEY, JSON.stringify(prefs)); } catch { /* private window */ } };
@@ -788,7 +788,7 @@ async function switchOn() {
           drawLights(m.buttons, m.keys, m.dimButtons, m.dimKeys);
           if (m.said) onSaid(m.said);
           window.emuLast = m;
-          if (m.load !== undefined) cpu.textContent = `MOR-1 uses ${m.load}% of this computer's time`;
+          if (m.load !== undefined) cpu.textContent = `GIO-1 uses ${m.load}% of this computer's time`;
           if (m.store) saveStore(m.store);
         } else if (m.type === "app" && appPart && appPart.message) appPart.message(m);
       };
