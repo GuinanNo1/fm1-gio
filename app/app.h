@@ -22,7 +22,7 @@
 enum { OBJ_PROJ, OBJ_PANEL, OBJ_NOBJ };
 #define APP_STORE_MAP {0xFC000u, 0xDC000u}
 #define PROJ_MAGIC 0x31524F4Du           /* "MOR1" */
-#define PROJ_FORMAT 2u                   /* 2: the lead's echo, reverb and tone; ten lead voices */
+#define PROJ_FORMAT 3u                   /* 2: the lead's echo, reverb and tone; ten lead voices; 3: the chords */
 #define NPIECES EN_NSONGS
 
 typedef struct {
@@ -37,7 +37,9 @@ typedef struct {
     uint8_t rsv0[2];
     slot_t slot[NPIECES];                /* every song as it was left (Tune and MIDI out are global) */
     uint8_t rsv[16];                     /* room to grow */
+    uint16_t chords[NPIECES][EN_NPROG * EN_PROG_MAX];   /* every song's chord changes (mor.h EN_CH), as edited */
 } project_t;
+#define PROJ_V2_SIZE (sizeof(project_t) - sizeof(((project_t *)0)->chords))   /* format 2 had no chords */
 
 extern project_t proj;
 

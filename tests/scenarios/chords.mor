@@ -1,0 +1,73 @@
+# the Chords page (EDIT): the chord changes of the section playing, a chord at a time: KNOB 1 the chord, 2 its root,
+# 3 its type, 4 its length (the last one's End takes it away; past the last, a new one); kept with the song, saved,
+# and back to the song's own with SAVE held. SEL: the next section
+wait 500
+expect piece 0
+tap EDIT
+wait 200
+expect view 10
+# Feel's intro: C, four bars (EN_CH: root | type << 4 | beats << 8)
+expect nchords 1
+expect chord0 4096
+expect cslot 0
+shot chords.png
+# its root two up (D), minor
+spin K2 2
+expect chord0 4098
+spin K3 1
+expect chord0 4114
+wait 2200
+expect chordroot 2
+# the root goes round: down three, B
+spin K2 -3
+expect chord0 4123
+spin K2 1
+expect chord0 4112
+# a new chord after it: C minor again, two bars
+spin K1 1
+expect cslot 1
+spin K4 3
+expect nchords 2
+expect chord1 2064
+# its root up to Eb, major 7
+spin K2 3
+spin K3 2
+expect chord1 2099
+wait 200
+shot two.png
+# the first chord can't end (half a bar at the least); the last one can: taken away
+spin K1 -1
+spin K4 -9
+expect nchords 2
+expect chord0 528
+spin K1 1
+spin K4 -9
+expect nchords 1
+spin K1 1
+spin K4 3
+expect nchords 2
+# kept after a restart
+tap SAVE
+wait 300
+reboot
+wait 500
+expect piece 0
+expect section 0
+expect nchords 2
+expect chord0 528
+expect chord1 2064
+# another song keeps its own; back here, still ours
+turn PRESET 1
+expect nchords 1
+turn PRESET -1
+expect nchords 2
+# SAVE held: the song back to its own chords
+press SAVE
+wait 1700
+release SAVE
+expect nchords 1
+expect chord0 4096
+# SEL: the next section (the verse), on the next bar
+tap SEL
+wait 2500
+expect section 1

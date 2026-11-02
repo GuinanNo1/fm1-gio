@@ -97,6 +97,7 @@ void en_param_text(int i, int v, char *b)
 
 /* ------------------------------------------------------------- chords --- */
 enum { Q_MAJ, Q_MIN, Q_7, Q_M7, Q_MIN7, Q_MIN11, Q_SUS4, Q_POW, Q_N };
+typedef char q_n_is_en_nqual[Q_N == EN_NQUAL ? 1 : -1];
 static const int8_t QT[Q_N][4] = {{0, 4, 7, -1}, {0, 3, 7, -1}, {0, 4, 7, 10}, {0, 4, 7, 11},
                                   {0, 3, 7, 10}, {0, 3, 10, 5}, {0, 5, 7, -1}, {0, 7, -1, -1}};
 
@@ -319,6 +320,47 @@ int en_sec_bars(int s, int k)
 {
     const song_t *g = &SONGS[song_ok(s)];
     return (unsigned)k < g->nsec ? g->sec[k].bars : 0;
+}
+int en_sec_prog(int s, int k)
+{
+    const song_t *g = &SONGS[song_ok(s)];
+    return (unsigned)k < g->nsec ? g->sec[k].prog : 0;
+}
+
+/* the chord changes, live (the Chords page edits them; en_prog_recipe is the song's own) */
+const char *const EN_QUAL_SUFFIX[EN_NQUAL] = {"", "m", "7", "M7", "m7", "m11", "sus4", "5"};
+static uint16_t progs[EN_NSONGS][NPROG][PROG_MAX];
+static uint8_t progs_ready;
+volatile int8_t en_prog_slot = -1;
+uint16_t en_prog_recipe(int s, int p, int i)
+{
+    const ch_t *c;
+    if ((unsigned)p >= NPROG || (unsigned)i >= PROG_MAX)
+        return 0;
+    c = &SONGS[song_ok(s)].prog[p][i];
+    return c->beats ? EN_CH((c->r % 12 + 12) % 12, c->q, c->beats) : 0;
+}
+static void progs_init(void)
+{
+    int s, p, i;
+    for (s = 0; s < EN_NSONGS; s++)
+        for (p = 0; p < NPROG; p++)
+            for (i = 0; i < PROG_MAX; i++)
+                progs[s][p][i] = en_prog_recipe(s, p, i);
+    progs_ready = 1;
+}
+uint16_t en_prog_get(int s, int p, int i)
+{
+    if (!progs_ready)
+        progs_init();
+    return (unsigned)p < NPROG && (unsigned)i < PROG_MAX ? progs[song_ok(s)][p][i] : 0;
+}
+void en_prog_set(int s, int p, int i, uint16_t c)
+{
+    if (!progs_ready)
+        progs_init();
+    if ((unsigned)p < NPROG && (unsigned)i < PROG_MAX && EN_CH_Q(c) < EN_NQUAL && EN_CH_R(c) < 12 && (i || EN_CH_BEATS(c)))
+        progs[song_ok(s)][p][i] = c;
 }
 
 /* ------------------------------------------------------------ effects --- */
@@ -1220,22 +1262,28 @@ static void drums_bar(void)
 /* ------------------------------------------------------------ harmony --- */
 static void chord_at(int beat)                  /* the chord on beat `beat` of the section (its progression loops) */
 {
-    const ch_t *p = song->prog[sec_now()->prog];
+    const uint16_t *p;
     int tot = 0, i, b, r, qq;
-    for (i = 0; i < PROG_MAX && p[i].beats; i++)
-        tot += p[i].beats;
-    if (!tot)
+    if (!progs_ready)
+        progs_init();
+    p = progs[en_song_i][sec_now()->prog];
+    for (i = 0; i < PROG_MAX && EN_CH_BEATS(p[i]); i++)
+        tot += EN_CH_BEATS(p[i]);
+    if (!tot) {
+        en_prog_slot = -1;
         return;
-    b = beat % tot;
-    for (i = 0; i < PROG_MAX && p[i].beats; i++) {
-        if (b < p[i].beats)
-            break;
-        b -= p[i].beats;
     }
-    if (i >= PROG_MAX || !p[i].beats)
+    b = beat % tot;
+    for (i = 0; i < PROG_MAX && EN_CH_BEATS(p[i]); i++) {
+        if (b < EN_CH_BEATS(p[i]))
+            break;
+        b -= EN_CH_BEATS(p[i]);
+    }
+    if (i >= PROG_MAX || !EN_CH_BEATS(p[i]))
         i = 0;
-    r = ((key + p[i].r) % 12 + 12) % 12;
-    qq = p[i].q;
+    en_prog_slot = (int8_t)i;
+    r = ((key + EN_CH_R(p[i])) % 12 + 12) % 12;
+    qq = EN_CH_Q(p[i]);
     if (r == chord_r && qq == chord_q && chord_nt)
         return;
     chord_r = r;

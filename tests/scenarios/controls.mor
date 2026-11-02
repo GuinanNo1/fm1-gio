@@ -1,4 +1,4 @@
-# the panel: the white keys play the lead, the Setup page's Key moves the key, EDIT the next section, REC holds,
+# the panel: the white keys play the lead, the Setup page's Key moves the key, SEL the next section, REC holds,
 # ALGORITHM the pattern, OCT the bass, HOME + SELECT the tempo (110 .. 130)
 wait 500
 key w2 down
@@ -17,9 +17,9 @@ spin K1 -2
 wait 100
 expect key 7
 tap HOME
-# EDIT: the next section on the next bar
+# SEL: the next section on the next bar
 expect section 0
-tap EDIT
+tap SEL
 wait 2500
 expect section 1
 # REC: the section holds; the verse's 16 bars come and go, it stays

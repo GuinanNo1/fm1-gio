@@ -4,6 +4,7 @@
  * "expect", its command, a reboot and the screen reader's dump.
  *
  * MOR-1's checks: playing held view piece dirty sixteenths ext section bar layers key chordroot pad_level fx leadstep parN
+ * nchords chordN (the section's progression: its length, chord N packed as mor.h's EN_CH) cslot progslot
  * battery (fm1-base's own: store_writes clocks_out midi_out peak_db_max peak_db_min). Its command: battery N (the
  * battery read as N, plat.h's plat_battery: -1..4; "battery off" the simulator's own, full). */
 
@@ -42,6 +43,14 @@ int app_expect(const char *what, int *got)
         g = en_lead_step;
     else if (!strcmp(what, "pad_level"))
         g = (int)(en_pad_level * 100.0f);
+    else if (!strcmp(what, "nchords"))
+        g = ccount();
+    else if (!strcmp(what, "cslot"))             /* the Chords page's chord edited */
+        g = cslot();
+    else if (!strcmp(what, "progslot"))          /* the chord playing in its progression */
+        g = en_prog_slot;
+    else if (!strncmp(what, "chord", 5) && what[5] >= '0' && what[5] <= '7')
+        g = *cslot_p(what[5] - '0');
     else if (!strncmp(what, "par", 3))           /* parN: parameter N (mor.h P_*) */
         g = proj.par[atoi(what + 3)];
     else

@@ -9,7 +9,9 @@
  *   black keys     eleven of the effects, each while held
  *   FX             the Effects page: the sixteen effects on the white keys (REC held: the same, for as long);
  *                  again: the SPACE page, and so on
- *   PLAY           plays / stops              EDIT   the next section, on the next bar
+ *   EDIT           the Chords page: the section's chord changes, a chord at a time (its root, type and length)
+ *   SEL            the next section, on the next bar
+ *   PLAY           plays / stops
  *   REC            a tap: HOLD, the section repeats until let go  OCT- / OCT+   the bass's octave
  *   ALGORITHM      the bass's pattern (Song: the song's own)      PRESETS       the song
  *   HOME ENV ARP LFO SEQ FX GLO   the pages: SONG, BASS, LEAD (again: LEAD FX), PAD, DRUMS, EFFECTS (again: SPACE), SETUP; SELECT
@@ -19,11 +21,11 @@
  *                  held 1.5 s: the song back to its recipe */
 #include "fastmath.h"
 
-enum { V_SONG, V_BASS, V_LEAD, V_LEADFX, V_PAD, V_DRUMS, V_SPACE, V_SETUP, V_MIDI, V_FXGRID, NVIEWS };
+enum { V_SONG, V_BASS, V_LEAD, V_LEADFX, V_PAD, V_DRUMS, V_SPACE, V_SETUP, V_MIDI, V_FXGRID, V_CHORDS, NVIEWS };
 static const char *const VIEW_NAME[NVIEWS] = {"Song", "Bass", "Lead", "Lead FX", "Pad", "Drums", "Space", "Setup",
-                                              "MIDI", "Effects"};
-static const uint8_t VIEW_BTN[NVIEWS] = {B_HOME, B_ENV, B_ARP, B_ARP, B_LFO, B_SEQ, B_FX, B_GLO, B_GLO, B_FX};
-enum { K_LEDS = 100, K_CPU, K_NONE };
+                                              "MIDI", "Effects", "Chords"};
+static const uint8_t VIEW_BTN[NVIEWS] = {B_HOME, B_ENV, B_ARP, B_ARP, B_LFO, B_SEQ, B_FX, B_GLO, B_GLO, B_FX, B_EDIT};
+enum { K_LEDS = 100, K_CPU, K_NONE, K_CSLOT, K_CROOT, K_CTYPE, K_CLEN };
 static const uint8_t VIEW_KNOB[NVIEWS][4] = {
     {P_TEMPO, P_EVOLVE, P_MOTION, P_ARRANGE},
     {P_BASS, P_CUTOFF, P_RESO, P_DECAY},
@@ -35,6 +37,7 @@ static const uint8_t VIEW_KNOB[NVIEWS][4] = {
     {P_ROOT, P_TUNE, P_MIDI, K_LEDS},
     {P_MIDI, P_MCHAN, P_MCLOCK, P_MCLKOUT},
     {P_ECHO, P_LECHO, P_ETIME, P_FEEDBACK},
+    {K_CSLOT, K_CROOT, K_CTYPE, K_CLEN},
 };
 static const char *const KNOB_LABEL[NVIEWS][4] = {
     {"Tempo", "Evolve", "Motion", "Arrange"},
@@ -47,6 +50,7 @@ static const char *const KNOB_LABEL[NVIEWS][4] = {
     {"Key", "Tune", "MIDI out", "Lights"},
     {"MIDI out", "Channels", "Clock", "Clock out"},
     {"Bass echo", "Lead echo", "Time", "Feedback"},
+    {"Chord", "Root", "Type", "Bars"},
 };
 /* the black keys' effects, left to right */
 static const uint8_t BLACK_FX[11] = {FX_THROW, FX_TAPESTOP, FX_SWELL, FX_LOWPASS, FX_HIGHPASS, FX_SWEEP, FX_PHASER,
@@ -106,6 +110,7 @@ static struct {
     uint8_t rec_grid;                  /* REC held: the effects on the white keys */
     uint32_t fx_keys, lead_keys;       /* keys down as effects, as the lead (each keeps its role until let go) */
     uint16_t fx_sent;
+    uint8_t cslot;                     /* the Chords page: the chord being edited (its progression's length: a new one) */
 } ui;
 
 static uint8_t sp_said;
@@ -172,6 +177,82 @@ static void caps(char *d, const char *s, int n)
     d[i] = 0;
 }
 
+/* ------------------------------------------------------------ chords --- */
+/* The Chords page edits the chord changes of the section playing (REC holds it there; SEL moves on). Its chords are
+ * the slots up to the progression's end, then one more, empty, where a turn adds a chord; the last one's Bars down
+ * to End takes it away. A root is in semitones above the key, shown as the note it is now. */
+static const uint8_t LEN_BEATS[7] = {0, 2, 4, 8, 12, 16, 32};
+static const char *const LEN_NAME[7] = {"End", "1/2", "1", "2", "3", "4", "8"};
+static const char *const QUAL_NAME[EN_NQUAL] = {"Maj", "Min", "7", "Maj7", "Min7", "Min11", "Sus4", "Power"};
+static int cprog(void) { return en_sec_prog(proj.piece, en_sec); }
+static uint16_t *cslot_p(int i) { return &proj.chords[proj.piece][cprog() * EN_PROG_MAX + i]; }
+static int ccount(void)
+{
+    int n = 0;
+    while (n < EN_PROG_MAX && EN_CH_BEATS(*cslot_p(n)))
+        n++;
+    return n;
+}
+static int cslot(void)                          /* the slot edited, within the progression (+1: a new chord) */
+{
+    int n = ccount(), top = n < EN_PROG_MAX ? n : EN_PROG_MAX - 1;
+    if (ui.cslot > top)
+        ui.cslot = (uint8_t)top;
+    return ui.cslot;
+}
+static int len_index(int beats)
+{
+    int i;
+    for (i = 1; i < 7; i++)
+        if (LEN_BEATS[i] >= beats)
+            return i;
+    return 6;
+}
+static uint16_t cshown(void)                    /* the slot's chord, or for a new one the last (its length 0) */
+{
+    int s = cslot(), n = ccount();
+    if (s < n)
+        return *cslot_p(s);
+    return n ? (uint16_t)(*cslot_p(n - 1) & 0xFFu) : 0u;
+}
+static void cput(int i, uint16_t c)
+{
+    *cslot_p(i) = c;
+    en_prog_set(proj.piece, cprog(), i, c);
+}
+static void chord_edit(int k, int v)            /* a value on the Chords page */
+{
+    int s = cslot(), n = ccount();
+    uint16_t c = cshown();
+    int r = EN_CH_R(c), q = EN_CH_Q(c), b = EN_CH_BEATS(c);
+    if (s >= n) {                               /* a new chord: the last one's, a bar unless its length says */
+        if (k == K_CLEN && v == 0)
+            return;
+        b = n ? EN_CH_BEATS(*cslot_p(n - 1)) : 4;
+    }
+    if (k == K_CROOT)
+        r = (v % 12 + 12) % 12;
+    else if (k == K_CTYPE)
+        q = v;
+    else if (k == K_CLEN)
+        b = LEN_BEATS[v];
+    if (!b) {                                   /* End: the last chord taken away */
+        if (s == n - 1 && n > 1)
+            cput(s, 0);
+        return;
+    }
+    cput(s, EN_CH(r, q, b));
+}
+static void chord_text(uint16_t c, char *b)     /* "Eb", "Fm7" ... in the key now */
+{
+    const char *r = EN_NOTE_NAME[(en_key + EN_CH_R(c)) % 12], *q = EN_QUAL_SUFFIX[EN_CH_Q(c)];
+    while (*r)
+        *b++ = *r++;
+    while (*q)
+        *b++ = *q++;
+    *b = 0;
+}
+
 /* ------------------------------------------------------------ values --- */
 static int knob_get(int k)
 {
@@ -181,6 +262,14 @@ static int knob_get(int k)
         return proj.leds;
     if (k == K_CPU)
         return (int)plat_cpu_pct();
+    if (k == K_CSLOT)
+        return cslot();
+    if (k == K_CROOT)
+        return EN_CH_R(cshown());
+    if (k == K_CTYPE)
+        return EN_CH_Q(cshown());
+    if (k == K_CLEN)
+        return EN_CH_BEATS(cshown()) ? len_index(EN_CH_BEATS(cshown())) : 0;
     return 0;
 }
 static void knob_range(int k, int *lo, int *hi)
@@ -189,8 +278,10 @@ static void knob_range(int k, int *lo, int *hi)
         *lo = en_param_info(k)->lo;
         *hi = en_param_info(k)->hi;
     } else {
-        *lo = 0;
-        *hi = k == K_LEDS ? 2 : k == K_CPU ? 100 : 0;
+        int n = ccount(), s = cslot();
+        *lo = k == K_CLEN && s < n && !(s == n - 1 && n > 1) ? 1 : 0;
+        *hi = k == K_LEDS ? 2 : k == K_CPU ? 100 : k == K_CSLOT ? (n < EN_PROG_MAX ? n : EN_PROG_MAX - 1)
+            : k == K_CROOT ? 11 : k == K_CTYPE ? EN_NQUAL - 1 : k == K_CLEN ? 6 : 0;
     }
 }
 static void knob_text(int k, char *b)
@@ -208,6 +299,22 @@ static void knob_text(int k, char *b)
             b++;
         *b++ = '%';
         *b = 0;
+    } else if (k == K_CSLOT) {
+        if (v >= ccount()) {
+            const char *n = "New";
+            while ((*b++ = *n++))
+                ;
+        } else {
+            itoa_u((uint32_t)v + 1u, b);
+        }
+    } else if (k == K_CROOT) {
+        const char *n = EN_NOTE_NAME[(en_key + v) % 12];
+        while ((*b++ = *n++))
+            ;
+    } else if (k == K_CTYPE || k == K_CLEN) {
+        const char *n = k == K_CTYPE ? QUAL_NAME[v] : LEN_NAME[v];
+        while ((*b++ = *n++))
+            ;
     } else {
         b[0] = 0;
     }
@@ -227,6 +334,11 @@ static void knob_set(int k, int v)
         en_set(k, v);
     } else if (k == K_LEDS) {
         proj.leds = (uint8_t)v;
+    } else if (k == K_CSLOT) {
+        ui.cslot = (uint8_t)v;
+        return;
+    } else {
+        chord_edit(k, v);
     }
     mark_dirty();
 }
@@ -256,6 +368,10 @@ static void turn(int role, int k, int32_t e)
     if (!e || k == K_NONE || k == K_CPU)
         return;
     knob_range(k, &lo, &hi);
+    if (k == K_CROOT) {                          /* the root goes round */
+        knob_set(k, (int)(((knob_get(k) + e) % 12 + 12) % 12));
+        return;
+    }
     knob_set(k, knob_get(k) + accel(role, e, hi - lo));
 }
 
@@ -291,6 +407,8 @@ static void set_piece(int i)                    /* the song playing kept as it i
 /* ------------------------------------------------------------ buttons --- */
 static void set_view(int v)
 {
+    if (v == V_CHORDS && ui.view != V_CHORDS)
+        ui.cslot = (uint8_t)(en_prog_slot > 0 ? en_prog_slot : 0);
     ui.view = (uint8_t)v;
     ui.touched = -1;
 }
@@ -298,8 +416,11 @@ static void set_view(int v)
 static void button(int b)
 {
     int v;
-    if (b == B_SEL)                              /* SEL: free */
+    if (b == B_SEL) {                            /* SEL: the next section */
+        en_next();
+        say("NEXT SECTION", en_playing ? "ON THE BAR" : 0);
         return;
+    }
     if (b == B_FX) {                             /* FX: the Effects page; again: Space, and back */
         set_view(ui.view == V_FXGRID ? V_SPACE : V_FXGRID);
         return;
@@ -318,10 +439,6 @@ static void button(int b)
             return;
         }
     switch (b) {
-    case B_EDIT:
-        en_next();
-        say("NEXT SECTION", en_playing ? "ON THE BAR" : 0);
-        break;
     case B_PLAY:
         sp_tp.playing = !en_playing;
         sp_tp.play_t = plat_ms();
@@ -391,7 +508,7 @@ static void help_tick(uint32_t btn, uint32_t keys)
     if (!btn || (btn & (btn - 1u)) || keys)
         return;
     for (i = 0; i < NB; i++)
-        if (btn == 1u << i && i != B_PLAY && i != B_SEL && i != B_REC && !(ui.btn_used & btn) && now - ui.down_t[i] >= HELP_HOLD &&
+        if (btn == 1u << i && i != B_PLAY && i != B_REC && !(ui.btn_used & btn) && now - ui.down_t[i] >= HELP_HOLD &&
             (int32_t)(ui.turn_t - ui.down_t[i]) <= 0) {
             ui.help = (uint8_t)(i + 1);
             ui.btn_used |= btn;
@@ -874,7 +991,8 @@ static int help_lines(int b, const char *l[HELP_LINES])
     case B_SEQ: L("THE DRUMS"); L("LEVEL, FILLS, HATS, SWING"); break;
     case B_FX: L("THE EFFECTS PAGE"); L("16 ON THE WHITE KEYS"); L("AGAIN: THE SPACE: ECHO,"); L(" TIME, FEEDBACK, REVERB"); break;
     case B_GLO: L("SETUP"); L("KEY, TUNE, MIDI OUT, LIGHTS"); L("AGAIN: MIDI: CHANNELS,"); L(" CLOCK, CLOCK OUT"); break;
-    case B_EDIT: L("THE NEXT SECTION,"); L("ON THE NEXT BAR"); break;
+    case B_EDIT: L("THE CHORDS: A CHORD,"); L(" ITS ROOT, TYPE AND BARS"); L("REC HOLDS THE SECTION"); L("SEL: THE NEXT ONE"); break;
+    case B_SEL: L("THE NEXT SECTION,"); L("ON THE NEXT BAR"); break;
     case B_REC: L("HOLD: THE SECTION"); L(" REPEATS"); L("AGAIN: LET IT GO ON"); break;
     case B_OCTDN: L("THE BASS AN OCTAVE DOWN"); L("WITH OCT+, 5 S: UPDATE MODE"); break;
     case B_OCTUP: L("THE BASS AN OCTAVE UP"); L("WITH OCT-, 5 S: UPDATE MODE"); break;
@@ -916,6 +1034,50 @@ static void draw_grid(void)
         }
 }
 
+/* the Chords page: the form across the top, as the Song page's; then the section's chords, two rows of four: each its
+ * name in the key now and its length; the one playing lit violet (the pad's), the one edited outlined */
+static void draw_chords(void)
+{
+    int n = ccount(), s = cslot(), i;
+    draw_form();
+    for (i = 0; i < EN_PROG_MAX; i++) {
+        int32_t x = 4 + (i % 4) * 59, y = 32 + (i / 4) * 56;
+        int play = en_playing && i < n && i == en_prog_slot, ed = i == s;
+        uint16_t c = *cslot_p(i), bg = play ? K_PAD : i < n ? K_PANEL : K_BG, fg = play ? K_BG : K_TEXT;
+        char t[16];
+        if (ed) {
+            cv_round(x, y, 56, 52, 6, K_ACC);
+            cv_round(x + 2, y + 2, 52, 48, 5, bg);
+        } else if (i < n) {
+            cv_round(x, y, 56, 52, 6, bg);
+        } else {
+            cv_round(x, y, 56, 52, 6, K_PANEL);
+            cv_round(x + 1, y + 1, 54, 50, 5, K_BG);
+        }
+        itoa_u((uint32_t)i + 1u, t);
+        cv_text(x + 5, y + 2, &FONT_XS, t, play ? K_BG : K_DIM);
+        if (i < n) {
+            int li = len_index(EN_CH_BEATS(c));
+            chord_text(c, t);
+            if (text_w(&FONT_B, t) <= 50)
+                text_c(x + 28, y + 15, &FONT_B, t, fg);
+            else
+                text_c(x + 28, y + 19, &FONT_S, t, fg);
+            caps(t, LEN_NAME[li], sizeof t);
+            {
+                int32_t k = 0;
+                while (t[k])
+                    k++;
+                t[k++] = ' ';
+                caps(t + k, li >= 3 ? "bars" : "bar", 6);
+            }
+            text_c(x + 28, y + 37, &FONT_XS, t, play ? K_BG : K_DIM);
+        } else if (i == n) {
+            text_c(x + 28, y + 15, &FONT_B, "+", ed ? K_ACC : K_LINE);
+        }
+    }
+}
+
 static void draw_main(void)
 {
     uint32_t h = hash(2166136261u, proj.piece | (uint32_t)en_sec << 8 | (uint32_t)en_sec_bar << 12 |
@@ -929,6 +1091,19 @@ static void draw_main(void)
             ui.sig[1] = h;
             cv_begin(240, MAIN_H, K_BG);
             draw_help();
+            cv_blit(0, MAIN_Y);
+        }
+        return;
+    }
+    if (ui.view == V_CHORDS && !ui.rec_grid) {
+        h = hash(hash(h, en_step | (uint32_t)en_key << 8 | (uint32_t)(uint8_t)en_prog_slot << 16 | (uint32_t)cslot() << 24),
+                 (uint32_t)en_next_sec);
+        for (i = 0; i < EN_PROG_MAX; i++)
+            h = hash(h, *cslot_p((int)i));
+        if (h != ui.sig[1]) {
+            ui.sig[1] = h;
+            cv_begin(240, MAIN_H, K_BG);
+            draw_chords();
             cv_blit(0, MAIN_Y);
         }
         return;
@@ -1368,10 +1543,12 @@ static void speak_dump(void)
         for (i = 0; i < 4; i++) {
             int k = VIEW_KNOB[v][i];
             knob_range(k, &lo, &hi);
+            if (k >= K_CSLOT)                       /* the Chords page's: as they are */
+                lo = hi = knob_get(k);
             for (x = lo; x <= hi; x++) {
                 if (k < P_NPARAMS)
                     proj.par[k] = (int16_t)x;
-                else
+                else if (k == K_LEDS)
                     proj.leds = (uint8_t)x;
                 sp_n = 0;
                 sp_knob(v, i);

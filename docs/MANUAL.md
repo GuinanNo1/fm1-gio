@@ -54,8 +54,10 @@ does the same from Chrome or Edge once a site is published.
    lead answers you, and takes your notes as its theme.
 4. Hold a **black key**: an effect while you hold it (Throw, Tape stop, Sweep ...). Press **FX** for all sixteen.
 5. Turn **ALGORITHM** for another bass pattern; back to **Song** for the song's own.
-6. Press **EDIT** to move on to the next section on the next bar; press **REC** to stay in this one.
-7. Press **ENV** for the Bass page and turn KNOB 2: the cutoff opens.
+6. Press **SEL** to move on to the next section on the next bar; press **REC** to stay in this one.
+7. Press **EDIT** to see the section's chords, and change them: KNOB 1 picks a chord, KNOB 2–4 set its root, type
+   and length.
+8. Press **ENV** for the Bass page and turn KNOB 2: the cutoff opens.
 
 ---
 
@@ -68,7 +70,8 @@ does the same from Chrome or Edge once a site is published.
 | FX | The Effects page (see Effects); again: the Space page. |
 | PLAY | Plays / stops. From stopped, the song starts from its first section. |
 | REC | A tap: HOLD, the section repeats until you tap it again. Held: the effects grid on the white keys for as long as it's held. |
-| EDIT | The next section, on the next bar. |
+| EDIT | The Chords page (see [The Chords page](#the-chords-page)). |
+| SEL | The next section, on the next bar. |
 | OCT− / OCT+ | The bass an octave down / up (−1 to +1). |
 | ALGORITHM | The bass pattern: Song (the song's own, section by section), Pump, Pump 16, Arpeggio, Gallop, Octaves, Slow. |
 | PRESETS | The song. Each remembers its settings as you left it. |
@@ -191,8 +194,32 @@ MOR-1's own, written as it plays.
 | Setup (GLO) | Key | Tune | MIDI out | Lights |
 | MIDI (GLO again) | MIDI out | Channels | Clock | Clock out |
 | Effects (FX) | Bass echo | Lead echo | Time | Feedback |
+| Chords (EDIT) | Chord | Root | Type | Bars |
 
 The Setup page also shows the audio's load (CPU) in the top line.
+
+### The Chords page
+
+![The Chords page on Heaven: the slow section's four chords, Fm11 playing, the first one edited](img/screen-chords.png)
+
+**EDIT** shows the chord changes of the section playing: the form across the top, as on the Song page, then up to
+eight chords in two rows, each with its length. The chord playing is lit violet; the one you're editing is outlined in
+magenta. Changes are heard from the next beat.
+
+| Knob | |
+|---|---|
+| KNOB 1 · Chord | which chord to edit (1–8). Past the last one, **New**: an empty slot marked +, where turning any other knob adds a chord (a copy of the last one) |
+| KNOB 2 · Root | its root, any of the twelve notes (it goes round), shown in the key it is in now |
+| KNOB 3 · Type | Maj, Min, 7, Maj7, Min7, Min11, Sus4, Power (root and fifth) |
+| KNOB 4 · Bars | ½, 1, 2, 3, 4 or 8 bars. On the last chord (if it isn't the only one), **End** takes it away |
+
+The chords loop for as long as the section lasts. The page follows the music: when the section changes, it shows the
+new one's chords. To stay on one, press **REC** (hold) while you edit; **SEL** moves to the next section. Some
+sections share their chords (a song's two verses, say): editing one changes both.
+
+The chords are written relative to the song's key, so changing the key (the Setup page, or a MIDI note) moves them
+with it. Each song keeps its own chords, saved with its settings; **SAVE held** puts them back to the song's own, with
+everything else.
 
 ---
 
@@ -234,7 +261,7 @@ black keys at all times. The page's knobs are the echo's: Bass echo, Lead echo, 
 
 Each song keeps its settings as you left it. **SAVE** saves all of them; MOR-1 also saves by itself a few seconds
 after a change while it is stopped (a save silences the sound for a moment, so never while playing). **SAVE held**
-puts the song back to its recipe. Tune and MIDI out belong to the FM-1, not to a song.
+puts the song back to its recipe, its chords too. Tune and MIDI out belong to the FM-1, not to a song.
 
 ---
 

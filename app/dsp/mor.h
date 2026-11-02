@@ -98,6 +98,24 @@ void en_song_recipe(int i, int16_t *par);
 int en_song_nsec(int i);
 const char *en_sec_name(int song, int sec);
 int en_sec_bars(int song, int sec);
+int en_sec_prog(int song, int sec);            /* which of the song's chord changes the section plays */
+
+/* the chord changes (the Chords page): each song has EN_NPROG progressions, EN_PROG_MAX chords each, a chord packed
+ * as its root (semitones above the key) | its quality << 4 | its length in beats << 8; a length of 0 ends the
+ * progression (the first chord always has one). The tables are live: en_prog_set writes one at once (a 16-bit store),
+ * and the render takes it up on the next beat. */
+#define EN_NPROG 5
+#define EN_PROG_MAX 8
+#define EN_NQUAL 8                             /* major, minor, 7, maj7, m7, m11, sus4, power */
+#define EN_CH(r, q, beats) ((uint16_t)((unsigned)(r) | (unsigned)(q) << 4 | (unsigned)(beats) << 8))
+#define EN_CH_R(c) ((int)((c) & 15u))
+#define EN_CH_Q(c) ((int)((c) >> 4 & 15u))
+#define EN_CH_BEATS(c) ((int)((c) >> 8))
+extern const char *const EN_QUAL_SUFFIX[EN_NQUAL];   /* "", "m", "7", "M7", "m7", "m11", "sus4", "5" */
+uint16_t en_prog_recipe(int song, int prog, int i);  /* the song's own */
+uint16_t en_prog_get(int song, int prog, int i);
+void en_prog_set(int song, int prog, int i, uint16_t c);
+extern volatile int8_t en_prog_slot;           /* (UI) the chord playing in its progression, -1 none */
 
 /* layers, as a section's mask */
 enum { L_BASS = 1, L_PAD = 2, L_LEAD = 4, L_KICK = 8, L_SNARE = 16, L_HATS = 32, L_OHAT = 64, L_TOMS = 128 };

@@ -34,7 +34,11 @@ key b0 up
 # the section moves on: said, queued
 wait 18000
 said Section Arpeggio
+press SEL
+wait 1200
+said SEL button. THE NEXT SECTION, ON THE NEXT BAR
+release SEL
 press EDIT
 wait 1200
-said EDIT button. THE NEXT SECTION, ON THE NEXT BAR
+said EDIT button. THE CHORDS: A CHORD, ITS ROOT, TYPE AND BARS. REC HOLDS THE SECTION. SEL: THE NEXT ONE
 release EDIT
