@@ -5,8 +5,9 @@ plays itself from the moment it's switched on: a Moog-style bass sequence out in
 or saws through a phaser, a synth lead that writes its own phrases, and four on the floor. Each song is a form of
 sections with their own chord changes; it loops for ever and changes as it goes. You steer it.
 
-> **Status: beta, simulator only.** GIO-1 has been built and tested in fm1-base's simulator. It has not yet been
-> built for, or run on, an FM-1.
+> **Status: alpha, under further testing.** GIO-1 0.1-alpha has been installed on only one FM-1 so far, where it
+> works; it is still being tested. Installing it is at your own risk: unofficial firmware could brick an FM-1. The
+> safety nets and the way back to M-VAVE's firmware are on the [Install page](https://guinanno1.github.io/fm1-gio/install/).
 
 ---
 
