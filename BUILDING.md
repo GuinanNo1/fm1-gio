@@ -96,12 +96,12 @@ packages as built from source.
 3. The site from that package: `gh release download vX.Y --pattern '*.fwsc' --dir app/build --clobber`, then
    `tools/publish_pages.sh X.Y`: it builds the browser emulator and the site (landing page, emulator, fm1-base's web
    installer, manual, the words files, the firmware) with `tools/make_pages.py` from `app/build/mor-X.Y.fwsc`, and
-   pushes it to the `gh-pages` branch, which GitHub Pages serves at <https://GuinanNo1.github.io/fm1-mor/>.
+   pushes it to the `gh-pages` branch, which GitHub Pages serves at <https://GuinanNo1.github.io/fm1-gio/>.
 
 To check a downloaded package yourself (GitHub CLI, signed in):
 
 ```sh
-tag=vX.Y repo=GuinanNo1/fm1-mor
+tag=vX.Y repo=GuinanNo1/fm1-gio
 gh release download "$tag" --repo "$repo" --dir build/verify --pattern '*.fwsc'
 git fetch origin "refs/tags/$tag:refs/tags/$tag"
 gh attestation verify "build/verify/mor-${tag#v}.fwsc" --repo "$repo" \
