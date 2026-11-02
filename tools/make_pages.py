@@ -307,16 +307,16 @@ QUICK_BODY = """<main>
 <section class="card" style="--c: var(--gold)">
 <h2>Presets</h2>
 <div class="wrap"><table>
-<tr><th>Preset</th><th>BPM</th><th>Key</th></tr>
-<tr><td>1 Feel</td><td>126</td><td>C</td></tr>
-<tr><td>2 Gio</td><td>113</td><td>A minor</td></tr>
-<tr><td>3 Mutant</td><td>123</td><td>F minor</td></tr>
-<tr><td>4 Heaven</td><td>130</td><td>A♭</td></tr>
-<tr><td>5 TickTock</td><td>126</td><td>C, then E♭</td></tr>
-<tr><td>6 Energy</td><td>123</td><td>C minor</td></tr>
-<tr><td>7 Fly</td><td>126</td><td>A minor</td></tr>
-<tr><td>8 Lover</td><td>130</td><td>C minor</td></tr>
-<tr><td>9 Express</td><td>128</td><td>D minor</td></tr>
+<tr><th>Preset</th><th>BPM</th><th>Key</th><th>The form</th></tr>
+<tr><td>1 Feel</td><td>126</td><td>C</td><td>Intro (bass, hats) · Verse (C) · Chorus (C–E♭–F–G) · Shift (on B♭) · Verse · Chorus · Break</td></tr>
+<tr><td>2 Gio</td><td>113</td><td>A minor</td><td>Click (hats on the beat) · Arpeggio · Disco (Am–Em) · Strings (Am–F) · Fills · House</td></tr>
+<tr><td>3 Mutant</td><td>123</td><td>F minor</td><td>Dawn (the pad alone) · Sequence · Groove · Theme (Fm–D♭) · Bridge (B♭m–Fm) · Theme</td></tr>
+<tr><td>4 Heaven</td><td>130</td><td>A♭</td><td>Slow ×2 (half time, A♭–E♭–Fm11–E♭) · Lift · Fast (A♭–E♭–B♭–A♭) · Vamp (Fm11) · Fast</td></tr>
+<tr><td>5 TickTock</td><td>126</td><td>C, then E♭</td><td>Intro · Verse (G–F) · Pre (Am–Dm–G–C) · Chorus (G–Em7–G) · Turn (C–E♭) · the same a minor third up · Outro</td></tr>
+<tr><td>6 Energy</td><td>123</td><td>C minor</td><td>Intro · Groove (Cm) · Lift (A♭–B♭) · Groove (Cm–B♭) · Break · Build</td></tr>
+<tr><td>7 Fly</td><td>126</td><td>A minor</td><td>Liftoff · Theme (Am–F–G) · Drift (Am–Dm) · Theme · Space</td></tr>
+<tr><td>8 Lover</td><td>130</td><td>C minor</td><td>Intro · Verse (Cm–B♭) · Hook (A♭–B♭–Cm) · Robot · Hook</td></tr>
+<tr><td>9 Express</td><td>128</td><td>D minor</td><td>Intro (the bass alone) · Drive · Strings · Theme (Dm–B♭–C) · Pursuit · Theme · Run</td></tr>
 </table></div>
 </section>
 
