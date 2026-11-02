@@ -30,6 +30,9 @@ wait 100
 shot drums.png
 tap FX
 wait 100
+shot effects.png
+tap FX
+wait 100
 shot space.png
 tap GLO
 wait 100

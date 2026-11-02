@@ -52,7 +52,7 @@ does the same from Chrome or Edge once a site is published.
 2. Turn **PRESETS** for another song. It starts from the top of its form.
 3. Play the **white keys**: the lead plays them, always in the song's scale. Play three notes or more and pause: the
    lead answers you, and takes your notes as its theme.
-4. Hold a **black key**: an effect while you hold it (Throw, Tape stop, Sweep ...). Press **SEL** for all sixteen.
+4. Hold a **black key**: an effect while you hold it (Throw, Tape stop, Sweep ...). Press **FX** for all sixteen.
 5. Turn **ALGORITHM** for another bass pattern; back to **Song** for the song's own.
 6. Press **EDIT** to move on to the next section on the next bar; press **REC** to stay in this one.
 7. Press **ENV** for the Bass page and turn KNOB 2: the cutoff opens.
@@ -65,14 +65,14 @@ does the same from Chrome or Edge once a site is published.
 |---|---|
 | White keys | The lead: each key a step of the song's scale, from its key note up. The keys of the chord playing are lit (the safest notes). Three notes or more and a pause of two beats: the lead answers (see The lead, below). On the Effects page: the sixteen effects. |
 | Black keys | Eleven effects, each while its key is held, left to right: Throw, Tape stop, Swell, Low-pass, High-pass, Sweep, Phaser, Freeze, Drop, Stutter, Roll. Lit; dark while held. |
-| SEL | The Effects page (see Effects); again: back. |
+| FX | The Effects page (see Effects); again: the Space page. |
 | PLAY | Plays / stops. From stopped, the song starts from its first section. |
 | REC | A tap: HOLD, the section repeats until you tap it again. Held: the effects grid on the white keys for as long as it's held. |
 | EDIT | The next section, on the next bar. |
 | OCT− / OCT+ | The bass an octave down / up (−1 to +1). |
 | ALGORITHM | The bass pattern: Song (the song's own, section by section), Pump, Pump 16, Arpeggio, Gallop, Octaves, Slow. |
 | PRESETS | The song. Each remembers its settings as you left it. |
-| HOME, ENV, ARP, LFO, SEQ, FX, GLO | The pages: Song, Bass, Lead, Pad, Drums, Space, Setup. ARP again: Lead FX; GLO again: MIDI. |
+| HOME, ENV, ARP, LFO, SEQ, FX, GLO | The pages: Song, Bass, Lead, Pad, Drums, Effects, Setup. ARP again: Lead FX; FX again: Space; GLO again: MIDI. |
 | SELECT | The previous / next page. With HOME held: the tempo, 110 to 130. |
 | KNOB 1–4 | The page's four values. A quick turn speeds up; a slow one goes a step at a time. |
 | SAVE | Saves all the songs. Held 1.5 s: the song back to its recipe (then SAVE to keep that). |
@@ -187,10 +187,10 @@ MOR-1's own, written as it plays.
 | Lead FX (ARP again) | Echo | Reverb | Octave | Tone |
 | Pad (LFO) | Level | Colour | Bright | Phaser |
 | Drums (SEQ) | Level | Fills | Hats | Swing |
-| Space (FX) | Echo | Time | Feedback | Reverb |
+| Space (FX twice) | Echo | Time | Feedback | Reverb |
 | Setup (GLO) | Key | Tune | MIDI out | Lights |
 | MIDI (GLO again) | MIDI out | Channels | Clock | Clock out |
-| Effects (SEL) | Bass echo | Lead echo | Time | Feedback |
+| Effects (FX) | Bass echo | Lead echo | Time | Feedback |
 
 The Setup page also shows the audio's load (CPU) in the top line.
 
@@ -218,7 +218,7 @@ The FM-1 also shows up on a computer as a USB audio input: MOR-1 can be recorded
 
 ![The Effects page, Sweep and Roll held](img/screen-grid.png)
 
-Sixteen effects, each on while its key is held, eased in and out; any number together. **SEL** opens the Effects
+Sixteen effects, each on while its key is held, eased in and out; any number together. **FX** opens the Effects
 page, where the white keys play them (white key 1 is the lowest); **REC held** brings the same grid up for as long as
 it's held, and a key still held when REC is let go keeps its effect until it's let go. Eleven of them are also on the
 black keys at all times. The page's knobs are the echo's: Bass echo, Lead echo, Time, Feedback.

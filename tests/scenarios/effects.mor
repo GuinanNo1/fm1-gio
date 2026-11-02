@@ -1,4 +1,4 @@
-# the drop-in effects: the black keys while held; SEL, the Effects page, the white keys all sixteen; REC held, the
+# the drop-in effects: the black keys while held; FX, the Effects page, the white keys all sixteen; REC held, the
 # same for as long; ARP twice the Lead FX page; GLO twice the MIDI page
 wait 1000
 key b0 down
@@ -17,8 +17,8 @@ wait 100
 expect fx 0
 expect leadstep 5
 key w5 up
-# SEL: the Effects page; white key 7 is Sweep (bit 6), white key 16 Roll
-tap SEL
+# FX: the Effects page; white key 7 is Sweep (bit 6), white key 16 Roll
+tap FX
 wait 100
 expect view 9
 key w6 down
@@ -30,7 +30,13 @@ key w6 up
 key w15 up
 wait 100
 expect fx 0
+tap FX
+expect view 6
+tap FX
+expect view 9
 tap SEL
+expect view 9
+tap HOME
 expect view 0
 # REC held: the grid while held; a key held keeps its effect after REC is let go; a tap of REC still holds
 press REC

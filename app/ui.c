@@ -7,11 +7,12 @@
  *   white keys     the lead, a step of the song's scale each (the chord's notes lit); a call of three notes or
  *                  more and a pause: the lead answers, and takes it as its theme
  *   black keys     eleven of the effects, each while held
- *   SEL            the Effects page: the sixteen effects on the white keys (REC held: the same, for as long)
+ *   FX             the Effects page: the sixteen effects on the white keys (REC held: the same, for as long);
+ *                  again: the SPACE page, and so on
  *   PLAY           plays / stops              EDIT   the next section, on the next bar
  *   REC            a tap: HOLD, the section repeats until let go  OCT- / OCT+   the bass's octave
  *   ALGORITHM      the bass's pattern (Song: the song's own)      PRESETS       the song
- *   HOME ENV ARP LFO SEQ FX GLO   the pages: SONG, BASS, LEAD (again: LEAD FX), PAD, DRUMS, SPACE, SETUP; SELECT
+ *   HOME ENV ARP LFO SEQ FX GLO   the pages: SONG, BASS, LEAD (again: LEAD FX), PAD, DRUMS, EFFECTS (again: SPACE), SETUP; SELECT
  *                  steps through them (with HOME held: the tempo)
  *   KNOB 1-4       the page's four values
  *   SAVE           saves (it also saves by itself a few seconds after a change, while stopped);
@@ -21,7 +22,7 @@
 enum { V_SONG, V_BASS, V_LEAD, V_LEADFX, V_PAD, V_DRUMS, V_SPACE, V_SETUP, V_MIDI, V_FXGRID, NVIEWS };
 static const char *const VIEW_NAME[NVIEWS] = {"Song", "Bass", "Lead", "Lead FX", "Pad", "Drums", "Space", "Setup",
                                               "MIDI", "Effects"};
-static const uint8_t VIEW_BTN[NVIEWS] = {B_HOME, B_ENV, B_ARP, B_ARP, B_LFO, B_SEQ, B_FX, B_GLO, B_GLO, B_SEL};
+static const uint8_t VIEW_BTN[NVIEWS] = {B_HOME, B_ENV, B_ARP, B_ARP, B_LFO, B_SEQ, B_FX, B_GLO, B_GLO, B_FX};
 enum { K_LEDS = 100, K_CPU, K_NONE };
 static const uint8_t VIEW_KNOB[NVIEWS][4] = {
     {P_TEMPO, P_EVOLVE, P_MOTION, P_ARRANGE},
@@ -102,7 +103,6 @@ static struct {
     uint32_t touch_until;
     uint32_t frame;
     uint32_t sig[3];
-    uint8_t prev_view;                 /* the page before the Effects page (SEL goes back to it) */
     uint8_t rec_grid;                  /* REC held: the effects on the white keys */
     uint32_t fx_keys, lead_keys;       /* keys down as effects, as the lead (each keeps its role until let go) */
     uint16_t fx_sent;
@@ -291,8 +291,6 @@ static void set_piece(int i)                    /* the song playing kept as it i
 /* ------------------------------------------------------------ buttons --- */
 static void set_view(int v)
 {
-    if (v == V_FXGRID && ui.view != V_FXGRID)
-        ui.prev_view = ui.view;
     ui.view = (uint8_t)v;
     ui.touched = -1;
 }
@@ -300,8 +298,10 @@ static void set_view(int v)
 static void button(int b)
 {
     int v;
-    if (b == B_SEL) {                            /* the Effects page, and back */
-        set_view(ui.view == V_FXGRID ? ui.prev_view : V_FXGRID);
+    if (b == B_SEL)                              /* SEL: free */
+        return;
+    if (b == B_FX) {                             /* FX: the Effects page; again: Space, and back */
+        set_view(ui.view == V_FXGRID ? V_SPACE : V_FXGRID);
         return;
     }
     if (VIEW_BTN[ui.view] == b) {                /* its page again: the button's next page (ARP: Lead FX) */
@@ -872,7 +872,7 @@ static int help_lines(int b, const char *l[HELP_LINES])
     case B_ARP: L("THE LEAD"); L("LEVEL, VOICE, BUSY, GLIDE"); L("AGAIN: ITS ECHO, REVERB,"); L(" OCTAVE, TONE"); break;
     case B_LFO: L("THE PAD"); L("LEVEL, COLOUR, BRIGHT,"); L(" PHASER"); break;
     case B_SEQ: L("THE DRUMS"); L("LEVEL, FILLS, HATS, SWING"); break;
-    case B_FX: L("THE SPACE"); L("ECHO, TIME, FEEDBACK,"); L(" REVERB"); break;
+    case B_FX: L("THE EFFECTS PAGE"); L("16 ON THE WHITE KEYS"); L("AGAIN: THE SPACE: ECHO,"); L(" TIME, FEEDBACK, REVERB"); break;
     case B_GLO: L("SETUP"); L("KEY, TUNE, MIDI OUT, LIGHTS"); L("AGAIN: MIDI: CHANNELS,"); L(" CLOCK, CLOCK OUT"); break;
     case B_EDIT: L("THE NEXT SECTION,"); L("ON THE NEXT BAR"); break;
     case B_REC: L("HOLD: THE SECTION"); L(" REPEATS"); L("AGAIN: LET IT GO ON"); break;
@@ -897,7 +897,7 @@ static void draw_help(void)
         text_c(120, 50 + k * 20, &FONT_S, l[k] + (l[k][0] == ' '), K_TEXT);
 }
 
-/* the effects grid (SEL, or REC held): four rows of four, a white key each; lit while held */
+/* the effects grid (FX, or REC held): four rows of four, a white key each; lit while held */
 static void draw_grid(void)
 {
     static const uint16_t RC[4] = {K_BASS, K_PAD, K_LEAD, K_DRUM};
