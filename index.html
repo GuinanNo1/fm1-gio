@@ -1,0 +1,150 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>MOR-1</title>
+<meta name="description" content="A generative electronic disco firmware for the M-VAVE FM-1.">
+<meta name="theme-color" content="#100e22">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow:ital,wght@0,400;0,600;1,400&family=Barlow+Semi+Condensed:wght@500;700&display=swap">
+<style>
+:root {
+  --night: #100e22; --card: #1c1a3a; --card-2: #262350; --rule: #3a3668; --ink: #f2eeff; --muted: #aaa4d4;
+  --magenta: #ff5cb4; --cyan: #2fd8f0; --violet: #b994ff; --gold: #ffc840; --red: #ff7a7a;
+  --display: "Barlow Semi Condensed", "Arial Narrow", "Helvetica Neue", Arial, sans-serif;
+  --body: "Barlow", "Helvetica Neue", Helvetica, Arial, sans-serif;
+  color-scheme: dark;
+}
+
+body { background: var(--night); color: var(--ink); margin: 0; font: 400 17px/1.6 var(--body);
+       padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px));
+       padding-block: 0 64px; }
+a { color: var(--ink); text-decoration-color: var(--magenta); text-decoration-thickness: 2px; text-underline-offset: 3px; }
+a:hover { color: var(--magenta); }
+a:focus-visible, button:focus-visible { outline: 2px solid var(--cyan); outline-offset: 2px; }
+code { font: .88em ui-monospace, Menlo, Consolas, monospace; background: var(--card-2); padding: .08em .35em; border-radius: 3px; }
+.foot { max-width: 46rem; margin: 3rem auto 0; color: var(--muted); font-size: .88rem; border-top: 1px solid var(--rule);
+        padding-top: 1rem; }
+
+header.site { max-width: 46rem; margin: 0 auto; display: flex; flex-wrap: wrap; gap: .4rem 1.2rem; align-items: baseline;
+              padding: 18px 0 14px; border-bottom: 1px solid var(--rule); }
+header.site .home { font: 700 1.15rem/1 var(--display); letter-spacing: .08em; text-decoration: none; color: var(--ink); }
+header.site nav { display: flex; flex-wrap: wrap; gap: .2rem 1rem; font: 500 .95rem/1.4 var(--display);
+                  letter-spacing: .05em; text-transform: uppercase; }
+header.site nav a { text-decoration: none; color: var(--muted); }
+header.site nav a:hover, header.site nav a[aria-current] { color: var(--magenta); }
+
+main { max-width: 46rem; margin: 0 auto; }
+.hero { padding: 2.6rem 0 1.2rem; }
+h1 { font: 700 clamp(3.6rem, 14vw, 6.4rem)/.9 var(--display); letter-spacing: .04em; margin: 0;
+     background: linear-gradient(180deg, #fff 0%, #ffd0ee 38%, var(--magenta) 52%, #7a3cff 100%);
+     -webkit-background-clip: text; background-clip: text; color: transparent; }
+.sub { font: 500 1.15rem/1.3 var(--display); letter-spacing: .1em; text-transform: uppercase; color: var(--muted);
+       margin: .7rem 0 0; }
+/* the form strip, as on MOR-1's screen: a block a section, the one playing filling */
+.strip { display: flex; gap: 4px; margin: 1.4rem 0 0; height: 10px; }
+.strip i { flex: var(--w); border-radius: 5px; background: var(--card-2); }
+.strip i.on { background: linear-gradient(90deg, var(--magenta) 60%, var(--card-2) 60%); }
+@media (prefers-reduced-motion: no-preference) {
+  .strip i.on { background: linear-gradient(90deg, var(--magenta) 50%, var(--card-2) 50%); background-size: 200% 100%;
+                background-position: 70% 0; animation: fill 7.6s linear infinite; }
+  @keyframes fill { from { background-position: 100% 0; } to { background-position: 0 0; } }
+}
+.lede { font-size: 1.18rem; margin: 1.6rem 0 1.2rem; max-width: 36rem; }
+.shots { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 12px; margin: 1.4rem 0 2rem; }
+.shots figure { margin: 0; min-width: 0; }
+.shots img { display: block; width: 100%; max-width: 100%; height: auto; image-rendering: pixelated; border-radius: 10px;
+             border: 6px solid #07061a; box-shadow: 0 0 0 1px var(--rule); box-sizing: border-box; }
+.shots figcaption { color: var(--muted); font-size: .85rem; margin-top: .3rem; }
+.ways { display: grid; gap: 10px; margin: 0 0 1rem; }
+.ways a, .ways .off { display: block; text-decoration: none; background: var(--card); border: 1px solid var(--rule);
+                      border-radius: 10px; padding: 12px 16px; }
+.ways .off { border-style: dashed; }
+.ways a:hover { border-color: var(--magenta); color: var(--ink); }
+.ways a.first { background: var(--card-2); border-color: var(--magenta); }
+.ways strong { display: block; font: 700 1.2rem/1.3 var(--display); letter-spacing: .06em; text-transform: uppercase; }
+.ways strong em { font-style: normal; color: var(--gold); font-weight: 500; letter-spacing: .04em; margin-left: .4em; }
+.ways span { color: var(--muted); font-size: .95rem; }
+h2 { font: 700 1.25rem/1.2 var(--display); letter-spacing: .08em; text-transform: uppercase; margin: 2.6rem 0 .8rem;
+     padding-top: .8rem; border-top: 1px solid var(--rule); }
+.parts { display: grid; gap: 10px; padding: 0; margin: 0 0 1rem; list-style: none; }
+.parts li { border-left: 4px solid var(--c); padding: 2px 0 2px 14px; }
+.parts b { color: var(--c); font-family: var(--display); letter-spacing: .06em; text-transform: uppercase; }
+.songs { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 8px; margin: 0 0 1rem;
+         padding: 0; list-style: none; }
+.songs li { background: var(--card); border-radius: 8px; padding: 8px 12px; }
+.songs b { font: 700 1.05rem/1.2 var(--display); letter-spacing: .06em; text-transform: uppercase; }
+.songs span { display: block; color: var(--muted); font-size: .9rem; font-variant-numeric: tabular-nums; }
+.credits p { max-width: 38rem; }
+</style>
+</head>
+<body>
+<header class="site"><a class="home" href="index.html">MOR-1</a><nav aria-label="MOR-1"><a href="emu/index.html">Try it</a><a href="install/index.html">Install</a><a href="manual/index.html">Manual</a><a href="quickstart/index.html">Quickstart</a><a href="https://github.com/GuinanNo1/fm1-mor">Source</a></nav></header>
+<main>
+<section class="hero">
+  <h1>MOR-1</h1>
+  <p class="sub">A generative electronic disco firmware for the M-VAVE FM-1</p>
+  <div class="strip" aria-hidden="true"><i style="--w:8"></i><i class="on" style="--w:16"></i><i style="--w:8"></i><i style="--w:8"></i><i style="--w:16"></i><i style="--w:8"></i><i style="--w:8"></i></div>
+</section>
+
+<p class="lede">It's time to relive the futuristic electronic disco sounds of the '70s, '80s and '90s with MOR-1, new
+firmware for the M-VAVE FM-1. It is generative: it writes music in these styles as it plays. Pick a song, play along on
+the keys and let the lead answer you, drop in effects, and nudge it in the direction your feelings take you. Feel love
+and enjoy!</p>
+
+<div class="shots">
+  <figure><img src="img/screen-song.png" width="240" height="240" alt="MOR-1's screen: the song Feel, its verse; the bass's sixteen steps in a ring round the chord C; the form across the top"><figcaption>Feel, its verse</figcaption></figure>
+  <figure><img src="img/screen-heaven.png" width="240" height="240" alt="MOR-1's screen: the song Heaven at full tempo, the chord A flat"><figcaption>Heaven at full tempo</figcaption></figure>
+  <figure><img src="img/screen-grid.png" width="240" height="240" alt="MOR-1's Effects page: sixteen effects in four rows, Sweep and Roll held"><figcaption>The effects grid</figcaption></figure>
+</div>
+
+<nav class="ways" aria-label="Get MOR-1">
+  <a class="first" href="emu/index.html"><strong>Try it in the browser</strong><span>The same code the FM-1 runs, with sound. Mouse, touch or keyboard; no FM-1 needed.</span></a>
+  <a href="install/index.html"><strong>Install <em>alpha</em></strong><span>From Chrome or Edge, with the FM-1 connected by USB. Coming with the first firmware build.</span></a>
+  <a href="manual/index.html"><strong>Manual</strong><span>Getting started in a few minutes, then everything else.</span></a>
+  <a href="quickstart/index.html"><strong>Quickstart</strong><span>Every control, page, effect and song on one page.</span></a>
+  <div class="off"><strong>Download <em>alpha</em></strong><span>In alpha; test beta downloads coming soon.</span></div>
+  <a href="https://github.com/GuinanNo1/fm1-mor"><strong>Source</strong><span>GitHub, MPL-2.0. Built on fm1-base and felucca-bsp, from Felucca by Hügelton Instruments.</span></a>
+</nav>
+
+<h2>What plays</h2>
+<ul class="parts">
+  <li style="--c: var(--cyan)"><b>Bass.</b> A Moog-style sequence out in front: two saws and a square through a four-pole ladder, short decays, the dry note on one side and its echo on the other. Seven pattern shapes, written in chord degrees so they follow the changes.</li>
+  <li style="--c: var(--violet)"><b>Pad.</b> Strings, a choir or detuned saws on the chord, voice-led, through a slow stereo phaser.</li>
+  <li style="--c: var(--gold)"><b>Lead.</b> Ten voices, from Mini and Odyssey to Theremin, FM Brass and Robot. It writes its own phrases. Play the white keys and it follows your line, answers it, and makes it the song's theme.</li>
+  <li style="--c: var(--red)"><b>Drums.</b> Four on the floor, claps on two and four, open hats off the beat, and syndrum fills.</li>
+  <li style="--c: var(--magenta)"><b>The form.</b> Each song is a set of sections with their own chord changes. It loops for ever, repeating, skipping, dropping a layer, or moving the whole song up a key for a while. Sixteen drop-in effects are under your fingers.</li>
+</ul>
+
+<h2>Presets</h2>
+<p>Nine presets, each lovingly influenced by ground-breaking electronic disco hits:</p>
+<ul class="songs">
+  <li><b>Feel</b><span>126 BPM · C</span></li>
+  <li><b>Gio</b><span>113 BPM · A minor</span></li>
+  <li><b>Mutant</b><span>123 BPM · F minor</span></li>
+  <li><b>Heaven</b><span>130 BPM · A♭</span></li>
+  <li><b>TickTock</b><span>126 BPM · C, then E♭</span></li>
+  <li><b>Energy</b><span>123 BPM · C minor</span></li>
+  <li><b>Fly</b><span>126 BPM · A minor</span></li>
+  <li><b>Lover</b><span>130 BPM · C minor</span></li>
+  <li><b>Express</b><span>128 BPM · D minor</span></li>
+</ul>
+
+<section class="credits">
+<h2>Thanks</h2>
+<p>Inspired by and modelled on <a href="https://charlesvestal.github.io/fm1-amb/">AMB-1</a> by Charles Vestal,
+<a href="https://sbegueria.github.io/fm1-dub/">DUB-1</a> by Santiago Beguería and
+<a href="https://fartypants.github.io/fm1-nachtfahrt/">NACHTFAHRT</a> by Cranky Man, and influenced by the music of
+Giorgio Moroder, Patrick Cowley, Marc Cerrone, Space, Daft Punk and many others. You are all giants, and I stand on your
+shoulders.</p>
+<p>I'd like to give credit for sparking this idea to YouTube user @mateocarrion7776, who posted on a recent thread on
+my channel those immortal words, "My name is Giovanni Giorgio…", and set off this train of thought.</p>
+</section>
+</main>
+<p class="foot">M-VAVE and FM-1 are trademarks of their owners. MOR-1 is independent firmware, not affiliated with
+M-VAVE, Giorgio Moroder or any artist named here. To go back to the official firmware, use the installer's "Back to the
+stock firmware", or M-VAVE's updater, M-UPGRADE, from <a href="https://www.m-vave.com/download">m-vave.com/download</a>.</p>
+</body>
+</html>

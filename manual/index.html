@@ -1,0 +1,188 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Manual · MOR-1</title>
+<meta name="description" content="The manual for MOR-1, a firmware for the M-VAVE FM-1.">
+<style>
+/* paper and ink: warm white paper, ink-blue type, vermilion for what is played, mustard for asides; a shade of the
+   paper for code and callouts (CTL-1's; a firmware may restyle its site) */
+:root {
+  --paper: #fbf8f1; --sheet: #efe9dc; --rule: #ddd4c2; --ink: #1e2b5a; --muted: #5d6585;
+  --hot: #e5482e; --hot-t: #f8d3c9; --cool: #d9a21b; --cool-t: #f5e4b8;
+  --hot-ink: #c23a22;                                 /* the vermilion as text: 4.5:1 on the paper */
+  color-scheme: light;
+}
+body {
+  background: var(--paper); color: var(--ink); margin: 0;
+  font: 400 17px/1.6 "Helvetica Neue", Helvetica, Arial, sans-serif;
+  padding-inline: 16px; padding-block: 32px 64px;
+}
+main { max-width: 46rem; margin: 0 auto; }
+.page > .site { max-width: 46rem; margin-inline: auto; }
+main:focus { outline: none; }
+h1, h2, h3 { font-family: inherit; text-wrap: balance; line-height: 1.2; }
+h1 { font-size: 2.2rem; font-weight: 700; margin: 0 0 .4rem; letter-spacing: .02em; }
+h2 { font-size: 1.3rem; font-weight: 700; margin: 3rem 0 .8rem; padding-top: .8rem; border-top: 2px solid var(--ink); }
+h2 .num { color: var(--hot); margin-right: .5em; font-variant-numeric: tabular-nums; }
+h3 { font-size: 1.1rem; font-weight: 700; margin: 2rem 0 .5rem; }
+p, li { max-width: 65ch; }
+p { margin: 0 0 1rem; }
+ul, ol { padding-left: 1.3rem; margin: 0 0 1rem; }
+li { margin: .2rem 0; }
+li::marker { color: var(--hot); }
+strong { font-weight: 700; }
+a { color: var(--ink); text-decoration-color: var(--hot); text-decoration-thickness: 2px; text-underline-offset: 3px; }
+a:hover { background: var(--hot-t); }
+:focus-visible { outline: 3px solid var(--hot-ink); outline-offset: 2px; }
+.skip { position: absolute; left: 16px; top: -100px; background: var(--ink); color: var(--paper); padding: 8px 14px; border-radius: 0 0 6px 6px; z-index: 1; }
+.skip:focus { top: 0; }
+code, pre { font-family: ui-monospace, Menlo, Consolas, monospace; font-size: .86em; }
+code { background: var(--sheet); padding: .08em .35em; border-radius: 3px; }
+pre { background: var(--sheet); border-radius: 6px; padding: 14px 16px; overflow-x: auto; line-height: 1.45; margin: 0 0 1.2rem; }
+pre code { background: none; padding: 0; font-size: inherit; }
+hr { display: none; }
+.table { overflow-x: auto; margin: 0 0 1.3rem; }
+table { border-collapse: collapse; width: 100%; font-size: .95rem; font-variant-numeric: tabular-nums; }
+th, td { text-align: left; vertical-align: top; padding: .45rem .7rem .45rem 0; border-bottom: 1px solid var(--rule); }
+th { font-weight: 700; text-transform: uppercase; letter-spacing: .06em; font-size: .78rem; color: var(--muted); border-bottom: 2px solid var(--ink); }
+td:first-child { white-space: nowrap; }
+.lede { margin-bottom: 1.6rem; }
+.status { background: var(--sheet); border-radius: 6px; padding: 12px 16px; }
+.status p { margin: 0; }
+.site { display: flex; flex-wrap: wrap; align-items: baseline; gap: .3rem 1.2rem; margin: 0 0 1.6rem; padding-bottom: .5rem; border-bottom: 2px solid var(--ink); }
+.site .home { font-size: 1.1rem; font-weight: 700; letter-spacing: .04em; color: var(--ink); text-decoration: none; }
+.site .home:hover { color: var(--hot-ink); background: none; }
+.site nav { margin-left: auto; display: flex; flex-wrap: wrap; gap: .2rem 1rem; font-size: .92rem; }
+.site nav a { color: var(--ink); text-underline-offset: 3px; }
+.site nav a[aria-current] { text-decoration: none; color: var(--hot-ink); }
+a.home { color: inherit; text-decoration: none; }
+a.home:hover { background: none; color: var(--hot-ink); }
+main > a.home { display: inline-block; font-size: .9rem; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); margin: 0 0 .4rem; }
+.callout { border-left: 4px solid var(--cool); background: var(--cool-t); padding: 10px 16px; margin: 0 0 1.2rem; max-width: 65ch; border-radius: 0 6px 6px 0; }
+.callout p { margin: 0; }
+details { background: var(--sheet); border-radius: 6px; padding: 0 16px; margin: 0 0 1.2rem; }
+details > summary { cursor: pointer; padding: 10px 0; }
+details[open] > summary { margin-bottom: .4rem; }
+details > :last-child { margin-bottom: 1rem; }
+.swatch { display: inline-block; width: .7em; height: .7em; margin-right: .4em; vertical-align: .02em; }
+nav.contents ol { columns: 2 14rem; column-gap: 2rem; padding-left: 1.3rem; }
+.figs { display: flex; flex-wrap: wrap; gap: 20px; margin: .4rem 0 1.6rem; }
+figure { margin: 0; flex: 0 1 auto; }
+figure img { display: block; max-width: 100%; height: auto; }
+figure.shot img { width: 300px; image-rendering: pixelated; border-radius: 4px; box-shadow: 0 0 0 1px var(--rule); }
+figure.wide { flex-basis: 100%; }
+figure.wide img { width: 100%; }
+figcaption { color: var(--muted); font-size: .88rem; margin-top: .4rem; max-width: 300px; }
+figure.wide figcaption { max-width: none; }
+nav.contents li { break-inside: avoid; }
+@media (prefers-reduced-motion: no-preference) { html { scroll-behavior: smooth; } }
+</style>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow:ital,wght@0,400;0,600;1,400&family=Barlow+Semi+Condensed:wght@500;700&display=swap">
+<style>
+:root {
+  --night: #100e22; --card: #1c1a3a; --card-2: #262350; --rule: #3a3668; --ink: #f2eeff; --muted: #aaa4d4;
+  --magenta: #ff5cb4; --cyan: #2fd8f0; --violet: #b994ff; --gold: #ffc840; --red: #ff7a7a;
+  --display: "Barlow Semi Condensed", "Arial Narrow", "Helvetica Neue", Arial, sans-serif;
+  --body: "Barlow", "Helvetica Neue", Helvetica, Arial, sans-serif;
+  color-scheme: dark;
+}
+
+header.site { max-width: 46rem; margin: 0 auto; display: flex; flex-wrap: wrap; gap: .4rem 1.2rem; align-items: baseline;
+              padding: 18px 0 14px; border-bottom: 1px solid var(--rule); }
+header.site .home { font: 700 1.15rem/1 var(--display); letter-spacing: .08em; text-decoration: none; color: var(--ink); }
+header.site nav { display: flex; flex-wrap: wrap; gap: .2rem 1rem; font: 500 .95rem/1.4 var(--display);
+                  letter-spacing: .05em; text-transform: uppercase; }
+header.site nav a { text-decoration: none; color: var(--muted); }
+header.site nav a:hover, header.site nav a[aria-current] { color: var(--magenta); }
+
+:root:root { --paper: #100e22; --sheet: #1c1a3a; --rule: #3a3668; --ink: #f2eeff; --muted: #aaa4d4;
+        --hot: #ff5cb4; --hot-t: #3a1d48; --cool: #ffc840; --cool-t: #2d2840; --hot-ink: #ff7cc4; color-scheme: dark; }
+body { font-family: "Barlow", "Helvetica Neue", Helvetica, Arial, sans-serif; }
+h1, h2, h3 { font-family: "Barlow Semi Condensed", "Arial Narrow", Arial, sans-serif; letter-spacing: .03em; }
+img { image-rendering: pixelated; max-width: 100%; border-radius: 8px; }
+</style>
+</head>
+<body>
+<a class="skip" href="#content">Skip to content</a>
+<div class="page">
+<header class="site"><a class="home" href="../index.html">MOR-1</a><nav aria-label="MOR-1"><a href="../emu/index.html">Try it</a><a href="../install/index.html">Install</a><a href="../manual/index.html" aria-current="page">Manual</a><a href="../quickstart/index.html">Quickstart</a><a href="https://github.com/GuinanNo1/fm1-mor">Source</a></nav></header>
+<main id="content" tabindex="-1"><h1>Manual</h1>
+<p class="lede">MOR-1 turns the M-VAVE FM-1 into a generative electronic disco machine, after Giorgio Moroder's Munich sound. It plays itself from the moment it's switched on: a Moog-style bass sequence out in front, a pad of strings, a choir or saws through a phaser, a synth lead that writes its own phrases, and four on the floor. Each song is a form of sections with their own chord changes; it loops for ever and changes as it goes. You steer it.</p>
+<div class="callout"><p><strong>Status: beta, simulator only.</strong> MOR-1 has been built and tested in fm1-base's simulator. It has not yet been built for, or run on, an FM-1.</p></div>
+<hr>
+<nav class="contents" aria-label="Contents"><h2 id="contents">Contents</h2>
+<ol><li><a href="#s1">Install</a></li><li><a href="#s2">Getting started</a></li><li><a href="#s3">Controls</a></li><li><a href="#s4">The screen</a></li><li><a href="#s5">The music</a></li><li><a href="#s6">The songs</a></li><li><a href="#s7">The pages</a></li><li><a href="#midi-and-8a-effects">MIDI (and 8a. Effects)</a></li><li><a href="#s9">Saving</a></li><li><a href="#s10">Troubleshooting</a></li><li><a href="#s11">Parameters</a></li><li><a href="#s12">Credits</a></li></ol>
+</nav>
+<hr>
+<h2 id="s1"><span class="num">1</span>Install</h2>
+<p>MOR-1 has no release yet. Once it is built (<code>./build.sh</code>, see <a href="https://github.com/GuinanNo1/fm1-mor/blob/main/BUILDING.md">BUILDING.md</a>):</p>
+<pre tabindex="0" role="region" aria-label="Command: Install"><code>python3 base/tools/fm1_install.py app/build/mor.fwsc</code></pre>
+<p>with Python 3 and <code>pip3 install mido python-rtmidi</code>, the FM-1 on a USB data cable. Don't unplug it while it's writing; when it finishes, the FM-1 restarts into MOR-1. fm1-base's web installer page (<code>tools/make_site.py</code>) does the same from Chrome or Edge once a site is published.</p>
+<p><strong>Go back:</strong> the web installer's "Back to the stock firmware", or M-VAVE's own updater, M-UPGRADE, from <a href="https://www.m-vave.com/download">m-vave.com/download</a>.</p>
+<div class="callout"><p>Installing other firmware is at your own risk. If the FM-1 ever won't start, see Troubleshooting.</p></div>
+<hr>
+<h2 id="s2"><span class="num">2</span>Getting started</h2>
+<ol><li>Switch it on. MOR-1 plays the first song, <strong>Feel</strong>, from its intro.</li><li>Turn <strong>PRESETS</strong> for another song. It starts from the top of its form.</li><li>Play the <strong>white keys</strong>: the lead plays them, always in the song's scale. Play three notes or more and pause: the lead answers you, and takes your notes as its theme.</li><li>Hold a <strong>black key</strong>: an effect while you hold it (Throw, Tape stop, Sweep ...). Press <strong>SEL</strong> for all sixteen.</li><li>Turn <strong>ALGORITHM</strong> for another bass pattern; back to <strong>Song</strong> for the song's own.</li><li>Press <strong>EDIT</strong> to move on to the next section on the next bar; press <strong>REC</strong> to stay in this one.</li><li>Press <strong>ENV</strong> for the Bass page and turn KNOB 2: the cutoff opens.</li></ol>
+<hr>
+<h2 id="s3"><span class="num">3</span>Controls</h2>
+<div class="table" tabindex="0" role="region" aria-label="Table: Controls (Control, What it does)"><table><thead><tr><th>Control</th><th>What it does</th></tr></thead><tbody><tr><td>White keys</td><td>The lead: each key a step of the song's scale, from its key note up. The keys of the chord playing are lit (the safest notes). Three notes or more and a pause of two beats: the lead answers (see The lead, below). On the Effects page: the sixteen effects.</td></tr><tr><td>Black keys</td><td>Eleven effects, each while its key is held, left to right: Throw, Tape stop, Swell, Low-pass, High-pass, Sweep, Phaser, Freeze, Drop, Stutter, Roll. Lit; dark while held.</td></tr><tr><td>SEL</td><td>The Effects page (see Effects); again: back.</td></tr><tr><td>PLAY</td><td>Plays / stops. From stopped, the song starts from its first section.</td></tr><tr><td>REC</td><td>A tap: HOLD, the section repeats until you tap it again. Held: the effects grid on the white keys for as long as it's held.</td></tr><tr><td>EDIT</td><td>The next section, on the next bar.</td></tr><tr><td>OCT− / OCT+</td><td>The bass an octave down / up (−1 to +1).</td></tr><tr><td>ALGORITHM</td><td>The bass pattern: Song (the song's own, section by section), Pump, Pump 16, Arpeggio, Gallop, Octaves, Slow.</td></tr><tr><td>PRESETS</td><td>The song. Each remembers its settings as you left it.</td></tr><tr><td>HOME, ENV, ARP, LFO, SEQ, FX, GLO</td><td>The pages: Song, Bass, Lead, Pad, Drums, Space, Setup. ARP again: Lead FX; GLO again: MIDI.</td></tr><tr><td>SELECT</td><td>The previous / next page. With HOME held: the tempo, 110 to 130.</td></tr><tr><td>KNOB 1–4</td><td>The page's four values. A quick turn speeds up; a slow one goes a step at a time.</td></tr><tr><td>SAVE</td><td>Saves all the songs. Held 1.5 s: the song back to its recipe (then SAVE to keep that).</td></tr><tr><td>MASTER</td><td>The volume.</td></tr></tbody></table></div>
+<p>Hold any button for a second and a card says what it does; let go and nothing else happens.</p>
+<hr>
+<h2 id="s4"><span class="num">4</span>The screen</h2>
+<div class="figs"><figure class="shot"><img src="img/screen-song.png" alt="The Song page" loading="lazy"><figcaption>The Song page</figcaption></figure></div>
+<ul><li><strong>The top line:</strong> the song in a magenta tag, its key; on the right a beat light (a play triangle while stopped), the tempo, a dot while something isn't saved, and the battery. Messages show here for a moment.</li><li><strong>The form:</strong> a block for each section, as wide as its bars. The one playing is lit, filling as it goes; the one coming next is a shade brighter than the rest. While held, it turns ice blue. Under it: the section's name and the bar (3/16).</li><li><strong>The ring:</strong> the bass pattern's sixteen steps, the first at the top. A step's size and brightness is how high its note is; a ring around it is an accent; small dots are rests. The step playing is bright. In the middle, the chord, and under it the lead's note as it plays.</li><li><strong>The meters</strong> (left): bass, pad, lead, drums. A dark track means the layer is out of this section.</li><li><strong>The drums</strong> (right): kick, snare, closed hat, open hat, tom; this bar's hits, the step playing bright.</li><li><strong>The knobs:</strong> the page's four values; the one being turned is lit.</li></ul>
+<div class="table" tabindex="0" role="region" aria-label="Table: The screen (, )"><table><thead><tr><th></th><th></th></tr></thead><tbody><tr><td>!<a href="img/screen-heaven.png">Heaven at full tempo</a></td><td>!<a href="img/screen-hold.png">Held</a></td></tr></tbody></table></div>
+<hr>
+<h2 id="s5"><span class="num">5</span>The music</h2>
+<p><strong>The bass</strong> is the loudest thing: two saws and a square an octave down through a four-pole ladder low-pass, a short decay on its level and its filter (Cutoff, Emphasis and Decay on the Bass page). It steps through a 16-step pattern written in chord degrees (root, third, fifth, seventh, octave), so it follows the chords. Most of the echo is its own: the dry note sits a little left, its repeat right, as on <em>I Feel Love</em>. With <strong>Evolve</strong>, a weak step changes now and then (another chord note, a ghost note, a rest), and goes back home a step at a time.</p>
+<p><strong>The pad</strong> holds the chord on four voices, each moving as little as it can from chord to chord: <strong>Strings</strong> (two saws), a <strong>Choir</strong> (a soft wave through two vowel formants, which <strong>Bright</strong> opens) or <strong>Saws</strong> (wider, swept). Then a low-pass and a stereo <strong>phaser</strong> (four stages a side, swept slowly in quadrature, fed back).</p>
+<p><strong>The lead</strong> writes a four-bar phrase for each section it plays in: a motif, the motif answered, a second motif, the first again; or, when <strong>Busy</strong> is low, a call and room for an answer. Its notes walk the song's scale, landing on the chord on the strong beats, never a semitone off it. With <strong>Evolve</strong>, a note moves or the middle bar is rewritten at each repeat. <strong>Glide</strong> slides between notes; past 60 it also swoops up into a phrase.</p>
+<p>Ten voices: <strong>Mini</strong> (three saws, one an octave down, through a ladder filter), <strong>Odyssey</strong> (a saw and a narrow pulse, resonant), <strong>Synthi</strong> (a triangle and a square, drifting), <strong>Flute</strong> (a sine with breath), <strong>Theremin</strong> (a sine, always gliding, its vibrato wide), <strong>FM Lead</strong>, <strong>FM Brass</strong> and <strong>FM Reed</strong> (two-operator FM), <strong>Choir</strong> (two saws through three vowel resonances; Tone is the vowel) and <strong>Robot</strong> (a square through two formants, short notes, no vibrato). The Lead FX page (ARP again) has the lead's own <strong>Echo</strong> and <strong>Reverb</strong> sends, its <strong>Octave</strong> and its <strong>Tone</strong>.</p>
+<p><strong>Playing the lead.</strong> The white keys play it: each key a step of the song's scale from its key note up, so every note fits. While you play, the lead's own phrases wait. Play three notes or more and pause for two beats: what you played was a call, and the lead <strong>answers</strong> it a beat or two later in your rhythm, with notes of its own close to yours, ending on the chord's root or fifth. From then on your notes are the song's <strong>theme</strong>: the lead plays them where it plays, and grows the bars after them out of them (a third up, turned upside down, a third down), varied as it repeats with Evolve. One or two notes are just played. A new song forgets the theme. Notes are counted on the grid to the nearest sixteenth while the song plays.</p>
+<p><strong>The drums</strong>: a kick on every beat (on 1 and 3 in a half-time section), a snare-clap on 2 and 4, closed hats in eighths or sixteenths (Hats), an open hat off the beat, and syndrum toms that fall in pitch. At the end of a section there is often a fill (<strong>Fills</strong>: how often, and from 60 on, longer and with toms). A building section ends in a snare roll. With <strong>Evolve</strong>, a syndrum or a ghost snare now and then.</p>
+<p><strong>The form</strong>: each song is a list of sections (Intro, Verse, Chorus, Break ...), each with its bars, its chord changes, which layers play, a transposition and a few flags (half time, a build, a break). After the last section the song goes back to a section of its own and goes round again. <strong>Arrange</strong> sets how freely it goes:</p>
+<ul><li>a section may play twice;</li><li>the song may jump to another section of its loop;</li><li>a layer may sit a section out (the lead, the pad, the hats, the snare), or the lead come in where it wasn't;</li><li>at the start of a cycle, the whole song may move up a tone, a semitone or a minor third (or down a tone) for a cycle, and come home after.</li></ul>
+<p><strong>Motion</strong> is the slow sweep over minutes: the bass's filter opening and closing, the pad brightening, the phaser's pace. A building section opens the bass filter as it goes; a break closes it and pushes the echo.</p>
+<p><strong>The space</strong>: a tape echo (two heads, the first at the echo's time on the right, the second at twice it on the left, each repeat darker) and Dattorro's plate reverb.</p>
+<hr>
+<h2 id="s6"><span class="num">6</span>The songs</h2>
+<p>Each song is after a record: its tempo, key, chord changes and the shape of its arrangement. The bass lines, leads and drum parts are MOR-1's own, written as it plays.</p>
+<div class="table" tabindex="0" role="region" aria-label="Table: The songs (#, Song, After, Tempo, Key, The form)"><table><thead><tr><th>#</th><th>Song</th><th>After</th><th>Tempo</th><th>Key</th><th>The form</th></tr></thead><tbody><tr><td>1</td><td>Feel</td><td><em>I Feel Love</em></td><td>126</td><td>C</td><td>Intro (bass, hats) · Verse (C) · Chorus (C–E♭–F–G) · Shift (on B♭) · Verse · Chorus · Break</td></tr><tr><td>2</td><td>Gio</td><td><em>Giorgio by Moroder</em></td><td>113</td><td>A minor</td><td>Click (hats on the beat) · Arpeggio · Disco (Am–Em) · Strings (Am–F) · Fills · House</td></tr><tr><td>3</td><td>Mutant</td><td><em>Supernature</em></td><td>123</td><td>F minor</td><td>Dawn (the pad alone) · Sequence · Groove · Theme (Fm–D♭) · Bridge (B♭m–Fm) · Theme</td></tr><tr><td>4</td><td>Heaven</td><td><em>The Number One Song in Heaven</em></td><td>130</td><td>A♭</td><td>Slow ×2 (half time, A♭–E♭–Fm11–E♭) · Lift · Fast (A♭–E♭–B♭–A♭) · Vamp (Fm11) · Fast</td></tr><tr><td>5</td><td>TickTock</td><td><em>Beat the Clock</em></td><td>126</td><td>C</td><td>Intro · Verse (G–F) · Pre (Am–Dm–G–C) · Chorus (G–Em7–G) · Turn (C–E♭) · the same a minor third up · Outro</td></tr><tr><td>6</td><td>Energy</td><td><em>Menergy</em></td><td>123</td><td>C minor</td><td>Intro · Groove (Cm) · Lift (A♭–B♭) · Groove (Cm–B♭) · Break · Build</td></tr><tr><td>7</td><td>Fly</td><td><em>Magic Fly</em></td><td>126</td><td>A minor</td><td>Liftoff · Theme (Am–F–G) · Drift (Am–Dm) · Theme · Space</td></tr><tr><td>8</td><td>Lover</td><td><em>Automatic Lover</em></td><td>130</td><td>C minor</td><td>Intro · Verse (Cm–B♭) · Hook (A♭–B♭–Cm) · Robot · Hook</td></tr><tr><td>9</td><td>Express</td><td><em>Chase</em></td><td>128</td><td>D minor</td><td>Intro (the bass alone) · Chase · Strings · Theme (Dm–B♭–C) · Pursuit · Theme · Run</td></tr></tbody></table></div>
+<p>Where the facts came from: tempo and key from published analyses (Hooktheory, Wikipedia) where there are some, and from AcousticBrainz's automatic detection where not; the chord changes of <em>Beat the Clock</em>, <em>The Number One Song in Heaven</em> and <em>I Feel Love</em> from published chord charts. <em>Supernature</em>, <em>Menergy</em>, <em>Magic Fly</em>, <em>Automatic Lover</em> and <em>Chase</em> have no published changes, so theirs are MOR-1's own in the record's manner, and so are <em>Chase</em>'s key and tempo. <em>Automatic Lover</em> (about 132) is set to 130 to stay within MOR-1's range.</p>
+<hr>
+<h2 id="s7"><span class="num">7</span>The pages</h2>
+<div class="table" tabindex="0" role="region" aria-label="Table: The pages (Page (button), KNOB 1, KNOB 2, KNOB 3, KNOB 4)"><table><thead><tr><th>Page (button)</th><th>KNOB 1</th><th>KNOB 2</th><th>KNOB 3</th><th>KNOB 4</th></tr></thead><tbody><tr><td>Song (HOME)</td><td>Tempo</td><td>Evolve</td><td>Motion</td><td>Arrange</td></tr><tr><td>Bass (ENV)</td><td>Level</td><td>Cutoff</td><td>Emphasis</td><td>Decay</td></tr><tr><td>Lead (ARP)</td><td>Level</td><td>Voice</td><td>Busy</td><td>Glide</td></tr><tr><td>Lead FX (ARP again)</td><td>Echo</td><td>Reverb</td><td>Octave</td><td>Tone</td></tr><tr><td>Pad (LFO)</td><td>Level</td><td>Colour</td><td>Bright</td><td>Phaser</td></tr><tr><td>Drums (SEQ)</td><td>Level</td><td>Fills</td><td>Hats</td><td>Swing</td></tr><tr><td>Space (FX)</td><td>Echo</td><td>Time</td><td>Feedback</td><td>Reverb</td></tr><tr><td>Setup (GLO)</td><td>Key</td><td>Tune</td><td>MIDI out</td><td>Lights</td></tr><tr><td>MIDI (GLO again)</td><td>MIDI out</td><td>Channels</td><td>Clock</td><td>Clock out</td></tr><tr><td>Effects (SEL)</td><td>Bass echo</td><td>Lead echo</td><td>Time</td><td>Feedback</td></tr></tbody></table></div>
+<p>The Setup page also shows the audio's load (CPU) in the top line.</p>
+<hr>
+<h2 id="s8"><span class="num">8</span>MIDI</h2>
+<p>The MIDI page (GLO, then GLO again): <strong>MIDI out</strong>, <strong>Channels</strong>, <strong>Clock</strong> and <strong>Clock out</strong>. They belong to the FM-1, not to a song.</p>
+<ul><li><strong>In</strong> (USB and the TRS jack): a note on channel 1 moves the key. <strong>Clock</strong> says where MIDI clock is taken from: <strong>Internal</strong> (none: MOR-1 keeps its own time, the default), <strong>USB</strong> or <strong>TRS</strong>. From the port chosen, clock drives the grid (EXT in the top line); Start plays the song from the top, Stop stops, Continue goes on. With no clock coming in, MOR-1 keeps its own time.</li><li><strong>Out</strong> (USB, when MIDI out is on; the FM-1's TRS jack is an input only): <strong>Channels</strong> 1, 2, 3, 10 (the default) puts the bass on channel 1, the pad on 2, the lead on 3, the drums on 10; 4, 5, 6, 11 puts them on 4, 5, 6 and 11. The drums are General MIDI notes: 36 kick, 39 clap, 42 and 46 hats, 45 tom. <strong>Clock out</strong> sends MIDI clock (and start and stop) while MOR-1 keeps its own time.</li></ul>
+<p>The FM-1 also shows up on a computer as a USB audio input: MOR-1 can be recorded over the cable.</p>
+<hr>
+<h2 id="8a-effects">8a. Effects</h2>
+<div class="figs"><figure class="shot"><img src="img/screen-grid.png" alt="The Effects page, Sweep and Roll held" loading="lazy"><figcaption>The Effects page, Sweep and Roll held</figcaption></figure></div>
+<p>Sixteen effects, each on while its key is held, eased in and out; any number together. <strong>SEL</strong> opens the Effects page, where the white keys play them (white key 1 is the lowest); <strong>REC held</strong> brings the same grid up for as long as it's held, and a key still held when REC is let go keeps its effect until it's let go. Eleven of them are also on the black keys at all times. The page's knobs are the echo's: Bass echo, Lead echo, Time, Feedback.</p>
+<div class="table" tabindex="0" role="region" aria-label="Table: 8a. Effects (Row, 1, 2, 3, 4)"><table><thead><tr><th>Row</th><th>1</th><th>2</th><th>3</th><th>4</th></tr></thead><tbody><tr><td>Echo (white 1–4)</td><td><strong>Throw</strong>: everything into the echo</td><td><strong>Time x2</strong>: the echo's time doubled, gliding there and back</td><td><strong>Tape stop</strong>: the tape slowing to a quarter, the repeats diving</td><td><strong>Swell</strong>: the echo fed back to the edge</td></tr><tr><td>Filter (5–8)</td><td><strong>Low-pass</strong>: the mix down to 350 Hz</td><td><strong>High-pass</strong>: the mix up to 1.3 kHz, thin</td><td><strong>Sweep</strong>: the bass's filter open three octaves, Moroder's hand on the cutoff</td><td><strong>Phaser</strong>: a deep phaser on everything</td></tr><tr><td>Space (9–12)</td><td><strong>Reverb</strong>: everything into the plate</td><td><strong>Wash</strong>: the dry down, everything into the echo and the plate</td><td><strong>Freeze</strong>: the plate stops listening and rings on</td><td><strong>Drop</strong>: everything out but the bass and the kick</td></tr><tr><td>Moves (13–16)</td><td><strong>Stutter</strong>: a sixteenth of the mix caught and looped</td><td><strong>Gate</strong>: the pad chopped in sixteenths</td><td><strong>Octave</strong>: the bass an octave up</td><td><strong>Roll</strong>: a snare every sixteenth, rising</td></tr></tbody></table></div>
+<h2 id="s9"><span class="num">9</span>Saving</h2>
+<p>Each song keeps its settings as you left it. <strong>SAVE</strong> saves all of them; MOR-1 also saves by itself a few seconds after a change while it is stopped (a save silences the sound for a moment, so never while playing). <strong>SAVE held</strong> puts the song back to its recipe. Tune and MIDI out belong to the FM-1, not to a song.</p>
+<hr>
+<h2 id="s10"><span class="num">10</span>Troubleshooting</h2>
+<p><strong>Update mode:</strong> hold OCT− and OCT+ together for five seconds. A countdown appears; let go before it ends to cancel.</p>
+<p><strong>Calibration:</strong> if a button or knob does the wrong thing, hold OCT− and OCT+ while you switch the FM-1 on, and follow the screen.</p>
+<p><strong>After a crash:</strong> a red CRASH screen, then a restart a few seconds later; the next start shows RESTARTED AFTER A CRASH and an address. If MOR-1 crashes twice in a row while starting, it starts in SAFE MODE: no sound, but USB works, so the installer can reinstall it or put the stock firmware back. If even that fails, the FM-1 drops into the chip's own update mode; fm1-base's rescue (<code>felucca-bsp/tools/fm1_rescue.sh</code>, on a Mac) puts M-VAVE's firmware back from there.</p>
+<hr>
+<h2 id="s11"><span class="num">11</span>Parameters</h2>
+<div class="table" tabindex="0" role="region" aria-label="Table: Parameters (Parameter, Range, What it does)"><table><thead><tr><th>Parameter</th><th>Range</th><th>What it does</th></tr></thead><tbody><tr><td>Tempo</td><td>110–130</td><td>Beats a minute</td></tr><tr><td>Evolve</td><td>0–100</td><td>How much the bass pattern, the lead's phrases and the drums change as they repeat</td></tr><tr><td>Motion</td><td>0–100</td><td>How far the slow sweeps go (bass filter, pad brightness, phaser's pace)</td></tr><tr><td>Arrange</td><td>0–100</td><td>How freely the form goes: repeats, jumps, layers out and in, a cycle in another key</td></tr><tr><td>Bass Level · Cutoff · Emphasis · Decay</td><td>0–100</td><td>The bass's level, its filter, the filter's resonance, the length of its notes and envelope</td></tr><tr><td>Lead Level · Busy · Glide</td><td>0–100</td><td>The lead's level, how many notes a bar (and whether it leaves room), its portamento</td></tr><tr><td>Lead Voice</td><td>Mini, Odyssey, Synthi, Flute, Theremin, FM Lead, FM Brass, FM Reed, Choir, Robot</td><td></td></tr><tr><td>Lead echo · Lead reverb · Tone</td><td>0–100</td><td>The lead's own sends to the echo and the plate; its brightness (the Choir's vowel)</td></tr><tr><td>Lead octave</td><td>−1, 0, +1</td><td></td></tr><tr><td>Channels</td><td>1,2,3,10 or 4,5,6,11</td><td>Bass, pad, lead, drums</td></tr><tr><td>Clock</td><td>Internal, USB, TRS</td><td>Where MIDI clock is taken from</td></tr><tr><td>Clock out</td><td>Off, On</td><td></td></tr><tr><td>Pad Level · Bright · Phaser</td><td>0–100</td><td>The pad's level, its brightness (the choir's vowel), the phaser's depth and feedback</td></tr><tr><td>Pad Colour</td><td>Strings, Choir, Saws</td><td></td></tr><tr><td>Drums Level · Fills · Hats</td><td>0–100</td><td>The kit's level, how often and how long the fills, the hats' colour and density</td></tr><tr><td>Swing</td><td>50–75%</td><td>The off sixteenths late</td></tr><tr><td>Echo · Feedback · Reverb</td><td>0–100</td><td>The echo's send (mostly the bass), its repeats, the plate's send</td></tr><tr><td>Echo time</td><td>1/16, 1/8, 1/8., 1/4, 1/4., 1/2</td><td>In time with the tempo</td></tr><tr><td>Key</td><td>C–B</td><td>The song's key</td></tr><tr><td>Tune</td><td>±50 cents</td><td></td></tr><tr><td>MIDI out</td><td>Off, On</td><td></td></tr><tr><td>Lights</td><td>Off, On, Keys</td><td>The keys (and the buttons' glow)</td></tr><tr><td>Pattern (ALGORITHM)</td><td>Song, Pump, Pump 16, Arpeggio, Gallop, Octaves, Slow</td><td></td></tr><tr><td>Bass octave (OCT)</td><td>−1, 0, +1</td><td></td></tr></tbody></table></div>
+<hr>
+<h2 id="s12"><span class="num">12</span>Credits</h2>
+<p>Inspired by and modelled on <a href="https://charlesvestal.github.io/fm1-amb/">AMB-1</a> by Charles Vestal, <a href="https://sbegueria.github.io/fm1-dub/">DUB-1</a> by Santiago Beguería and <a href="https://fartypants.github.io/fm1-nachtfahrt/">NACHTFAHRT</a> by Cranky Man, and influenced by the music of Giorgio Moroder, Patrick Cowley, Marc Cerrone, Space, Daft Punk and many others. You are all giants, and I stand on your shoulders. I'd like to give credit for sparking this idea to YouTube user @mateocarrion7776, who posted on a recent thread on my channel those immortal words, "My name is Giovanni Giorgio…", and set off this train of thought.</p>
+<p>A fork of <a href="https://github.com/charlesvestal/fm1-amb">AMB-1</a> by Charles Vestal: its platform, panel, plate reverb, tape echo and screen reader. Built on <a href="https://github.com/charlesvestal/fm1-base">fm1-base</a> and <a href="https://github.com/hugelton/felucca-bsp">felucca-bsp</a>, from <a href="https://github.com/hugelton/Felucca">Felucca</a> by Leo Kuroshita (Hügelton Instruments). The reverb is Jon Dattorro's plate ("Effect Design, Part 1", JAES 1997). MPL-2.0; see <a href="https://github.com/GuinanNo1/fm1-mor/blob/main/LICENSING.md">LICENSING.md</a>.</p>
+<p>M-VAVE and FM-1 are trademarks of their owners. MOR-1 is not affiliated with M-VAVE, Giorgio Moroder or any artist named here.</p>
+</main>
+</div>
+</body>
+</html>

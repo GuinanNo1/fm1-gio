@@ -1,0 +1,158 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>MOR-1 Quickstart</title>
+<meta name="description" content="MOR-1 on one page: every control, page, effect and song.">
+<meta name="theme-color" content="#100e22">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow:ital,wght@0,400;0,600;1,400&family=Barlow+Semi+Condensed:wght@500;700&display=swap">
+<style>
+:root {
+  --night: #100e22; --card: #1c1a3a; --card-2: #262350; --rule: #3a3668; --ink: #f2eeff; --muted: #aaa4d4;
+  --magenta: #ff5cb4; --cyan: #2fd8f0; --violet: #b994ff; --gold: #ffc840; --red: #ff7a7a;
+  --display: "Barlow Semi Condensed", "Arial Narrow", "Helvetica Neue", Arial, sans-serif;
+  --body: "Barlow", "Helvetica Neue", Helvetica, Arial, sans-serif;
+  color-scheme: dark;
+}
+
+body { background: var(--night); color: var(--ink); margin: 0; font: 400 17px/1.6 var(--body);
+       padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px));
+       padding-block: 0 64px; }
+a { color: var(--ink); text-decoration-color: var(--magenta); text-decoration-thickness: 2px; text-underline-offset: 3px; }
+a:hover { color: var(--magenta); }
+a:focus-visible, button:focus-visible { outline: 2px solid var(--cyan); outline-offset: 2px; }
+code { font: .88em ui-monospace, Menlo, Consolas, monospace; background: var(--card-2); padding: .08em .35em; border-radius: 3px; }
+.foot { max-width: 46rem; margin: 3rem auto 0; color: var(--muted); font-size: .88rem; border-top: 1px solid var(--rule);
+        padding-top: 1rem; }
+
+header.site { max-width: 46rem; margin: 0 auto; display: flex; flex-wrap: wrap; gap: .4rem 1.2rem; align-items: baseline;
+              padding: 18px 0 14px; border-bottom: 1px solid var(--rule); }
+header.site .home { font: 700 1.15rem/1 var(--display); letter-spacing: .08em; text-decoration: none; color: var(--ink); }
+header.site nav { display: flex; flex-wrap: wrap; gap: .2rem 1rem; font: 500 .95rem/1.4 var(--display);
+                  letter-spacing: .05em; text-transform: uppercase; }
+header.site nav a { text-decoration: none; color: var(--muted); }
+header.site nav a:hover, header.site nav a[aria-current] { color: var(--magenta); }
+
+header.site, .foot { max-width: 62rem; }
+main { max-width: 62rem; margin: 0 auto; }
+h1 { font: 700 2.6rem/1 var(--display); letter-spacing: .05em; margin: 2rem 0 .3rem; }
+.sub { color: var(--muted); margin: 0 0 1.4rem; }
+.grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 28rem), 1fr)); gap: 14px; }
+.card { background: var(--card); border-radius: 10px; padding: 14px 16px; min-width: 0; border-top: 4px solid var(--c, var(--magenta)); }
+.card h2 { font: 700 1.1rem/1.2 var(--display); letter-spacing: .08em; text-transform: uppercase; margin: 0 0 .6rem; color: var(--c, var(--magenta)); }
+.wrap { overflow-x: auto; }
+table { border-collapse: collapse; width: 100%; font-size: .93rem; }
+th, td { text-align: left; padding: 5px 10px 5px 0; border-bottom: 1px solid var(--rule); vertical-align: top; }
+th { font: 500 .78rem/1.3 var(--display); letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
+td:first-child { font-weight: 600; white-space: nowrap; }
+.fx { display: grid; grid-template-columns: auto repeat(4, minmax(0, 1fr)); gap: 4px; font-size: .9rem; }
+.fx span { background: var(--card-2); border-radius: 5px; padding: 4px 6px; min-width: 0; overflow-wrap: anywhere; }
+.fx b { font: 700 .8rem/1.6 var(--display); letter-spacing: .06em; text-transform: uppercase; color: var(--muted); padding-right: 6px; }
+.fx small { color: var(--muted); font-size: .72rem; margin-right: 4px; }
+kbd { font: 600 .82em ui-monospace, Menlo, monospace; background: var(--card-2); border: 1px solid var(--rule); border-radius: 4px; padding: 0 .3em; }
+ol.start { margin: 0; padding-left: 1.3rem; }
+ol.start li { margin-bottom: .35rem; }
+ol.start li::marker { color: var(--magenta); font-weight: 600; }
+</style>
+</head>
+<body>
+<header class="site"><a class="home" href="../index.html">MOR-1</a><nav aria-label="MOR-1"><a href="../emu/index.html">Try it</a><a href="../install/index.html">Install</a><a href="../manual/index.html">Manual</a><a href="../quickstart/index.html" aria-current="page">Quickstart</a><a href="https://github.com/GuinanNo1/fm1-mor">Source</a></nav></header>
+<main>
+<h1>Quickstart</h1>
+<p class="sub">MOR-1 on one page: every control, page, effect and song.</p>
+<div class="grid">
+
+<section class="card" style="--c: var(--magenta)">
+<h2>Start</h2>
+<ol class="start">
+  <li>Switch on: <b>Feel</b> plays from its intro.</li>
+  <li><b>PRESETS</b>: another song, from the top.</li>
+  <li><b>White keys</b>: play the lead, always in key. Three notes and a pause: it answers, and keeps your line as its theme.</li>
+  <li><b>Black keys</b>: an effect while held. <b>SEL</b>: all sixteen on the white keys.</li>
+  <li><b>EDIT</b>: the next section. A tap on <b>REC</b>: stay in this one.</li>
+  <li><b>ENV</b>, KNOB 2: open the bass filter.</li>
+</ol>
+</section>
+
+<section class="card" style="--c: var(--cyan)">
+<h2>Controls</h2>
+<div class="wrap"><table>
+<tr><td>White keys</td><td>The lead, a step of the scale each; the chord's notes lit</td></tr>
+<tr><td>Black keys</td><td>Effects while held: Throw, Tape stop, Swell, Low-pass, High-pass, Sweep, Phaser, Freeze, Drop, Stutter, Roll</td></tr>
+<tr><td>PLAY</td><td>Play / stop (the song from the top)</td></tr>
+<tr><td>REC</td><td>Tap: hold the section. Held: the effects grid</td></tr>
+<tr><td>EDIT</td><td>The next section, on the next bar</td></tr>
+<tr><td>SEL</td><td>The Effects page; again: back</td></tr>
+<tr><td>OCT− / OCT+</td><td>The bass's octave</td></tr>
+<tr><td>ALGORITHM</td><td>The bass pattern: Song, Pump, Pump 16, Arpeggio, Gallop, Octaves, Slow</td></tr>
+<tr><td>PRESETS</td><td>The song (each keeps its settings)</td></tr>
+<tr><td>SELECT</td><td>Pages. With HOME held: tempo 110–130</td></tr>
+<tr><td>SAVE</td><td>Save. Held 1.5 s: the song's recipe again</td></tr>
+</table></div>
+</section>
+
+<section class="card" style="--c: var(--violet)">
+<h2>Pages and knobs</h2>
+<div class="wrap"><table>
+<tr><th>Page</th><th>1</th><th>2</th><th>3</th><th>4</th></tr>
+<tr><td>Song (HOME)</td><td>Tempo</td><td>Evolve</td><td>Motion</td><td>Arrange</td></tr>
+<tr><td>Bass (ENV)</td><td>Level</td><td>Cutoff</td><td>Emphasis</td><td>Decay</td></tr>
+<tr><td>Lead (ARP)</td><td>Level</td><td>Voice</td><td>Busy</td><td>Glide</td></tr>
+<tr><td>Lead FX (ARP ×2)</td><td>Echo</td><td>Reverb</td><td>Octave</td><td>Tone</td></tr>
+<tr><td>Pad (LFO)</td><td>Level</td><td>Colour</td><td>Bright</td><td>Phaser</td></tr>
+<tr><td>Drums (SEQ)</td><td>Level</td><td>Fills</td><td>Hats</td><td>Swing</td></tr>
+<tr><td>Space (FX)</td><td>Echo</td><td>Time</td><td>Feedback</td><td>Reverb</td></tr>
+<tr><td>Setup (GLO)</td><td>Key</td><td>Tune</td><td>MIDI out</td><td>Lights</td></tr>
+<tr><td>MIDI (GLO ×2)</td><td>MIDI out</td><td>Channels</td><td>Clock</td><td>Clock out</td></tr>
+<tr><td>Effects (SEL)</td><td>Bass echo</td><td>Lead echo</td><td>Time</td><td>Feedback</td></tr>
+</table></div>
+</section>
+
+<section class="card" style="--c: var(--red)">
+<h2>Effects</h2>
+<p style="margin:0 0 .6rem;color:var(--muted);font-size:.9rem">SEL or REC held: white keys 1–16, each while held.</p>
+<div class="fx">
+<b>Echo</b><span><small>1</small>Throw</span><span><small>2</small>Time x2</span><span><small>3</small>Tape stop</span><span><small>4</small>Swell</span>
+<b>Filter</b><span><small>5</small>Low-pass</span><span><small>6</small>High-pass</span><span><small>7</small>Sweep</span><span><small>8</small>Phaser</span>
+<b>Space</b><span><small>9</small>Reverb</span><span><small>10</small>Wash</span><span><small>11</small>Freeze</span><span><small>12</small>Drop</span>
+<b>Moves</b><span><small>13</small>Stutter</span><span><small>14</small>Gate</span><span><small>15</small>Octave</span><span><small>16</small>Roll</span>
+</div>
+</section>
+
+<section class="card" style="--c: var(--gold)">
+<h2>Songs</h2>
+<div class="wrap"><table>
+<tr><th>Song</th><th>Tempo</th><th>Key</th></tr>
+<tr><td>1 Feel</td><td>126</td><td>C</td></tr>
+<tr><td>2 Gio</td><td>113</td><td>A minor</td></tr>
+<tr><td>3 Mutant</td><td>123</td><td>F minor</td></tr>
+<tr><td>4 Heaven</td><td>130</td><td>A♭</td></tr>
+<tr><td>5 TickTock</td><td>126</td><td>C, then E♭</td></tr>
+<tr><td>6 Energy</td><td>123</td><td>C minor</td></tr>
+<tr><td>7 Fly</td><td>126</td><td>A minor</td></tr>
+<tr><td>8 Lover</td><td>130</td><td>C minor</td></tr>
+<tr><td>9 Express</td><td>128</td><td>D minor</td></tr>
+</table></div>
+</section>
+
+<section class="card" style="--c: var(--cyan)">
+<h2>Handy to know</h2>
+<div class="wrap"><table>
+<tr><td>Help</td><td>Hold any button a second: a card says what it does</td></tr>
+<tr><td>MIDI</td><td>Out on USB: bass, pad, lead, drums on 1, 2, 3, 10 (or 4, 5, 6, 11). Clock from Internal, USB or TRS</td></tr>
+<tr><td>Update mode</td><td>OCT− and OCT+ together for 5 s</td></tr>
+<tr><td>Calibration</td><td>OCT− and OCT+ held while switching on</td></tr>
+<tr><td>Emulator keys</td><td>White <kbd>Q</kbd>–<kbd>I</kbd> <kbd>A</kbd>–<kbd>K</kbd>, black <kbd>1</kbd>–<kbd>-</kbd>, <kbd>P</kbd> PLAY, <kbd>O</kbd> REC, <kbd>Esc</kbd> HOME, <kbd>Z</kbd> <kbd>X</kbd> OCT, <kbd>↑</kbd> <kbd>↓</kbd> SELECT</td></tr>
+</table></div>
+</section>
+
+</div>
+</main>
+<p class="foot">M-VAVE and FM-1 are trademarks of their owners. MOR-1 is independent firmware, not affiliated with
+M-VAVE, Giorgio Moroder or any artist named here. To go back to the official firmware, use the installer's "Back to the
+stock firmware", or M-VAVE's updater, M-UPGRADE, from <a href="https://www.m-vave.com/download">m-vave.com/download</a>.</p>
+</body>
+</html>
