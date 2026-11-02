@@ -1,6 +1,6 @@
 # GIO-1's build settings (fm1-base's tools/build.py: ./build.sh)
 name = "GIO"                   # the build's files: gio.fwsc, gio-X.Y.fwsc
-id_prefix = "FM-1_4"           # package identity: dev FM-1_400, releases FM-1_4XXYYZZ (check it is free on the Firmware Hub)
+id_prefix = "FM-1_58"          # package identity: dev FM-1_5800, releases FM-1_58XXYYZZ (free: no FM-1 firmware found on GitHub uses 5x, 2026-11)
 usb_manufacturer = "GIO-1"
 usb_product = "GIO-1 FM-1"
 ble = false                    # GIO-1 never uses the radio

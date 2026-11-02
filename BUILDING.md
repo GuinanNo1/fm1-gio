@@ -39,7 +39,7 @@ On Linux x86-64 the toolchain runs natively and no container is needed.
 
 ```
 ./build.sh                    # app/build/gio.fwsc
-./build.sh --release X.Y      # app/build/gio-X.Y.fwsc, identity FM-1_4XXYYZZ
+./build.sh --release X.Y      # app/build/gio-X.Y.fwsc, identity FM-1_58XXYYZZ
 ./build.sh --host             # the simulator: app/build/host/gio_host
 ./build.sh --web              # the browser emulator: app/build/emu/
 web/app/build.sh              # the web app (the engine alone, for phone and desktop): app/build/app/
@@ -112,7 +112,7 @@ gh attestation verify "build/verify/gio-${tag#v}.fwsc" --repo "$repo" \
 The same checks the `-app.bin`. `SHA256SUMS` comes with the downloads; a checksum alone proves nothing about where a
 package was built.
 
-A local release build (`./build.sh --release X.Y`, package `app/build/gio-X.Y.fwsc`; its identity FM-1_4XXYYZZ is
+A local release build (`./build.sh --release X.Y`, package `app/build/gio-X.Y.fwsc`; its identity FM-1_58XXYYZZ is
 what the installer checks) is still how to try one on the FM-1 before tagging.
 
 ## The emulator as one file

@@ -14,7 +14,7 @@
 
   tools/make_pages.py OUT_DIR [PKG VERSION]
 
-A package must be a release build (./build.sh --release X.Y): its identity, FM-1_4XXYYZZ, is what the installer
+A package must be a release build (./build.sh --release X.Y): its identity, FM-1_58XXYYZZ, is what the installer
 checks the download against and what the FM-1 reports after the install."""
 import hashlib
 import html
@@ -360,7 +360,7 @@ def main(out, pkg=None, version=None):
         pkg = Path(pkg)
         raw = pkg.read_bytes()
         product = product_of(raw)
-        if not re.fullmatch(r"FM-1_4\d{6}", product):
+        if not re.fullmatch(r"FM-1_58\d{6}", product):
             raise SystemExit(f"{pkg}: identity {product!r}: make a release build (./build.sh --release X.Y)")
         if b"FELUCCA-LOADER-1" not in raw:
             raise SystemExit(f"{pkg}: no update loader in it")
