@@ -305,9 +305,9 @@ QUICK_BODY = """<main>
 </section>
 
 <section class="card" style="--c: var(--gold)">
-<h2>Songs</h2>
+<h2>Presets</h2>
 <div class="wrap"><table>
-<tr><th>Song</th><th>Tempo</th><th>Key</th></tr>
+<tr><th>Preset</th><th>BPM</th><th>Key</th></tr>
 <tr><td>1 Feel</td><td>126</td><td>C</td></tr>
 <tr><td>2 Gio</td><td>113</td><td>A minor</td></tr>
 <tr><td>3 Mutant</td><td>123</td><td>F minor</td></tr>

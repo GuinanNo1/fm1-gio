@@ -200,7 +200,7 @@ typedef struct {
 #define NPROG 5
 #define PROG_MAX 8
 typedef struct {
-    const char *name, *after;
+    const char *name;
     int16_t v[P_NPARAMS];
     uint8_t mode, pat, nsec, loop_to;
     sec_t sec[EN_MAXSEC];
@@ -213,7 +213,7 @@ typedef struct {
 
 /* recipes:    Tem Evo Mot Arr  Bas Cut Emp Dec  Led Voi Bus Gli  Pad Col Bri Pha  Drm Fil Hat Swi  Ech ET Fbk Rev  Key Tun MI  Pat BO LO  LEc LRv Ton */
 static const song_t SONGS[EN_NSONGS] = {
-    {"Feel", "I Feel Love", {126, 40, 55, 35, 85, 42, 50, 35, 40, 1, 35, 30, 45, 2, 45, 45, 70, 30, 55, 0, 60, 0, 30, 35, 0, 0, 1, 0, 0, 0, 40, 45, 50},
+    {"Feel", {126, 40, 55, 35, 85, 42, 50, 35, 40, 1, 35, 30, 45, 2, 45, 45, 70, 30, 55, 0, 60, 0, 30, 35, 0, 0, 1, 0, 0, 0, 40, 45, 50},
      M_MAJOR, A_PUMP, 7, 1,
      {{"Intro", 8, 0, L_BASS | L_HATS, 0, F_BUILD, 0},
       {"Verse", 16, 0, L_BASS | L_PAD | L_KICK | L_HATS | L_OHAT, 0, 0, 0},
@@ -223,7 +223,7 @@ static const song_t SONGS[EN_NSONGS] = {
       {"Chorus", 8, 1, ALL, 0, 0, 0},
       {"Break", 8, 0, L_BASS | L_PAD | L_HATS, 0, F_BREAK, 0}},
      {{{0, Q_MAJ, 16}}, {{0, Q_MAJ, 8}, {3, Q_MAJ, 8}, {5, Q_MAJ, 8}, {7, Q_MAJ, 8}}}},
-    {"Gio", "Giorgio by Moroder", {113, 35, 50, 30, 80, 48, 35, 30, 50, 0, 55, 25, 55, 0, 55, 25, 70, 45, 50, 0, 25, 1, 30, 40, 9, 0, 1, 0, 0, 0, 35, 50, 55},
+    {"Gio", {113, 35, 50, 30, 80, 48, 35, 30, 50, 0, 55, 25, 55, 0, 55, 25, 70, 45, 50, 0, 25, 1, 30, 40, 9, 0, 1, 0, 0, 0, 35, 50, 55},
      M_MINOR, A_ARP, 6, 2,
      {{"Click", 8, 2, L_HATS, 0, F_CLICK, 0},
       {"Arpeggio", 8, 0, L_BASS | L_HATS, 0, F_BUILD | F_CLICK, 0},
@@ -232,7 +232,7 @@ static const song_t SONGS[EN_NSONGS] = {
       {"Fills", 8, 0, GR | L_TOMS, 0, F_TOMS, 0},
       {"House", 16, 0, ALL, 0, 0, 0}},
      {{{0, Q_MIN, 8}, {7, Q_MIN, 8}}, {{0, Q_MIN, 8}, {8, Q_MAJ, 8}}, {{0, Q_MIN, 16}}}},
-    {"Mutant", "Supernature", {123, 45, 60, 35, 80, 38, 58, 40, 45, 2, 40, 40, 50, 1, 40, 55, 65, 35, 45, 0, 40, 2, 45, 45, 5, 0, 1, 0, 0, 0, 45, 55, 45},
+    {"Mutant", {123, 45, 60, 35, 80, 38, 58, 40, 45, 2, 40, 40, 50, 1, 40, 55, 65, 35, 45, 0, 40, 2, 45, 45, 5, 0, 1, 0, 0, 0, 45, 55, 45},
      M_MINOR, A_GALLOP, 6, 2,
      {{"Dawn", 8, 0, L_PAD, 0, F_BUILD, 0},
       {"Sequence", 8, 0, L_BASS | L_PAD, 0, F_BUILD, 0},
@@ -241,7 +241,7 @@ static const song_t SONGS[EN_NSONGS] = {
       {"Bridge", 8, 2, L_BASS | L_PAD | L_KICK | L_SNARE, 0, 0, 0},
       {"Theme", 16, 1, ALL, 0, 0, 0}},
      {{{0, Q_MIN, 16}}, {{0, Q_MIN, 8}, {8, Q_MAJ, 8}}, {{5, Q_MIN, 8}, {0, Q_MIN, 8}}}},
-    {"Heaven", "The Number One Song in Heaven", {130, 35, 45, 25, 75, 45, 40, 30, 50, 1, 45, 30, 60, 1, 50, 35, 70, 40, 55, 0, 30, 1, 30, 40, 8, 0, 1, 0, 0, 0, 40, 55, 50},
+    {"Heaven", {130, 35, 45, 25, 75, 45, 40, 30, 50, 1, 45, 30, 60, 1, 50, 35, 70, 40, 55, 0, 30, 1, 30, 40, 8, 0, 1, 0, 0, 0, 40, 55, 50},
      M_MAJOR, A_PUMP16, 6, 0,
      {{"Slow", 16, 0, L_PAD | L_BASS | L_KICK | L_SNARE | L_LEAD, A_SLOW, F_HALF, 0},
       {"Slow", 16, 0, L_PAD | L_BASS | L_KICK | L_SNARE | L_HATS | L_LEAD, A_SLOW, F_HALF, 0},
@@ -251,7 +251,7 @@ static const song_t SONGS[EN_NSONGS] = {
       {"Fast", 16, 1, ALL, 0, 0, 0}},
      {{{0, Q_MAJ, 8}, {7, Q_MAJ, 8}, {9, Q_MIN11, 8}, {7, Q_MAJ, 8}},
       {{0, Q_MAJ, 4}, {7, Q_MAJ, 4}, {2, Q_MAJ, 4}, {0, Q_MAJ, 4}}, {{9, Q_MIN11, 16}}}},
-    {"TickTock", "Beat the Clock", {126, 40, 45, 30, 80, 50, 40, 25, 45, 2, 65, 20, 45, 2, 55, 20, 75, 50, 75, 0, 30, 0, 25, 35, 0, 0, 1, 0, 0, 0, 30, 40, 60},
+    {"TickTock", {126, 40, 45, 30, 80, 50, 40, 25, 45, 2, 65, 20, 45, 2, 55, 20, 75, 50, 75, 0, 30, 0, 25, 35, 0, 0, 1, 0, 0, 0, 30, 40, 60},
      M_MAJOR, A_PUMP16, 9, 1,
      {{"Intro", 4, 4, L_BASS | L_KICK | L_HATS, 0, F_BUILD, 0},
       {"Verse", 8, 0, GR, 0, 0, 0},
@@ -264,7 +264,7 @@ static const song_t SONGS[EN_NSONGS] = {
       {"Outro", 4, 4, GR, 0, 0, 3}},
      {{{7, Q_MAJ, 4}, {5, Q_MAJ, 4}}, {{9, Q_MIN, 4}, {2, Q_MIN, 4}, {7, Q_MAJ, 4}, {0, Q_MAJ, 4}},
       {{7, Q_MAJ, 8}, {4, Q_MIN7, 4}, {7, Q_MAJ, 4}}, {{0, Q_MAJ, 8}, {3, Q_MAJ, 8}}, {{0, Q_MAJ, 16}}}},
-    {"Energy", "Menergy", {123, 40, 50, 35, 85, 45, 60, 25, 45, 0, 50, 25, 50, 2, 60, 30, 75, 40, 60, 0, 30, 2, 35, 35, 0, 0, 1, 0, 0, 0, 35, 45, 55},
+    {"Energy", {123, 40, 50, 35, 85, 45, 60, 25, 45, 0, 50, 25, 50, 2, 60, 30, 75, 40, 60, 0, 30, 2, 35, 35, 0, 0, 1, 0, 0, 0, 35, 45, 55},
      M_MINOR, A_OCT, 6, 1,
      {{"Intro", 8, 0, L_BASS | L_KICK | L_HATS, 0, F_BUILD, 0},
       {"Groove", 16, 0, GR, 0, 0, 0},
@@ -273,7 +273,7 @@ static const song_t SONGS[EN_NSONGS] = {
       {"Break", 8, 0, L_BASS | L_PAD, 0, F_BREAK, 0},
       {"Build", 4, 0, L_BASS | L_PAD | L_SNARE, 0, F_BUILD, 0}},
      {{{0, Q_MIN, 16}}, {{8, Q_MAJ, 8}, {10, Q_MAJ, 8}}, {{0, Q_MIN, 8}, {10, Q_MAJ, 8}}}},
-    {"Fly", "Magic Fly", {126, 40, 60, 30, 70, 42, 45, 35, 70, 4, 40, 75, 55, 0, 45, 45, 65, 35, 50, 0, 35, 3, 35, 45, 9, 0, 1, 0, 0, 0, 55, 60, 50},
+    {"Fly", {126, 40, 60, 30, 70, 42, 45, 35, 70, 4, 40, 75, 55, 0, 45, 45, 65, 35, 50, 0, 35, 3, 35, 45, 9, 0, 1, 0, 0, 0, 55, 60, 50},
      M_MINOR, A_OCT, 5, 1,
      {{"Liftoff", 8, 2, L_PAD | L_BASS, 0, F_BUILD, 0},
       {"Theme", 16, 0, ALL, 0, 0, 0},
@@ -281,7 +281,7 @@ static const song_t SONGS[EN_NSONGS] = {
       {"Theme", 16, 0, ALL, 0, 0, 0},
       {"Space", 8, 2, L_PAD | L_LEAD | L_BASS, 0, F_BREAK, 0}},
      {{{0, Q_MIN, 8}, {8, Q_MAJ, 4}, {10, Q_MAJ, 4}}, {{0, Q_MIN, 8}, {5, Q_MIN, 8}}, {{0, Q_MIN, 16}}}},
-    {"Lover", "Automatic Lover", {130, 40, 45, 30, 80, 46, 50, 25, 55, 9, 55, 15, 45, 0, 50, 30, 75, 40, 60, 0, 35, 0, 30, 35, 0, 0, 1, 0, 0, 0, 30, 40, 55},
+    {"Lover", {130, 40, 45, 30, 80, 46, 50, 25, 55, 9, 55, 15, 45, 0, 50, 30, 75, 40, 60, 0, 35, 0, 30, 35, 0, 0, 1, 0, 0, 0, 30, 40, 55},
      M_MINOR, A_PUMP16, 5, 1,
      {{"Intro", 8, 2, L_BASS | L_KICK | L_HATS, 0, F_BUILD, 0},
       {"Verse", 16, 0, GR | L_LEAD, 0, 0, 0},
@@ -289,10 +289,10 @@ static const song_t SONGS[EN_NSONGS] = {
       {"Robot", 8, 2, L_BASS | L_LEAD | L_KICK | L_HATS, 0, 0, 0},
       {"Hook", 8, 1, ALL, 0, 0, 0}},
      {{{0, Q_MIN, 8}, {10, Q_MAJ, 8}}, {{8, Q_MAJ, 4}, {10, Q_MAJ, 4}, {0, Q_MIN, 8}}, {{0, Q_MIN, 16}}}},
-    {"Express", "Chase", {128, 40, 60, 30, 85, 44, 55, 30, 50, 5, 50, 30, 50, 0, 50, 70, 75, 45, 60, 0, 45, 0, 30, 35, 2, 0, 1, 0, 0, 0, 40, 45, 55},
+    {"Express", {128, 40, 60, 30, 85, 44, 55, 30, 50, 5, 50, 30, 50, 0, 50, 70, 75, 45, 60, 0, 45, 0, 30, 35, 2, 0, 1, 0, 0, 0, 40, 45, 55},
      M_MINOR, A_PUMP16, 7, 1,
      {{"Intro", 8, 0, L_BASS, 0, F_BUILD, 0},
-      {"Chase", 16, 0, L_BASS | L_KICK | L_HATS | L_OHAT, 0, 0, 0},
+      {"Drive", 16, 0, L_BASS | L_KICK | L_HATS | L_OHAT, 0, 0, 0},
       {"Strings", 16, 0, GR, 0, 0, 0},
       {"Theme", 16, 1, ALL, 0, 0, 0},
       {"Pursuit", 8, 0, GR | L_TOMS, 0, F_TOMS | F_BUILD, 0},
@@ -303,7 +303,6 @@ static const song_t SONGS[EN_NSONGS] = {
 
 static unsigned song_ok(int i) { return (unsigned)i < EN_NSONGS ? (unsigned)i : 0u; }
 const char *en_song_name(int i) { return SONGS[song_ok(i)].name; }
-const char *en_song_after(int i) { return SONGS[song_ok(i)].after; }
 void en_song_recipe(int i, int16_t *par)
 {
     int p;
@@ -921,7 +920,7 @@ static void lead_note(int n, int32_t len)
 {
     if (lead.on && lead.note && en_playing)
         midi(0x82, lead.note, 0);
-    if (!lead.on || lead.env < 0.05f) {          /* from silence: no glide; Magic Fly's swoop when Glide is high */
+    if (!lead.on || lead.env < 0.05f) {          /* from silence: no glide; a swoop up when Glide is high */
         lead.pitch = (float)n - (par[P_GLIDE] > 60 ? 5.0f : 0.0f);
         lead.vib_t = 0.0f;
     }
@@ -1472,7 +1471,7 @@ static void plate_init(void)
 
 /* ---------------------------------------------------- echo: the tape --- */
 /* AMB-1's tape at a quarter rate (11 kHz, 16-bit): each repeat darker and thinner. Two heads: the first at the echo's
- * time, on the right (I Feel Love's dry note left, its repeat right); the second at twice it, on the left. The first
+ * time, on the right (the dry note left, its repeat right); the second at twice it, on the left. The first
  * feeds back. */
 #define TAPE_N 62000
 #define TAPE_SR 11025.0f

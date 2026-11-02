@@ -1219,14 +1219,12 @@ static void sp_help(void)
         sp_line(l[k]);
 }
 
-static void sp_piece_text(void)                /* "SONG Heaven, after The Number One Song in Heaven, key of Ab, tempo 130" */
+static void sp_piece_text(void)                /* "SONG Heaven, key of Ab, tempo 130" */
 {
     sp_n = 0;
     sp_buf[0] = 0;
     sp_cat("SONG ");
     sp_cat(piece_name(proj.piece));
-    sp_cat(", after ");
-    sp_cat(en_song_after(proj.piece));
     sp_cat(", key of ");
     sp_cat(EN_NOTE_NAME[proj.par[P_ROOT]]);
     sp_cat(", tempo ");

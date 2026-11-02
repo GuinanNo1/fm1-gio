@@ -110,8 +110,8 @@ int main(int argc, char **argv)
     t1 = (double)ts.tv_sec + (double)ts.tv_nsec * 1e-9;
     fclose(f);
     (void)t0, (void)t1;
-    printf("%s (after %s): %.0f s, peak %.1f dBFS, rms %.1f dBFS, nan %ld, engine %.2f%% of real time\n",
-           en_song_name(song), en_song_after(song), (double)secs, 20.0 * log10(peak + 1e-12),
+    printf("%s: %.0f s, peak %.1f dBFS, rms %.1f dBFS, nan %ld, engine %.2f%% of real time\n",
+           en_song_name(song), (double)secs, 20.0 * log10(peak + 1e-12),
            10.0 * log10(sum2 / (double)(frames * 2) + 1e-24), nan, 100.0 * eng / (double)secs);
     return nan ? 1 : 0;
 }

@@ -8,7 +8,7 @@
  *           ladder low-pass, a short decay on both the filter and the level) stepping through a 16-step pattern. A
  *           pattern is a shape (pump, arpeggio, gallop, octaves, ...) written in chord degrees, so it follows the
  *           chords; Evolve changes a step now and then, and the bar after it may change back. Most of the echo is
- *           its: as on I Feel Love, the dry note on one side and its repeat on the other.
+ *           its: the dry note on one side and its repeat on the other.
  *   PAD     four voices on the chord (strings, a choir, or detuned saws through a filter), voice-led from chord to
  *           chord, through a stereo phaser.
  *   LEAD    a monophonic synth line with glide and vibrato: a phrase of short motifs written for each section, its
@@ -94,7 +94,6 @@ void en_midi_out(uint32_t st, uint32_t d1, uint32_t d2);
 #define EN_NSONGS 9
 #define EN_MAXSEC 12
 const char *en_song_name(int i);
-const char *en_song_after(int i);              /* what it is after ("I Feel Love") */
 void en_song_recipe(int i, int16_t *par);
 int en_song_nsec(int i);
 const char *en_sec_name(int song, int sec);

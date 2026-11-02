@@ -2,7 +2,7 @@
 
 MOR-1 turns the M-VAVE FM-1 into a generative electronic disco machine, after Giorgio Moroder's Munich sound. It
 plays itself from the moment it's switched on: a Moog-style bass sequence out in front, its repeats on the other
-side as on *I Feel Love*; strings, a choir or detuned saws through a phaser; a synth lead (ten voices) that writes its
+side; strings, a choir or detuned saws through a phaser; a synth lead (ten voices) that writes its
 own phrases, which you can play from the white keys and which answers you; four on the floor with claps, open hats and syndrum fills. Each song is a form (intro, verse, chorus,
 break) with its own chord changes, and it loops for ever, changing as it goes: a section repeated, a layer let
 out for a while, the whole song moved up a key for a cycle. You steer it: pick a song, a key, a bass pattern,
@@ -13,26 +13,24 @@ hold a section, push it on to the next.
 **Status: beta, simulator only.** It runs in fm1-base's simulator and passes its tests; it has not yet been built
 for or run on an FM-1. See [BUILDING.md](BUILDING.md) for the toolchain.
 
-## The songs
+## The presets
 
-Nine songs, each after a record: its tempo, key, chord changes and the shape of its arrangement. The lines are
-MOR-1's own, written as it plays.
+Nine presets, each with its own tempo, key, chord changes and arrangement. The lines are MOR-1's own, written as
+it plays.
 
-| # | Song | After | Tempo | Key | Bass | What's taken |
-|---|---|---|---|---|---|---|
-| 1 | Feel | *I Feel Love*, Donna Summer (1977) | 126 | C | Pump (eighths, octaves) | the dry-left, echo-right eighths; a vamp on C, the chorus C–E♭–F–G, the riff moving to B♭ |
-| 2 | Gio | *Giorgio by Moroder*, Daft Punk (2013) | 113 | A minor | Arpeggio | a click, the arpeggio, disco, strings, drum fills, a house beat; Am–Em, Am–F |
-| 3 | Mutant | *Supernature*, Cerrone (1977) | 123 | F minor | Gallop | a long build from the pad alone; a minor vamp, i–♭VI, iv–i (the changes are MOR-1's) |
-| 4 | Heaven | *The Number One Song in Heaven*, Sparks (1979) | 130 | A♭ | Slow, then Pump 16 | a half-time first half (A♭–E♭–Fm11–E♭), then full tempo (A♭–E♭–B♭–A♭, an Fm11 vamp) |
-| 5 | TickTock | *Beat the Clock*, Sparks (1979) | 126 | C, then E♭ | Pump 16 | G–F verses, Am–Dm–G–C, G–Em7–G; the turn through C–E♭ and the whole song again a minor third up |
-| 6 | Energy | *Menergy*, Patrick Cowley (1981) | 123 | C minor | Octaves | the hi-NRG off-beat octave bass; a minor vamp with A♭–B♭ lifts (the changes are MOR-1's) |
-| 7 | Fly | *Magic Fly*, Space (1977) | 126 | A minor | Octaves | the gliding lead out in front, strings; Am–F–G, Am–Dm (the changes are MOR-1's) |
-| 8 | Lover | *Automatic Lover*, Dee D. Jackson (1978) | 130 | C minor | Pump 16 | the Robot lead; Cm–B♭, A♭–B♭–Cm (the changes are MOR-1's) |
-| 9 | Express | *Chase*, Giorgio Moroder (1978) | 128 | D minor | Pump 16 | a bass alone, then layer on layer, rising; Dm–B♭–C, strings under a phaser (key, tempo and changes are MOR-1's) |
+| # | Preset | BPM | Key |
+|---|---|---|---|
+| 1 | Feel | 126 | C |
+| 2 | Gio | 113 | A minor |
+| 3 | Mutant | 123 | F minor |
+| 4 | Heaven | 130 | A♭ |
+| 5 | TickTock | 126 | C, then E♭ |
+| 6 | Energy | 123 | C minor |
+| 7 | Fly | 126 | A minor |
+| 8 | Lover | 130 | C minor |
+| 9 | Express | 128 | D minor |
 
-Tempo and key come from published analyses where there are some; several are machine-detected, and three of the
-records' chord changes aren't published at all, so those are MOR-1's own in the record's manner. All of it is a
-table in `app/dsp/mor.c` (`SONGS`), easy to correct.
+All of it is a table in `app/dsp/mor.c` (`SONGS`), easy to change.
 
 ## In short
 

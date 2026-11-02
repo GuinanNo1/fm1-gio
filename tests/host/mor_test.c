@@ -124,7 +124,7 @@ int main(void)
     for (s = 0; s < EN_NSONGS; s++) {
         int16_t par[P_NPARAMS];
         en_song_recipe(s, par);
-        CHECK(en_song_name(s)[0] && en_song_after(s)[0], "song %d: no name", s);
+        CHECK(en_song_name(s)[0], "song %d: no name", s);
         CHECK(en_song_nsec(s) > 1 && en_song_nsec(s) <= EN_MAXSEC, "song %d: %d sections", s, en_song_nsec(s));
         for (i = 0; i < P_NPARAMS; i++) {
             const en_param_t *p = en_param_info(i);

@@ -17,7 +17,7 @@ sections with their own chord changes; it loops for ever and changes as it goes.
 3. Controls
 4. The screen
 5. The music
-6. The songs
+6. The presets
 7. The pages
 8. MIDI (and 8a. Effects)
 9. Saving
@@ -108,7 +108,7 @@ Hold any button for a second and a card says what it does; let go and nothing el
 **The bass** is the loudest thing: two saws and a square an octave down through a four-pole ladder low-pass, a
 short decay on its level and its filter (Cutoff, Emphasis and Decay on the Bass page). It steps through a 16-step
 pattern written in chord degrees (root, third, fifth, seventh, octave), so it follows the chords. Most of the echo is
-its own: the dry note sits a little left, its repeat right, as on *I Feel Love*. With **Evolve**, a weak step changes
+its own: the dry note sits a little left, its repeat right. With **Evolve**, a weak step changes
 now and then (another chord note, a ghost note, a rest), and goes back home a step at a time.
 
 **The pad** holds the chord on four voices, each moving as little as it can from chord to chord: **Strings** (two
@@ -157,28 +157,23 @@ each repeat darker) and Dattorro's plate reverb.
 
 ---
 
-## 6. The songs
+## 6. The presets
 
-Each song is after a record: its tempo, key, chord changes and the shape of its arrangement. The bass lines, leads
-and drum parts are MOR-1's own, written as it plays.
+Each preset has its own tempo, key, chord changes and arrangement. The bass lines, leads and drum parts are
+MOR-1's own, written as it plays.
 
-| # | Song | After | Tempo | Key | The form |
-|---|---|---|---|---|---|
-| 1 | Feel | *I Feel Love* | 126 | C | Intro (bass, hats) · Verse (C) · Chorus (C–E♭–F–G) · Shift (on B♭) · Verse · Chorus · Break |
-| 2 | Gio | *Giorgio by Moroder* | 113 | A minor | Click (hats on the beat) · Arpeggio · Disco (Am–Em) · Strings (Am–F) · Fills · House |
-| 3 | Mutant | *Supernature* | 123 | F minor | Dawn (the pad alone) · Sequence · Groove · Theme (Fm–D♭) · Bridge (B♭m–Fm) · Theme |
-| 4 | Heaven | *The Number One Song in Heaven* | 130 | A♭ | Slow ×2 (half time, A♭–E♭–Fm11–E♭) · Lift · Fast (A♭–E♭–B♭–A♭) · Vamp (Fm11) · Fast |
-| 5 | TickTock | *Beat the Clock* | 126 | C | Intro · Verse (G–F) · Pre (Am–Dm–G–C) · Chorus (G–Em7–G) · Turn (C–E♭) · the same a minor third up · Outro |
-| 6 | Energy | *Menergy* | 123 | C minor | Intro · Groove (Cm) · Lift (A♭–B♭) · Groove (Cm–B♭) · Break · Build |
-| 7 | Fly | *Magic Fly* | 126 | A minor | Liftoff · Theme (Am–F–G) · Drift (Am–Dm) · Theme · Space |
-| 8 | Lover | *Automatic Lover* | 130 | C minor | Intro · Verse (Cm–B♭) · Hook (A♭–B♭–Cm) · Robot · Hook |
-| 9 | Express | *Chase* | 128 | D minor | Intro (the bass alone) · Chase · Strings · Theme (Dm–B♭–C) · Pursuit · Theme · Run |
+| # | Preset | BPM | Key | The form |
+|---|---|---|---|---|
+| 1 | Feel | 126 | C | Intro (bass, hats) · Verse (C) · Chorus (C–E♭–F–G) · Shift (on B♭) · Verse · Chorus · Break |
+| 2 | Gio | 113 | A minor | Click (hats on the beat) · Arpeggio · Disco (Am–Em) · Strings (Am–F) · Fills · House |
+| 3 | Mutant | 123 | F minor | Dawn (the pad alone) · Sequence · Groove · Theme (Fm–D♭) · Bridge (B♭m–Fm) · Theme |
+| 4 | Heaven | 130 | A♭ | Slow ×2 (half time, A♭–E♭–Fm11–E♭) · Lift · Fast (A♭–E♭–B♭–A♭) · Vamp (Fm11) · Fast |
+| 5 | TickTock | 126 | C, then E♭ | Intro · Verse (G–F) · Pre (Am–Dm–G–C) · Chorus (G–Em7–G) · Turn (C–E♭) · the same a minor third up · Outro |
+| 6 | Energy | 123 | C minor | Intro · Groove (Cm) · Lift (A♭–B♭) · Groove (Cm–B♭) · Break · Build |
+| 7 | Fly | 126 | A minor | Liftoff · Theme (Am–F–G) · Drift (Am–Dm) · Theme · Space |
+| 8 | Lover | 130 | C minor | Intro · Verse (Cm–B♭) · Hook (A♭–B♭–Cm) · Robot · Hook |
+| 9 | Express | 128 | D minor | Intro (the bass alone) · Drive · Strings · Theme (Dm–B♭–C) · Pursuit · Theme · Run |
 
-Where the facts came from: tempo and key from published analyses (Hooktheory, Wikipedia) where there are some, and
-from AcousticBrainz's automatic detection where not; the chord changes of *Beat the Clock*, *The Number One Song in
-Heaven* and *I Feel Love* from published chord charts. *Supernature*, *Menergy*, *Magic Fly*, *Automatic Lover* and
-*Chase* have no published changes, so theirs are MOR-1's own in the record's manner, and so are *Chase*'s key and
-tempo. *Automatic Lover* (about 132) is set to 130 to stay within MOR-1's range.
 
 ---
 
