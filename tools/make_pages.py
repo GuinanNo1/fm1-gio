@@ -384,6 +384,20 @@ def main(out, pkg=None, version=None):
         for key, val in (("NAME", "GIO-1"), ("REPO", REPO), ("REPO_SHORT", re.sub(r"^https?://", "", REPO)),
                          ("LICENSE", conf.get("licence", "MPL-2.0")), ("CREDITS", " " + conf.get("credits", ""))):
             page_i = page_i.replace("{{" + key + "}}", val)
+        # the release notes' warnings, over the Install button too
+        caution = ('<div style="border:2px solid #b5451b;border-radius:10px;padding:.7rem 1rem;margin:1rem 0">'
+                   '<p style="margin:.2rem 0"><strong>Disclaimer: installing this firmware could brick your FM-1.</strong> '
+                   'GIO-1 is unofficial firmware, not made, endorsed or supported by M-VAVE, and this is an alpha. You install '
+                   'it entirely at your own risk.</p>'
+                   '<p style="margin:.4rem 0"><strong>Not yet tested on a real FM-1.</strong> It has run only in the simulator, '
+                   'the browser emulator and the installer\'s tests.</p>'
+                   '<p style="margin:.4rem 0 .2rem"><strong>The safety nets:</strong> a crash restarts it; two failed starts in '
+                   'a row bring up SAFE MODE (no sound, USB on: install again, or go back to stock below); past that, the '
+                   'chip\'s own update mode, from which the rescue tool puts M-VAVE\'s firmware back. Update mode by hand: hold '
+                   'OCT− and OCT+ for 5 seconds.</p></div>')
+        if page_i.count("<h1>Install GIO-1</h1>") != 1:
+            raise SystemExit("base/web/installer.html: no <h1>Install {{NAME}}</h1> for the warnings")
+        page_i = page_i.replace("<h1>Install GIO-1</h1>", "<h1>Install GIO-1</h1>\n  " + caution)
         app_js = (SRC / "app" / conf["install_app"]).read_text(encoding="utf-8") if conf.get("install_app") else "null"
         (out / "install" / "index.html").write_text(page_i.replace("/*LIB*/", lib).replace("/*META*/", meta)
                                                     .replace("/*APP*/", app_js), encoding="utf-8")
