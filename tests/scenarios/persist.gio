@@ -1,0 +1,42 @@
+# saved and back after a restart: the song, its settings, the lights; a project another firmware left there
+# (another magic) gives the defaults
+wait 300
+turn PRESET 5
+expect piece 5
+tap LFO
+spin K1 -15
+expect par12 35
+tap GLO
+spin K4 1
+tap SAVE
+wait 300
+expect dirty 0
+reboot
+wait 500
+expect piece 5
+expect par12 35
+expect par0 123
+expect playing 1
+# saved by the same instrument before its name was GIO-1 (another magic, its own): all of it taken up
+turn PRESET 1
+expect piece 6
+tap EDIT
+spin K2 2
+expect chord0 4114
+saved_as old
+reboot
+wait 500
+expect piece 6
+expect chord0 4114
+turn PRESET -1
+expect piece 5
+expect par12 35
+# saved in format 2, before the chords: the settings kept, the songs' own chords
+saved_as v2
+reboot
+wait 500
+expect piece 5
+expect par12 35
+turn PRESET 1
+expect piece 6
+expect chord0 4112

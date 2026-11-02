@@ -1,8 +1,8 @@
 /* SPDX-License-Identifier: MPL-2.0
  * Copyright (C) 2026 Charles Vestal, Ian Guinan */
-/* The instrument (mor.h). One compilation unit, -O2. From AMB-1's engine: the plate, the tape echo, voice leading,
- * the command queue and the clock; the rest is MOR-1's. */
-#include "mor.h"
+/* The instrument (gio.h). One compilation unit, -O2. From AMB-1's engine: the plate, the tape echo, voice leading,
+ * the command queue and the clock; the rest is GIO-1's. */
+#include "gio.h"
 #include "fastmath.h"
 
 #if defined EN_HOST || defined PLAT_HOST
@@ -764,7 +764,7 @@ static uint16_t ph_on[PH_BARS];                 /* the phrase: onsets a bar */
 static int8_t ph_deg[PH_BARS][EN_STEPS];        /* each onset's degree (scale steps above the key) */
 static uint8_t ph_len[PH_BARS][EN_STEPS];       /* its length in sixteenths */
 static uint8_t ph_rest[PH_BARS];                /* a bar left out: an answer's room */
-/* the lead's voices: MOR-1's own takes on the classic lead synths (an envelope, a filter, a vibrato that comes in
+/* the lead's voices: GIO-1's own takes on the classic lead synths (an envelope, a filter, a vibrato that comes in
  * late, and for the FM ones an index and a ratio) */
 typedef struct {
     float att, dec, sus, rel;                   /* seconds, and the sustain's level */

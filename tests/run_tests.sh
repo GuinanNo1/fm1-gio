@@ -1,8 +1,8 @@
 #!/bin/sh
 # SPDX-License-Identifier: MPL-2.0
 # Copyright (C) 2026 Charles Vestal, Ian Guinan
-# MOR-1's tests: the instrument (tests/host/mor_test.c), the whole app in fm1-base's simulator (tests/scenarios/*.mor:
-# UI, the form, the panel, persistence, the screen reader), the browser build, and the update path against MOR-1's
+# GIO-1's tests: the instrument (tests/host/gio_test.c), the whole app in fm1-base's simulator (tests/scenarios/*.gio:
+# UI, the form, the panel, persistence, the screen reader), the browser build, and the update path against GIO-1's
 # package (./build.sh first). Screenshots and audio in app/build/scenarios/. fm1-base's own tests: base/tests/run_tests.sh.
 #   tests/run_tests.sh
 set -u
@@ -24,15 +24,15 @@ run() {
         FAIL=1
     fi
 }
-run mor sh -c "$CC -O2 -ffp-contract=off -std=c99 -Wall -Wextra -Wdouble-promotion -Werror -DEN_HOST -Iapp/dsp -Ibase/include \
-    -o $OUT/mor_test tests/host/mor_test.c app/dsp/mor.c -lm && $OUT/mor_test"
-if [ -f $B/mor.fwsc ]; then
-    run ota-entry sh -c "$CC -w -o $OUT/ota_test base/tests/ota_test.c && $OUT/ota_test $B/mor.fwsc"
-    run update-loader sh -c "head -c 100000 $B/mor.bin > $OUT/old_app.bin && \
+run gio sh -c "$CC -O2 -ffp-contract=off -std=c99 -Wall -Wextra -Wdouble-promotion -Werror -DEN_HOST -Iapp/dsp -Ibase/include \
+    -o $OUT/gio_test tests/host/gio_test.c app/dsp/gio.c -lm && $OUT/gio_test"
+if [ -f $B/gio.fwsc ]; then
+    run ota-entry sh -c "$CC -w -o $OUT/ota_test base/tests/ota_test.c && $OUT/ota_test $B/gio.fwsc"
+    run update-loader sh -c "head -c 100000 $B/gio.bin > $OUT/old_app.bin && \
         $PY base/tools/fm1pkg_make.py $OUT/old_app.bin $B/loader/ota.bin $OUT/old.fwsc >/dev/null && \
-        $CC -w -o $OUT/ldr_test base/tests/ldr_test.c && $OUT/ldr_test $OUT/old.fwsc $B/mor.fwsc"
+        $CC -w -o $OUT/ldr_test base/tests/ldr_test.c && $OUT/ldr_test $OUT/old.fwsc $B/gio.fwsc"
 else
-    echo "  skip update path (no $B/mor.fwsc: ./build.sh)"
+    echo "  skip update path (no $B/gio.fwsc: ./build.sh)"
 fi
 run host-build sh build.sh --host
 if command -v emcc >/dev/null 2>&1; then
@@ -40,10 +40,10 @@ if command -v emcc >/dev/null 2>&1; then
 else
     echo "  skip emu (no emcc)"
 fi
-for s in tests/scenarios/*.mor; do
-    n=$(basename "$s" .mor)
+for s in tests/scenarios/*.gio; do
+    n=$(basename "$s" .gio)
     mkdir -p "$B/scenarios/$n"
-    run "scenario-$n" $B/host/mor_host "$s" "$B/scenarios/$n"
+    run "scenario-$n" $B/host/gio_host "$s" "$B/scenarios/$n"
 done
 [ $FAIL -eq 0 ] && echo "all tests passed" || echo "TESTS FAILED"
 exit $FAIL

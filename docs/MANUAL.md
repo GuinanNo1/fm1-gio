@@ -1,11 +1,11 @@
-# MOR-1
+# GIO-1
 
-MOR-1 turns the M-VAVE FM-1 into a generative electronic disco machine, after Giorgio Moroder's Munich sound. It
+GIO-1 turns the M-VAVE FM-1 into a generative electronic disco machine, after Giorgio Moroder's Munich sound. It
 plays itself from the moment it's switched on: a Moog-style bass sequence out in front, a pad of strings, a choir
 or saws through a phaser, a synth lead that writes its own phrases, and four on the floor. Each song is a form of
 sections with their own chord changes; it loops for ever and changes as it goes. You steer it.
 
-> **Status: beta, simulator only.** MOR-1 has been built and tested in fm1-base's simulator. It has not yet been
+> **Status: beta, simulator only.** GIO-1 has been built and tested in fm1-base's simulator. It has not yet been
 > built for, or run on, an FM-1.
 
 ---
@@ -29,14 +29,14 @@ sections with their own chord changes; it loops for ever and changes as it goes.
 
 ## 1. Install
 
-MOR-1 has no release yet. Once it is built (`./build.sh`, see [BUILDING.md](../BUILDING.md)):
+GIO-1 has no release yet. Once it is built (`./build.sh`, see [BUILDING.md](../BUILDING.md)):
 
 ```
-python3 base/tools/fm1_install.py app/build/mor.fwsc
+python3 base/tools/fm1_install.py app/build/gio.fwsc
 ```
 
 with Python 3 and `pip3 install mido python-rtmidi`, the FM-1 on a USB data cable. Don't unplug it while it's
-writing; when it finishes, the FM-1 restarts into MOR-1. fm1-base's web installer page (`tools/make_site.py`)
+writing; when it finishes, the FM-1 restarts into GIO-1. fm1-base's web installer page (`tools/make_site.py`)
 does the same from Chrome or Edge once a site is published.
 
 **Go back:** the web installer's "Back to the stock firmware", or M-VAVE's own updater, M-UPGRADE, from
@@ -48,7 +48,7 @@ does the same from Chrome or Edge once a site is published.
 
 ## 2. Getting started
 
-1. Switch it on. MOR-1 plays the first song, **Feel**, from its intro.
+1. Switch it on. GIO-1 plays the first song, **Feel**, from its intro.
 2. Turn **PRESETS** for another song. It starts from the top of its form.
 3. Play the **white keys**: the lead plays them, always in the song's scale. Play three notes or more and pause: the
    lead answers you, and takes your notes as its theme.
@@ -163,7 +163,7 @@ each repeat darker) and Dattorro's plate reverb.
 ## 6. The presets
 
 Each preset has its own tempo, key, chord changes and arrangement. The bass lines, leads and drum parts are
-MOR-1's own, written as it plays.
+GIO-1's own, written as it plays.
 
 | # | Preset | BPM | Key | The form |
 |---|---|---|---|---|
@@ -229,15 +229,15 @@ The MIDI page (GLO, then GLO again): **MIDI out**, **Channels**, **Clock** and *
 to a song.
 
 - **In** (USB and the TRS jack): a note on channel 1 moves the key. **Clock** says where MIDI clock is taken from:
-  **Internal** (none: MOR-1 keeps its own time, the default), **USB** or **TRS**. From the port chosen, clock drives
+  **Internal** (none: GIO-1 keeps its own time, the default), **USB** or **TRS**. From the port chosen, clock drives
   the grid (EXT in the top line); Start plays the song from the top, Stop stops, Continue goes on. With no clock
-  coming in, MOR-1 keeps its own time.
+  coming in, GIO-1 keeps its own time.
 - **Out** (USB, when MIDI out is on; the FM-1's TRS jack is an input only): **Channels** 1, 2, 3, 10 (the default)
   puts the bass on channel 1, the pad on 2, the lead on 3, the drums on 10; 4, 5, 6, 11 puts them on 4, 5, 6 and 11.
   The drums are General MIDI notes: 36 kick, 39 clap, 42 and 46 hats, 45 tom. **Clock out** sends MIDI clock (and
-  start and stop) while MOR-1 keeps its own time.
+  start and stop) while GIO-1 keeps its own time.
 
-The FM-1 also shows up on a computer as a USB audio input: MOR-1 can be recorded over the cable.
+The FM-1 also shows up on a computer as a USB audio input: GIO-1 can be recorded over the cable.
 
 ---
 
@@ -259,7 +259,7 @@ black keys at all times. The page's knobs are the echo's: Bass echo, Lead echo, 
 
 ## 9. Saving
 
-Each song keeps its settings as you left it. **SAVE** saves all of them; MOR-1 also saves by itself a few seconds
+Each song keeps its settings as you left it. **SAVE** saves all of them; GIO-1 also saves by itself a few seconds
 after a change while it is stopped (a save silences the sound for a moment, so never while playing). **SAVE held**
 puts the song back to its recipe, its chords too. Tune and MIDI out belong to the FM-1, not to a song.
 
@@ -273,7 +273,7 @@ puts the song back to its recipe, its chords too. Tune and MIDI out belong to th
 the screen.
 
 **After a crash:** a red CRASH screen, then a restart a few seconds later; the next start shows RESTARTED AFTER A
-CRASH and an address. If MOR-1 crashes twice in a row while starting, it starts in SAFE MODE: no sound, but USB
+CRASH and an address. If GIO-1 crashes twice in a row while starting, it starts in SAFE MODE: no sound, but USB
 works, so the installer can reinstall it or put the stock firmware back. If even that fails, the FM-1 drops into
 the chip's own update mode; fm1-base's rescue (`felucca-bsp/tools/fm1_rescue.sh`, on a Mac) puts M-VAVE's firmware
 back from there.
@@ -326,5 +326,5 @@ tape echo and screen reader. Built on [fm1-base](https://github.com/charlesvesta
 Kuroshita (Hügelton Instruments). The reverb is Jon Dattorro's plate ("Effect Design, Part 1", JAES 1997). MPL-2.0;
 see [LICENSING.md](../LICENSING.md).
 
-M-VAVE and FM-1 are trademarks of their owners. MOR-1 is not affiliated with M-VAVE, Giorgio Moroder or any artist
+M-VAVE and FM-1 are trademarks of their owners. GIO-1 is not affiliated with M-VAVE, Giorgio Moroder or any artist
 named here.

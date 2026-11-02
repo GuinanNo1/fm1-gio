@@ -1,6 +1,6 @@
 /* SPDX-License-Identifier: MPL-2.0
  * Copyright (C) 2026 Charles Vestal, Ian Guinan */
-/* MOR-1 UI: the panel and the screen. Part of the unity build (after gfx.c and project.c); the host simulator
+/* GIO-1 UI: the panel and the screen. Part of the unity build (after gfx.c and project.c); the host simulator
  * includes it too. From AMB-1's: the input, the knobs' acceleration, the help cards, the drawing, the autosave and
  * the screen reader.
  *
@@ -476,7 +476,7 @@ static void button(int b)
 }
 
 /* MIDI in (USB and the TRS jack): a channel 1 note moves the key; clock and start / stop drive the grid, from the port
- * the MIDI page's Clock names (Internal: none; with no clock coming in, MOR-1 keeps its own time) */
+ * the MIDI page's Clock names (Internal: none; with no clock coming in, GIO-1 keeps its own time) */
 static void midi_in(void)
 {
     uint32_t pkt;

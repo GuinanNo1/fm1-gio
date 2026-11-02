@@ -1,6 +1,6 @@
-# Building MOR-1
+# Building GIO-1
 
-MOR-1 is an app on [fm1-base](https://github.com/charlesvestal/fm1-base) (`base/`, a git submodule, with
+GIO-1 is an app on [fm1-base](https://github.com/charlesvestal/fm1-base) (`base/`, a git submodule, with
 felucca-bsp inside it). Clone with `--recursive`, or after cloning:
 
 ```
@@ -12,9 +12,9 @@ makes, in `app/build/`:
 
 | File | What |
 | --- | --- |
-| `mor.bin` | the firmware app |
+| `gio.bin` | the firmware app |
 | `loader/ota.bin` | the update loader (felucca-bsp's) |
-| `mor.fwsc` | the installable package (app + loader) |
+| `gio.fwsc` | the installable package (app + loader) |
 
 ## Prerequisites (macOS)
 
@@ -38,9 +38,9 @@ On Linux x86-64 the toolchain runs natively and no container is needed.
 ## Build
 
 ```
-./build.sh                    # app/build/mor.fwsc
-./build.sh --release X.Y      # app/build/mor-X.Y.fwsc, identity FM-1_4XXYYZZ
-./build.sh --host             # the simulator: app/build/host/mor_host
+./build.sh                    # app/build/gio.fwsc
+./build.sh --release X.Y      # app/build/gio-X.Y.fwsc, identity FM-1_4XXYYZZ
+./build.sh --host             # the simulator: app/build/host/gio_host
 ./build.sh --web              # the browser emulator: app/build/emu/
 web/app/build.sh              # the web app (the engine alone, for phone and desktop): app/build/app/
 ```
@@ -52,24 +52,24 @@ stays in felucca-bsp, and that no double-precision code is linked.
 ## Tests
 
 ```
-sh tests/run_tests.sh             # MOR-1's
+sh tests/run_tests.sh             # GIO-1's
 sh base/tests/run_tests.sh        # fm1-base's own
 ```
 
-MOR-1's: the instrument (`tests/host/mor_test.c`); the update path against `app/build/mor.fwsc`; the browser
-build in Node; and the whole app in the simulator (`tests/scenarios/*.mor`: the songs, the form, the panel, the
+GIO-1's: the instrument (`tests/host/gio_test.c`); the update path against `app/build/gio.fwsc`; the browser
+build in Node; and the whole app in the simulator (`tests/scenarios/*.gio`: the songs, the form, the panel, the
 screen reader, persistence), with audio and screenshots in
 `app/build/scenarios/`.
 
-`app/build/host/mor_host SCRIPT OUTDIR` runs one script. The commands are listed at the top of
-`base/host/plat_host.c`, and MOR-1's own checks and commands at the top of `app/host.c`.
+`app/build/host/gio_host SCRIPT OUTDIR` runs one script. The commands are listed at the top of
+`base/host/plat_host.c`, and GIO-1's own checks and commands at the top of `app/host.c`.
 
 ## Install
 
 From the command line (needs `pip3 install mido python-rtmidi`):
 
 ```
-python3 base/tools/fm1_install.py app/build/mor.fwsc
+python3 base/tools/fm1_install.py app/build/gio.fwsc
 ```
 
 Installing firmware is at your own risk. Hold OCT− and OCT+ for 5 seconds for the update mode. If the FM-1 no
@@ -84,10 +84,10 @@ A release is built on GitHub from its tag, so anyone can check that the package 
 The builder checks out the tagged commit, installs JieLi's Linux toolchain and the AC79 SDK at its fixed tag, runs
 `./build.sh --release X.Y` (with fm1-base and felucca-bsp at the commits this one links) and `tests/run_tests.sh` (a
 failing test stops the release; the browser builds' tests need Emscripten, which the builder does not have, and are
-skipped there), then signs build provenance for `mor-X.Y.fwsc` and `mor-X.Y-app.bin`. The Firmware Hub shows such
+skipped there), then signs build provenance for `gio-X.Y.fwsc` and `gio-X.Y-app.bin`. The Firmware Hub shows such
 packages as built from source.
 
-1. Write the notes first, as a draft: `gh release create vX.Y --draft --title "MOR-1 X.Y" --notes-file NOTES.md`
+1. Write the notes first, as a draft: `gh release create vX.Y --draft --title "GIO-1 X.Y" --notes-file NOTES.md`
    (the workflow keeps a draft's notes; without one it makes a draft from the commits).
 2. Push the tag: `git tag vX.Y && git push origin vX.Y`. The workflow builds, tests, attests, checks the SHA-256 sums
    and the signatures against the builder, the tag and the commit, then publishes the draft. A tag with a suffix
@@ -95,7 +95,7 @@ packages as built from source.
    on a branch (Actions, Run workflow) builds and attests a development package, in the run's `packages` artifact.
 3. The site from that package: `gh release download vX.Y --pattern '*.fwsc' --dir app/build --clobber`, then
    `tools/publish_pages.sh X.Y`: it builds the browser emulator and the site (landing page, emulator, fm1-base's web
-   installer, manual, the words files, the firmware) with `tools/make_pages.py` from `app/build/mor-X.Y.fwsc`, and
+   installer, manual, the words files, the firmware) with `tools/make_pages.py` from `app/build/gio-X.Y.fwsc`, and
    pushes it to the `gh-pages` branch, which GitHub Pages serves at <https://GuinanNo1.github.io/fm1-gio/>.
 
 To check a downloaded package yourself (GitHub CLI, signed in):
@@ -104,7 +104,7 @@ To check a downloaded package yourself (GitHub CLI, signed in):
 tag=vX.Y repo=GuinanNo1/fm1-gio
 gh release download "$tag" --repo "$repo" --dir build/verify --pattern '*.fwsc'
 git fetch origin "refs/tags/$tag:refs/tags/$tag"
-gh attestation verify "build/verify/mor-${tag#v}.fwsc" --repo "$repo" \
+gh attestation verify "build/verify/gio-${tag#v}.fwsc" --repo "$repo" \
   --signer-workflow zvenson/fm1-build/.github/workflows/build.yml \
   --source-ref "refs/tags/$tag" --source-digest "$(git rev-parse "$tag^{commit}")"
 ```
@@ -112,7 +112,7 @@ gh attestation verify "build/verify/mor-${tag#v}.fwsc" --repo "$repo" \
 The same checks the `-app.bin`. `SHA256SUMS` comes with the downloads; a checksum alone proves nothing about where a
 package was built.
 
-A local release build (`./build.sh --release X.Y`, package `app/build/mor-X.Y.fwsc`; its identity FM-1_4XXYYZZ is
+A local release build (`./build.sh --release X.Y`, package `app/build/gio-X.Y.fwsc`; its identity FM-1_4XXYYZZ is
 what the installer checks) is still how to try one on the FM-1 before tagging.
 
 ## The emulator as one file
@@ -121,7 +121,7 @@ what the installer checks) is still how to try one on the FM-1 before tagging.
 installed, `tools/emcc_wasi.py` stands in for it with clang and the WASI sysroot). Then
 
 ```
-python3 tools/make_local_emu.py      # app/build/MOR-1-emulator.html
+python3 tools/make_local_emu.py      # app/build/GIO-1-emulator.html
 ```
 
 packs the page, its sound worklet, the WebAssembly build and a guide (`tools/emu_guide.html`) into one HTML file that

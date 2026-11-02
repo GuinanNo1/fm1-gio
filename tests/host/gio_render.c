@@ -1,17 +1,17 @@
 /* SPDX-License-Identifier: MPL-2.0
  * Copyright (C) 2026 Charles Vestal, Ian Guinan */
-/* MOR-1's engine alone on the host: a song at its recipe, rendered to a WAV, with its levels, the sections it went
+/* GIO-1's engine alone on the host: a song at its recipe, rendered to a WAV, with its levels, the sections it went
  * through and the engine's time (for listening, and for keeping the CPU in check).
  *
- *   mor_render SONG SECS OUT.wav [SEED] [NAME=V ...]   (NAME: a parameter's index, e.g. 9=2 for the Robot lead)
+ *   gio_render SONG SECS OUT.wav [SEED] [NAME=V ...]   (NAME: a parameter's index, e.g. 9=2 for the Robot lead)
  *
- *   cc -O2 -ffp-contract=off -DEN_HOST -Iapp/dsp -Ibase/include -o mor_render tests/host/mor_render.c app/dsp/mor.c -lm */
+ *   cc -O2 -ffp-contract=off -DEN_HOST -Iapp/dsp -Ibase/include -o gio_render tests/host/gio_render.c app/dsp/gio.c -lm */
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <math.h>
 #include <time.h>
-#include "mor.h"
+#include "gio.h"
 
 void en_midi_out(uint32_t st, uint32_t d1, uint32_t d2) { (void)st, (void)d1, (void)d2; }
 

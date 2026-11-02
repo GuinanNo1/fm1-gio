@@ -7,7 +7,7 @@
 #include <string.h>
 #include <stdlib.h>
 #include <math.h>
-#include "mor.h"
+#include "gio.h"
 
 static int fails;
 #define CHECK(c, ...)                                                                                              \
@@ -314,6 +314,6 @@ int main(void)
     if (fails)
         printf("%d FAILED\n", fails);
     else
-        printf("mor_test: all passed\n");
+        printf("gio_test: all passed\n");
     return fails ? 1 : 0;
 }

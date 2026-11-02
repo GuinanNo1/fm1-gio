@@ -1,15 +1,15 @@
 #!/usr/bin/env python3
 # SPDX-License-Identifier: MPL-2.0
 # Copyright (C) 2026 Charles Vestal, Ian Guinan
-"""Make the MOR-1 site for GitHub Pages (https://GuinanNo1.github.io/fm1-gio/), dark, after AMB-1's:
+"""Make the GIO-1 site for GitHub Pages (https://GuinanNo1.github.io/fm1-gio/), dark, after AMB-1's:
 
-  index.html                  what MOR-1 is, and the ways in: try, install, manual, quickstart, download, source
+  index.html                  what GIO-1 is, and the ways in: try, install, manual, quickstart, download, source
   img/                        screenshots (docs/img)
-  emu/                        MOR-1 in the browser (app/build/emu, from ./build.sh --web), with its guide
+  emu/                        GIO-1 in the browser (app/build/emu, from ./build.sh --web), with its guide
   quickstart/index.html       one page: every control, page, effect and song
   manual/index.html, img/     the manual (fm1-base's tools/manual_html.py, from docs/MANUAL.md), in the site's colours
   install/index.html          fm1-base's web installer, when a package is given; else a page saying it's coming
-  firmware/mor-VERSION.fwsc   the package the installer writes; also the download (when given)
+  firmware/gio-VERSION.fwsc   the package the installer writes; also the download (when given)
   words/                      the screen reader's words files (app/web/words)
 
   tools/make_pages.py OUT_DIR [PKG VERSION]
@@ -36,7 +36,7 @@ FONTS = ('<link rel="preconnect" href="https://fonts.googleapis.com">\n'
          '<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow:ital,wght@0,400;0,600;1,400'
          '&family=Barlow+Semi+Condensed:wght@500;700&display=swap">\n')
 
-# the site's colours: MOR-1's own screen. A night-club navy, the cards a shade up; magenta for what's live; the bass's
+# the site's colours: GIO-1's own screen. A night-club navy, the cards a shade up; magenta for what's live; the bass's
 # cyan, the pad's violet, the lead's gold for the three kinds of thing
 TOKENS = """
 :root {
@@ -75,11 +75,11 @@ def header(here, depth):
     up = "../" * depth
     links = "".join('<a href="%s%sindex.html"%s>%s</a>' % (up, p, ' aria-current="page"' if p == here else "", t)
                     for p, t in NAV)
-    return (f'<header class="site"><a class="home" href="{up}index.html">MOR-1</a><nav aria-label="MOR-1">{links}'
+    return (f'<header class="site"><a class="home" href="{up}index.html">GIO-1</a><nav aria-label="GIO-1">{links}'
             f'<a href="{REPO}">Source</a></nav></header>')
 
 
-FOOT = """<p class="foot">M-VAVE and FM-1 are trademarks of their owners. MOR-1 is independent firmware, not affiliated with
+FOOT = """<p class="foot">M-VAVE and FM-1 are trademarks of their owners. GIO-1 is independent firmware, not affiliated with
 M-VAVE, Giorgio Moroder or any artist named here. To go back to the official firmware, use the installer's "Back to the
 stock firmware", or M-VAVE's updater, M-UPGRADE, from <a href="https://www.m-vave.com/download">m-vave.com/download</a>.</p>"""
 
@@ -112,7 +112,7 @@ h1 { font: 700 clamp(3.6rem, 14vw, 6.4rem)/.9 var(--display); letter-spacing: .0
      -webkit-background-clip: text; background-clip: text; color: transparent; }
 .sub { font: 500 1.15rem/1.3 var(--display); letter-spacing: .1em; text-transform: uppercase; color: var(--muted);
        margin: .7rem 0 0; }
-/* the form strip, as on MOR-1's screen: a block a section, the one playing filling */
+/* the form strip, as on GIO-1's screen: a block a section, the one playing filling */
 .strip { display: flex; gap: 4px; margin: 1.4rem 0 0; height: 10px; }
 .strip i { flex: var(--w); border-radius: 5px; background: var(--card-2); }
 .strip i.on { background: linear-gradient(90deg, var(--magenta) 60%, var(--card-2) 60%); }
@@ -151,23 +151,23 @@ h2 { font: 700 1.25rem/1.2 var(--display); letter-spacing: .08em; text-transform
 
 LANDING_BODY = """<main>
 <section class="hero">
-  <h1>MOR-1</h1>
+  <h1>GIO-1</h1>
   <p class="sub">A generative electronic disco firmware for the M-VAVE FM-1</p>
   <div class="strip" aria-hidden="true"><i style="--w:8"></i><i class="on" style="--w:16"></i><i style="--w:8"></i><i style="--w:8"></i><i style="--w:16"></i><i style="--w:8"></i><i style="--w:8"></i></div>
 </section>
 
-<p class="lede">It's time to relive the futuristic electronic disco sounds of the '70s, '80s and '90s with MOR-1, new
+<p class="lede">It's time to relive the futuristic electronic disco sounds of the '70s, '80s and '90s with GIO-1, new
 firmware for the M-VAVE FM-1. It is generative: it writes music in these styles as it plays. Pick a song, play along on
 the keys and let the lead answer you, drop in effects, and nudge it in the direction your feelings take you. Feel love
 and enjoy!</p>
 
 <div class="shots">
-  <figure><img src="img/screen-song.png" width="240" height="240" alt="MOR-1's screen: the song Feel, its verse; the bass's sixteen steps in a ring round the chord C; the form across the top"><figcaption>Feel, its verse</figcaption></figure>
-  <figure><img src="img/screen-heaven.png" width="240" height="240" alt="MOR-1's screen: the song Heaven at full tempo, the chord A flat"><figcaption>Heaven at full tempo</figcaption></figure>
-  <figure><img src="img/screen-grid.png" width="240" height="240" alt="MOR-1's Effects page: sixteen effects in four rows, Sweep and Roll held"><figcaption>The effects grid</figcaption></figure>
+  <figure><img src="img/screen-song.png" width="240" height="240" alt="GIO-1's screen: the song Feel, its verse; the bass's sixteen steps in a ring round the chord C; the form across the top"><figcaption>Feel, its verse</figcaption></figure>
+  <figure><img src="img/screen-heaven.png" width="240" height="240" alt="GIO-1's screen: the song Heaven at full tempo, the chord A flat"><figcaption>Heaven at full tempo</figcaption></figure>
+  <figure><img src="img/screen-grid.png" width="240" height="240" alt="GIO-1's Effects page: sixteen effects in four rows, Sweep and Roll held"><figcaption>The effects grid</figcaption></figure>
 </div>
 
-<nav class="ways" aria-label="Get MOR-1">
+<nav class="ways" aria-label="Get GIO-1">
   <a class="first" href="emu/index.html"><strong>Try it in the browser</strong><span>The same code the FM-1 runs, with sound. Mouse, touch or keyboard; no FM-1 needed.</span></a>
   __INSTALL__
   <a href="manual/index.html"><strong>Manual</strong><span>Getting started in a few minutes, then everything else.</span></a>
@@ -213,7 +213,7 @@ my channel those immortal words, "My name is Giovanni Giorgio…", and set off t
 
 INSTALL_SOON = """<main style="max-width:46rem;margin:0 auto">
 <h1 style="font:700 2.6rem/1 var(--display);letter-spacing:.05em;margin:2.4rem 0 .6rem">Install <span style="color:var(--gold);font-weight:500">alpha</span></h1>
-<p>MOR-1 is in alpha. The installer will be here with the first firmware build, and test beta downloads are coming
+<p>GIO-1 is in alpha. The installer will be here with the first firmware build, and test beta downloads are coming
 soon. Until then, <a href="../emu/index.html">try it in the browser</a>: the same code the FM-1 will run.</p>
 <p>When it's ready, installing works from Chrome or Edge with the FM-1 connected by a USB data cable, with nothing to
 install on the computer, and the same page can put M-VAVE's own firmware back.</p>
@@ -244,7 +244,7 @@ ol.start li::marker { color: var(--magenta); font-weight: 600; }
 
 QUICK_BODY = """<main>
 <h1>Quickstart</h1>
-<p class="sub">MOR-1 on one page: every control, page, effect and song.</p>
+<p class="sub">GIO-1 on one page: every control, page, effect and song.</p>
 <div class="grid">
 
 <section class="card" style="--c: var(--magenta)">
@@ -337,7 +337,7 @@ QUICK_BODY = """<main>
 </div>
 </main>"""
 
-# the manual in the site's colours: fm1-base's renderer, its tokens given MOR-1's
+# the manual in the site's colours: fm1-base's renderer, its tokens given GIO-1's
 MANUAL_CSS = """
 :root:root { --paper: #100e22; --sheet: #1c1a3a; --rule: #3a3668; --ink: #f2eeff; --muted: #aaa4d4;
         --hot: #ff5cb4; --hot-t: #3a1d48; --cool: #ffc840; --cool-t: #2d2840; --hot-ink: #ff7cc4; color-scheme: dark; }
@@ -364,7 +364,7 @@ def main(out, pkg=None, version=None):
             raise SystemExit(f"{pkg}: identity {product!r}: make a release build (./build.sh --release X.Y)")
         if b"FELUCCA-LOADER-1" not in raw:
             raise SystemExit(f"{pkg}: no update loader in it")
-        name = f"mor-{re.sub(r'[^A-Za-z0-9.-]', '-', version)}.fwsc"
+        name = f"gio-{re.sub(r'[^A-Za-z0-9.-]', '-', version)}.fwsc"
         (out / "firmware").mkdir()
         shutil.copy(pkg, out / "firmware" / name)
         page_i = (BASE / "web" / "installer.html").read_text(encoding="utf-8")
@@ -381,7 +381,7 @@ def main(out, pkg=None, version=None):
         for mark in ("/*LIB*/", "/*META*/", "/*APP*/"):
             if page_i.count(mark) != 1:
                 raise SystemExit(f"base/web/installer.html must contain {mark} once")
-        for key, val in (("NAME", "MOR-1"), ("REPO", REPO), ("REPO_SHORT", re.sub(r"^https?://", "", REPO)),
+        for key, val in (("NAME", "GIO-1"), ("REPO", REPO), ("REPO_SHORT", re.sub(r"^https?://", "", REPO)),
                          ("LICENSE", conf.get("licence", "MPL-2.0")), ("CREDITS", " " + conf.get("credits", ""))):
             page_i = page_i.replace("{{" + key + "}}", val)
         app_js = (SRC / "app" / conf["install_app"]).read_text(encoding="utf-8") if conf.get("install_app") else "null"
@@ -394,7 +394,7 @@ def main(out, pkg=None, version=None):
                     f'coming soon.</span></a>')
     else:
         (out / "install" / "index.html").write_text(
-            page("MOR-1 Install", "Installing MOR-1 on the M-VAVE FM-1: coming with the first build.", INSTALL_SOON,
+            page("GIO-1 Install", "Installing GIO-1 on the M-VAVE FM-1: coming with the first build.", INSTALL_SOON,
                  "install/", 1), encoding="utf-8")
         install = ('<a href="install/index.html"><strong>Install <em>alpha</em></strong><span>From Chrome or Edge, with the FM-1 '
                    'connected by USB. Coming with the first firmware build.</span></a>')
@@ -403,17 +403,17 @@ def main(out, pkg=None, version=None):
     # the landing page and its screenshots
     shutil.copytree(SRC / "docs" / "img", out / "img")
     (out / "index.html").write_text(
-        page("MOR-1", "A generative electronic disco firmware for the M-VAVE FM-1.",
+        page("GIO-1", "A generative electronic disco firmware for the M-VAVE FM-1.",
              LANDING_BODY.replace("__INSTALL__", install).replace("__DOWNLOAD__", download).replace("__REPO__", REPO),
              "", 0, LANDING_CSS), encoding="utf-8")
     # the quickstart
     (out / "quickstart" / "index.html").write_text(
-        page("MOR-1 Quickstart", "MOR-1 on one page: every control, page, effect and song.", QUICK_BODY,
+        page("GIO-1 Quickstart", "GIO-1 on one page: every control, page, effect and song.", QUICK_BODY,
              "quickstart/", 1, QUICK_CSS), encoding="utf-8")
     # the manual: fm1-base's renderer, then the site's colours, header and links
     man = out / "manual" / "index.html"
     subprocess.run([sys.executable, str(BASE / "tools" / "manual_html.py"), str(SRC / "docs" / "MANUAL.md"), str(man),
-                    "--name", "MOR-1", "--repo", REPO, "--tagline", conf.get("tagline", "")],
+                    "--name", "GIO-1", "--repo", REPO, "--tagline", conf.get("tagline", "")],
                    check=True, capture_output=True)
     m = man.read_text(encoding="utf-8")
     m = re.sub(r'<header class="site">.*?</header>', lambda _: header("manual/", 1), m, count=1, flags=re.S)
@@ -422,7 +422,7 @@ def main(out, pkg=None, version=None):
     m = m.replace('href="../LICENSING.md"', f'href="{REPO}/blob/main/LICENSING.md"')
     man.write_text(m, encoding="utf-8")
     shutil.copytree(SRC / "docs" / "img", out / "manual" / "img")
-    # the emulator: fm1-base's page, dark, with MOR-1's guide under it and the site's header
+    # the emulator: fm1-base's page, dark, with GIO-1's guide under it and the site's header
     emu = SRC / "app" / "build" / "emu"
     if not (emu / "app.wasm").exists():
         raise SystemExit("no app/build/emu/app.wasm: run ./build.sh --web (needs Emscripten, or tools/emcc_wasi.py)")
@@ -431,8 +431,8 @@ def main(out, pkg=None, version=None):
     guide = (SRC / "tools" / "emu_guide.html").read_text(encoding="utf-8")
     mark = "<!-- what the screen says, for the computer's screen reader -->"
     e = e.replace('<html lang="en">', '<html lang="en" data-theme="dark">', 1)
-    e = e.replace("<title>MOR in the browser</title>", "<title>MOR-1 Emulator</title>").replace("MOR uses ", "MOR-1 uses ")
-    e = re.sub(r"<header>\s*<h1>MOR</h1>\s*</header>", lambda _: header("emu/", 1), e, count=1)
+    e = e.replace("<title>GIO in the browser</title>", "<title>GIO-1 Emulator</title>").replace("GIO uses ", "GIO-1 uses ")
+    e = re.sub(r"<header>\s*<h1>GIO</h1>\s*</header>", lambda _: header("emu/", 1), e, count=1)
     e = e.replace(mark, guide + mark, 1)
     e = e.replace("</head>", FONTS + "<style>" + TOKENS + HEADER_CSS.replace("max-width: 46rem", "max-width: 62rem") +
                   ':root[data-theme="dark"] { --ground: #100e22; --card: #1c1a3a; --rule: #3a3668; --ink: #f2eeff;'

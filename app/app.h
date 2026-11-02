@@ -1,13 +1,13 @@
 /* SPDX-License-Identifier: MPL-2.0
  * Copyright (C) 2026 Charles Vestal, Ian Guinan */
-/* MOR-1 app: the project (everything that is saved), the app's entry points and its half of the contract with
+/* GIO-1 app: the project (everything that is saved), the app's entry points and its half of the contract with
  * fm1-base (device/unity.c, host/plat_host.c). */
 #pragma once
 #include <stdint.h>
 #include "plat.h"
-#include "mor.h"
+#include "gio.h"
 
-#define APP_NAME "MOR-1"
+#define APP_NAME "GIO-1"
 #define APP_TAGLINE "ELECTRONIC DISCO"
 #define APP_SPLASH_RGB RGB(255, 72, 170)
 #define APP_BLOCK 256u                   /* frames per audio block: 5.8 ms at 44.1 kHz */
@@ -18,10 +18,11 @@
 #endif
 
 /* the store: the project and the panel calibration (where AMB-1 keeps them: another firmware's project there is
- * not MOR-1's, by its magic, and gives the defaults) */
+ * not GIO-1's, by its magic, and gives the defaults) */
 enum { OBJ_PROJ, OBJ_PANEL, OBJ_NOBJ };
 #define APP_STORE_MAP {0xFC000u, 0xDC000u}
-#define PROJ_MAGIC 0x31524F4Du           /* "MOR1" */
+#define PROJ_MAGIC 0x314F4947u           /* "GIO1" */
+#define PROJ_MAGIC_OLD 0x31524F4Du       /* the same instrument before its name was GIO-1: taken up as GIO-1's */
 #define PROJ_FORMAT 3u                   /* 2: the lead's echo, reverb and tone; ten lead voices; 3: the chords */
 #define NPIECES EN_NSONGS
 
@@ -31,13 +32,13 @@ typedef struct {
 
 typedef struct {
     uint32_t magic, format;
-    int16_t par[P_NPARAMS];              /* the song playing, as it is now (mor.h P_*) */
+    int16_t par[P_NPARAMS];              /* the song playing, as it is now (gio.h P_*) */
     uint8_t leds;                        /* lights: 0 off, 1 keys and the buttons' glow, 2 keys only */
     uint8_t piece;                       /* which song */
     uint8_t rsv0[2];
     slot_t slot[NPIECES];                /* every song as it was left (Tune and MIDI out are global) */
     uint8_t rsv[16];                     /* room to grow */
-    uint16_t chords[NPIECES][EN_NPROG * EN_PROG_MAX];   /* every song's chord changes (mor.h EN_CH), as edited */
+    uint16_t chords[NPIECES][EN_NPROG * EN_PROG_MAX];   /* every song's chord changes (gio.h EN_CH), as edited */
 } project_t;
 #define PROJ_V2_SIZE (sizeof(project_t) - sizeof(((project_t *)0)->chords))   /* format 2 had no chords */
 
@@ -66,7 +67,7 @@ void app_frame(void);
 void app_input_only(void);
 void app_say(const char *a, const char *b);
 
-/* the host simulator's part (app/host.c): MOR-1's checks, its commands, the screen reader's dump */
+/* the host simulator's part (app/host.c): GIO-1's checks, its commands, the screen reader's dump */
 #define APP_HOST_EXPECT
 int app_expect(const char *what, int *got);
 #define APP_HOST_CMD

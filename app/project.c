@@ -1,6 +1,6 @@
 /* SPDX-License-Identifier: MPL-2.0
  * Copyright (C) 2026 Charles Vestal, Ian Guinan */
-/* MOR-1 project: one flash object (OBJ_PROJ). A project of another format, or none, gives the defaults. Part of the
+/* GIO-1 project: one flash object (OBJ_PROJ). A project of another format, or none, gives the defaults. Part of the
  * unity build, after app.h.
  *
  * The songs (their recipes are the engine's, en_song_recipe): each keeps its own settings as you leave it; Tune and
@@ -98,6 +98,8 @@ int project_load(void)
     int n, i;
     memset(&proj, 0, sizeof proj);
     n = plat_store_load(OBJ_PROJ, &proj, sizeof proj);
+    if (n >= 8 && proj.magic == PROJ_MAGIC_OLD)
+        proj.magic = PROJ_MAGIC;
     if (n == (int)PROJ_V2_SIZE && proj.magic == PROJ_MAGIC && proj.format == 2u) {   /* format 2: the songs' own chords */
         proj.format = PROJ_FORMAT;
         for (i = 0; i < NPIECES; i++)

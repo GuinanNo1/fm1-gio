@@ -1,6 +1,6 @@
-# MOR-1 for the M-VAVE FM-1
+# GIO-1 for the M-VAVE FM-1
 
-MOR-1 turns the M-VAVE FM-1 into a generative electronic disco machine, after Giorgio Moroder's Munich sound. It
+GIO-1 turns the M-VAVE FM-1 into a generative electronic disco machine, after Giorgio Moroder's Munich sound. It
 plays itself from the moment it's switched on: a Moog-style bass sequence out in front, its repeats on the other
 side; strings, a choir or detuned saws through a phaser; a synth lead (ten voices) that writes its
 own phrases, which you can play from the white keys and which answers you; four on the floor with claps, open hats and syndrum fills. Each song is a form (intro, verse, chorus,
@@ -15,7 +15,7 @@ for or run on an FM-1. See [BUILDING.md](BUILDING.md) for the toolchain.
 
 ## The presets
 
-Nine presets, each with its own tempo, key, chord changes and arrangement. The lines are MOR-1's own, written as
+Nine presets, each with its own tempo, key, chord changes and arrangement. The lines are GIO-1's own, written as
 it plays.
 
 | # | Preset | BPM | Key | The form |
@@ -30,7 +30,7 @@ it plays.
 | 8 | Lover | 130 | C minor | Intro · Verse (Cm–B♭) · Hook (A♭–B♭–Cm) · Robot · Hook |
 | 9 | Express | 128 | D minor | Intro (the bass alone) · Drive · Strings · Theme (Dm–B♭–C) · Pursuit · Theme · Run |
 
-All of it is a table in `app/dsp/mor.c` (`SONGS`), easy to change.
+All of it is a table in `app/dsp/gio.c` (`SONGS`), easy to change.
 
 ## In short
 
@@ -51,24 +51,24 @@ Hold any button for a second and a card says what it does. The [manual](docs/MAN
 
 ## Building and testing
 
-MOR-1 is an app on [fm1-base](https://github.com/charlesvestal/fm1-base) (`base/`, a git submodule); clone with
+GIO-1 is an app on [fm1-base](https://github.com/charlesvestal/fm1-base) (`base/`, a git submodule); clone with
 `--recursive`. The toolchain and prerequisites are in [BUILDING.md](BUILDING.md):
 
 ```
 sh tests/run_tests.sh                                  # the instrument, the app in the simulator
-./build.sh --host                                      # the simulator: app/build/host/mor_host
-./build.sh                                             # app/build/mor.fwsc (needs JieLi's toolchain and SDK)
-python3 base/tools/fm1_install.py app/build/mor.fwsc   # install it over USB
+./build.sh --host                                      # the simulator: app/build/host/gio_host
+./build.sh                                             # app/build/gio.fwsc (needs JieLi's toolchain and SDK)
+python3 base/tools/fm1_install.py app/build/gio.fwsc   # install it over USB
 ```
 
-`app/build/host/mor_host SCRIPT OUTDIR` runs the whole app on a computer from a script (`tests/scenarios/*.mor`),
-with audio and screenshots coming out. `tests/host/mor_render.c` renders one song's engine alone to a WAV, with
+`app/build/host/gio_host SCRIPT OUTDIR` runs the whole app on a computer from a script (`tests/scenarios/*.gio`),
+with audio and screenshots coming out. `tests/host/gio_render.c` renders one song's engine alone to a WAV, with
 its sections, levels and the engine's time:
 
 ```
-cc -O2 -ffp-contract=off -DEN_HOST -Iapp/dsp -Ibase/include -o mor_render tests/host/mor_render.c app/dsp/mor.c -lm
-./mor_render 3 180 heaven.wav          # song 4, three minutes
-CHORDS=1 ./mor_render 4 120 clock.wav  # with every chord change printed
+cc -O2 -ffp-contract=off -DEN_HOST -Iapp/dsp -Ibase/include -o gio_render tests/host/gio_render.c app/dsp/gio.c -lm
+./gio_render 3 180 heaven.wav          # song 4, three minutes
+CHORDS=1 ./gio_render 4 120 clock.wav  # with every chord change printed
 ```
 
 ## Credits
@@ -80,5 +80,5 @@ and [NACHTFAHRT](https://github.com/FartyPants/fm1-nachtfahrt)'s (no code from e
 from [Felucca](https://github.com/hugelton/Felucca) by Leo Kuroshita (Hügelton Instruments). MPL-2.0; see
 [LICENSING.md](LICENSING.md).
 
-M-VAVE and FM-1 are trademarks of their owners. MOR-1 is not affiliated with M-VAVE, Giorgio Moroder, any artist
+M-VAVE and FM-1 are trademarks of their owners. GIO-1 is not affiliated with M-VAVE, Giorgio Moroder, any artist
 named here, or Hügelton Instruments.
