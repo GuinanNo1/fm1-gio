@@ -307,16 +307,16 @@ QUICK_BODY = """<main>
 <section class="card" style="--c: var(--gold)">
 <h2>Songs</h2>
 <div class="wrap"><table>
-<tr><th>Song</th><th>After</th><th>Tempo</th><th>Key</th></tr>
-<tr><td>1 Feel</td><td>I Feel Love</td><td>126</td><td>C</td></tr>
-<tr><td>2 Gio</td><td>Giorgio by Moroder</td><td>113</td><td>A minor</td></tr>
-<tr><td>3 Mutant</td><td>Supernature</td><td>123</td><td>F minor</td></tr>
-<tr><td>4 Heaven</td><td>The Number One Song in Heaven</td><td>130</td><td>A♭</td></tr>
-<tr><td>5 TickTock</td><td>Beat the Clock</td><td>126</td><td>C, then E♭</td></tr>
-<tr><td>6 Energy</td><td>Menergy</td><td>123</td><td>C minor</td></tr>
-<tr><td>7 Fly</td><td>Magic Fly</td><td>126</td><td>A minor</td></tr>
-<tr><td>8 Lover</td><td>Automatic Lover</td><td>130</td><td>C minor</td></tr>
-<tr><td>9 Express</td><td>Chase</td><td>128</td><td>D minor</td></tr>
+<tr><th>Song</th><th>Tempo</th><th>Key</th></tr>
+<tr><td>1 Feel</td><td>126</td><td>C</td></tr>
+<tr><td>2 Gio</td><td>113</td><td>A minor</td></tr>
+<tr><td>3 Mutant</td><td>123</td><td>F minor</td></tr>
+<tr><td>4 Heaven</td><td>130</td><td>A♭</td></tr>
+<tr><td>5 TickTock</td><td>126</td><td>C, then E♭</td></tr>
+<tr><td>6 Energy</td><td>123</td><td>C minor</td></tr>
+<tr><td>7 Fly</td><td>126</td><td>A minor</td></tr>
+<tr><td>8 Lover</td><td>130</td><td>C minor</td></tr>
+<tr><td>9 Express</td><td>128</td><td>D minor</td></tr>
 </table></div>
 </section>
 
