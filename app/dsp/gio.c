@@ -1521,7 +1521,9 @@ static void plate_init(void)
 /* AMB-1's tape at a quarter rate (11 kHz, 16-bit): each repeat darker and thinner. Two heads: the first at the echo's
  * time, on the right (the dry note left, its repeat right); the second at twice it, on the left. The first
  * feeds back. */
-#define TAPE_N 62000
+/* 4.4 s at 11.025 kHz: the longest echo asked for, a half note at 110 (the slowest tempo) with Time x2 on, its second
+ * head at twice that (48,108 samples); AMB-1's 62,000 does not leave the FM-1's pool room for the Stutter's buffer */
+#define TAPE_N 49000
 #define TAPE_SR 11025.0f
 static int16_t tape[TAPE_N] EN_POOL;
 static int tape_w, tape_ph;
