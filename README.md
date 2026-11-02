@@ -18,17 +18,17 @@ for or run on an FM-1. See [BUILDING.md](BUILDING.md) for the toolchain.
 Nine presets, each with its own tempo, key, chord changes and arrangement. The lines are MOR-1's own, written as
 it plays.
 
-| # | Preset | BPM | Key |
-|---|---|---|---|
-| 1 | Feel | 126 | C |
-| 2 | Gio | 113 | A minor |
-| 3 | Mutant | 123 | F minor |
-| 4 | Heaven | 130 | A♭ |
-| 5 | TickTock | 126 | C, then E♭ |
-| 6 | Energy | 123 | C minor |
-| 7 | Fly | 126 | A minor |
-| 8 | Lover | 130 | C minor |
-| 9 | Express | 128 | D minor |
+| # | Preset | BPM | Key | The form |
+|---|---|---|---|---|
+| 1 | Feel | 126 | C | Intro (bass, hats) · Verse (C) · Chorus (C–E♭–F–G) · Shift (on B♭) · Verse · Chorus · Break |
+| 2 | Gio | 113 | A minor | Click (hats on the beat) · Arpeggio · Disco (Am–Em) · Strings (Am–F) · Fills · House |
+| 3 | Mutant | 123 | F minor | Dawn (the pad alone) · Sequence · Groove · Theme (Fm–D♭) · Bridge (B♭m–Fm) · Theme |
+| 4 | Heaven | 130 | A♭ | Slow ×2 (half time, A♭–E♭–Fm11–E♭) · Lift · Fast (A♭–E♭–B♭–A♭) · Vamp (Fm11) · Fast |
+| 5 | TickTock | 126 | C, then E♭ | Intro · Verse (G–F) · Pre (Am–Dm–G–C) · Chorus (G–Em7–G) · Turn (C–E♭) · the same a minor third up · Outro |
+| 6 | Energy | 123 | C minor | Intro · Groove (Cm) · Lift (A♭–B♭) · Groove (Cm–B♭) · Break · Build |
+| 7 | Fly | 126 | A minor | Liftoff · Theme (Am–F–G) · Drift (Am–Dm) · Theme · Space |
+| 8 | Lover | 130 | C minor | Intro · Verse (Cm–B♭) · Hook (A♭–B♭–Cm) · Robot · Hook |
+| 9 | Express | 128 | D minor | Intro (the bass alone) · Drive · Strings · Theme (Dm–B♭–C) · Pursuit · Theme · Run |
 
 All of it is a table in `app/dsp/mor.c` (`SONGS`), easy to change.
 
