@@ -1,5 +1,7 @@
 # GIO-1 for the M-VAVE FM-1
 
+**[▶ Try it in your browser](https://guinanno1.github.io/fm1-gio/emu/)** · **[Install it on your FM-1](https://guinanno1.github.io/fm1-gio/install/)** · [Website](https://guinanno1.github.io/fm1-gio/) · [Manual](https://guinanno1.github.io/fm1-gio/manual/) · [Quickstart](https://guinanno1.github.io/fm1-gio/quickstart/) · [Screen mirror](https://guinanno1.github.io/fm1-gio/mirror/)
+
 GIO-1 turns the M-VAVE FM-1 into a generative electronic disco machine, after Giorgio Moroder's Munich sound. It
 plays itself from the moment it's switched on: an analog-style bass sequence (or FM) out in front, its repeats on the other
 side; strings, a choir or detuned saws through a phaser; a synth lead (ten voices) that writes its
