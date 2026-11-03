@@ -26,7 +26,7 @@ enum { OBJ_PROJ, OBJ_PANEL, OBJ_NOBJ };
 #define PROJ_MAGIC 0x314F4947u           /* "GIO1" */
 #define PROJ_MAGIC_OLD 0x31524F4Du       /* the same instrument before its name was GIO-1: taken up as GIO-1's */
 #define PROJ_FORMAT 4u                   /* 2: the lead's echo, reverb and tone; ten lead voices; 3: the chords;
-                                          * 4: the FX pages' sends (P_BREV .. P_DREV), Bass 2 (P_BVOICE ..) */
+                                          * 4: the FX pages' sends (P_BREV .. P_DREV), Bass FM (P_BVOICE ..) */
 #define NPIECES EN_NSONGS
 
 typedef struct {
