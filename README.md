@@ -12,7 +12,7 @@ hold a section, push it on to the next.
 
 ![The Song page: Feel's verse, the bass's sixteen steps round the chord, the form across the top](docs/img/screen-song.png) ![Heaven at full tempo](docs/img/screen-heaven.png) ![The Bass page](docs/img/screen-bass.png)
 
-**Status: alpha, tested on one FM-1 only.** The latest release, [0.2-alpha](https://github.com/GuinanNo1/fm1-gio/releases/tag/v0.2-alpha),
+**Status: alpha, tested on one FM-1 only.** The latest release, [0.2.1-alpha](https://github.com/GuinanNo1/fm1-gio/releases/tag/v0.2.1-alpha),
 works on the one FM-1 it has been tested on; it has not yet been tried on others. Installing it is at your own
 risk: unofficial firmware could brick an FM-1. See [BUILDING.md](BUILDING.md) for the toolchain.
 
