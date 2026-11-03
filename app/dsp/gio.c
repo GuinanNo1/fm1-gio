@@ -1549,6 +1549,9 @@ static int16_t tape[TAPE_N] EN_POOL;
 static int tape_w, tape_ph;
 static float tape_acc, tape_lp, tape_hp, tape_p1, tape_p2, tape_c1, tape_c2;
 static float echo_send, echo_len, echo_len_t, echo_fb, rev_send, echo_base, fb_eff, echo_glide = 0.002f;
+static float ts_slope;                          /* Tape stop: how fast the delay grows (the tape's slowing: pitch 1 - it) */
+static float ts_gain = 1.0f;                    /* Tape stop: the tape's level, faded out once it can slow no further */
+static uint8_t ts_on;                           /* Tape stop held */
 /* each instrument's own sends (the FX pages): the bass's reverb, the pad's echo and reverb, the drums' echo and reverb;
  * at a recipe's values exactly as they were fixed before (the reverbs at 50, the drums' echo the bass's Echo) */
 static float bass_rev = 0.06f, pad_echo, pad_rev = 0.45f, drum_echo = 0.2025f, drum_rev = 1.0f;
@@ -1592,7 +1595,17 @@ static inline void echoes(float in, float *el, float *er)
     if (++tape_ph >= 4) {
         float h1, h2;
         tape_ph = 0;
-        echo_len += (echo_len_t - echo_len) * echo_glide;
+        if (ts_on && echo_len < (float)(TAPE_N - 8) * 0.5f - 2.0f) {   /* Tape stop: the tape slows on and on (the
+                                                                     * delay growing ever faster), down to a crawl */
+            ts_slope += (0.85f - ts_slope) * 0.00036f;   /* (~0.25 s to most of the way) */
+            echo_len += ts_slope;
+        } else if (ts_on) {
+            ts_gain *= 0.9993f;                   /* as far as it goes: stopped, the sound dying away (~0.3 s) */
+        } else {
+            ts_slope = 0.0f;
+            ts_gain += (1.0f - ts_gain) * 0.002f;
+            echo_len += (echo_len_t - echo_len) * echo_glide;   /* (let go: back up to speed) */
+        }
         h1 = tape_read(echo_len * (1.0f + 0.002f * motion * mod[5].v));
         h2 = tape_read(2.0f * echo_len);
         tape_lp += 0.6f * (h1 - tape_lp);
@@ -1608,8 +1621,9 @@ static inline void echoes(float in, float *el, float *er)
     }
     {
         float f = (float)tape_ph * 0.25f, h1 = tape_p1 + (tape_c1 - tape_p1) * f, h2 = tape_p2 + (tape_c2 - tape_p2) * f;
-        *el = 0.25f * h1 + 0.6f * h2;
-        *er = h1 + 0.2f * h2;
+        const float t2 = 1.0f - fx_a[FX_TAPESTOP];       /* (Tape stop: the first head only; the second runs backwards) */
+        *el = ((0.25f + 0.75f * (1.0f - t2)) * h1 + 0.6f * t2 * h2) * ts_gain;
+        *er = (h1 + 0.2f * t2 * h2) * ts_gain;
     }
 }
 
@@ -2363,8 +2377,11 @@ static void render_chunk(int32_t *out, uint32_t n, float gain)
     const float eg = (sec_now()->flags & F_BREAK) ? 1.4f : 1.0f;
     /* Reverb and Wash: measured on Feel (tests: the mix's RMS held against without), Reverb about +1.5 dB, Wash about
      * level with the dry mix it replaces (they were +5.5 and +3.1 dB: 0.8 and 1.0 / 0.6) */
-    const float thr = 1.2f * FXA(THROW) + 0.8f * FXA(SWELL) + 0.7f * FXA(WASH), rx = 0.32f * FXA(REVERB) + 0.42f * FXA(WASH);
-    const float dry = 1.0f - 0.85f * FXA(WASH), rin = 1.0f - FXA(FREEZE);
+    /* Throw, Swell, Wash and Tape stop send the mix into the echo; Wash and Tape stop take the dry sound down (Tape stop:
+     * all of it, so the music itself winds down, through the tape) */
+    const float thr = 1.2f * FXA(THROW) + 1.3f * FXA(SWELL) + 0.7f * FXA(WASH) + 1.6f * FXA(TAPESTOP),
+                rx = 0.32f * FXA(REVERB) + 0.42f * FXA(WASH);
+    const float dry = (1.0f - 0.85f * FXA(WASH)) * (1.0f - 0.95f * FXA(TAPESTOP)), rin = 1.0f - FXA(FREEZE);
     const float alp = FXA(LOWPASS), ahp = FXA(HIGHPASS), aph = FXA(PHASER), ast = FXA(STUTTER);
     float clp = 0.0f, chp = 0.0f;
     if (alp > 0.001f)                            /* 18 kHz down to 350 Hz */
@@ -2481,9 +2498,10 @@ static void control(uint32_t n)
     } else if (!(fx_mask >> FX_STUTTER & 1u) && FXA(STUTTER) <= 0.0f) {
         stut_on = 0;
     }
-    echo_len_t = fm_minf(echo_base * (1.0f + FXA(TIME)) * (1.0f + 3.0f * FXA(TAPESTOP)), (float)(TAPE_N - 8) * 0.5f);
-    echo_glide = (fx_mask >> FX_TAPESTOP & 1u) || FXA(TAPESTOP) > 0.02f ? 0.00025f : 0.002f;
-    fb_eff = fm_maxf(echo_fb, 0.96f * FXA(SWELL));
+    echo_len_t = fm_minf(echo_base * (1.0f + FXA(TIME)), (float)(TAPE_N - 8) * 0.5f);
+    ts_on = (uint8_t)(fx_mask >> FX_TAPESTOP & 1u);
+    echo_glide = ts_on || FXA(TAPESTOP) > 0.02f ? 0.0006f : 0.002f;   /* (let go: the tape back up to speed, ~0.15 s) */
+    fb_eff = fm_maxf(echo_fb, 0.985f * FXA(SWELL));
     pl_decay = 0.72f + 0.27f * FXA(FREEZE);
     drop_g = 1.0f - FXA(DROP);
     en_bass_glow *= 0.94f;

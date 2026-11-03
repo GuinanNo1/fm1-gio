@@ -285,7 +285,7 @@ start with the pad out of the echo (Pad echo 0).
 
 | Row | 1 | 2 | 3 | 4 |
 |---|---|---|---|---|
-| Echo (white 1–4) | **Throw**: everything into the echo | **Time x2**: the echo's time doubled, gliding there and back | **Tape stop**: the tape slowing to a quarter, the repeats diving | **Swell**: the echo fed back to the edge |
+| Echo (white 1–4) | **Throw**: everything into the echo | **Time x2**: the echo's time doubled, gliding there and back | **Tape stop**: the music winding down through the tape, its pitch diving, then silence; let go: back up to speed | **Swell**: more into the echo, fed back to the edge: it builds while held |
 | Filter (5–8) | **Low-pass**: the mix down to 350 Hz | **High-pass**: the mix up to 1.3 kHz, thin | **Sweep**: the bass's filter open three octaves, Moroder's hand on the cutoff | **Phaser**: a deep phaser on everything |
 | Space (9–12) | **Reverb**: everything into the plate | **Wash**: the dry down, everything into the echo and the plate | **Freeze**: the plate stops listening and rings on | **Stutter**: a sixteenth of the mix caught and looped |
 | Moves (13–16) | **Drop**: everything out but the bass and the kick | **Gate**: the pad chopped in sixteenths | **Octave**: the bass an octave up | **Roll**: a snare every sixteenth, rising |
