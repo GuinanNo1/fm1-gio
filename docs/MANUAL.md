@@ -258,7 +258,7 @@ wrong).
 
 ## 8a. Effects
 
-![The effects grid, Sweep and Roll held](img/screen-grid.png)
+![The effects grid on the Bass FX page, Sweep and Roll held](img/screen-grid.png)
 
 Sixteen effects, each on while its key is held, eased in and out; any number together. Every page **FX**
 brings up (the FX pages, below) shows them as a grid, and the white keys play them (white key 1 is the lowest);
@@ -279,8 +279,8 @@ start with the pad out of the echo (Pad echo 0).
 |---|---|---|---|---|
 | Echo (white 1–4) | **Throw**: everything into the echo | **Time x2**: the echo's time doubled, gliding there and back | **Tape stop**: the tape slowing to a quarter, the repeats diving | **Swell**: the echo fed back to the edge |
 | Filter (5–8) | **Low-pass**: the mix down to 350 Hz | **High-pass**: the mix up to 1.3 kHz, thin | **Sweep**: the bass's filter open three octaves, Moroder's hand on the cutoff | **Phaser**: a deep phaser on everything |
-| Space (9–12) | **Reverb**: everything into the plate | **Wash**: the dry down, everything into the echo and the plate | **Freeze**: the plate stops listening and rings on | **Drop**: everything out but the bass and the kick |
-| Moves (13–16) | **Stutter**: a sixteenth of the mix caught and looped | **Gate**: the pad chopped in sixteenths | **Octave**: the bass an octave up | **Roll**: a snare every sixteenth, rising |
+| Space (9–12) | **Reverb**: everything into the plate | **Wash**: the dry down, everything into the echo and the plate | **Freeze**: the plate stops listening and rings on | **Stutter**: a sixteenth of the mix caught and looped |
+| Moves (13–16) | **Drop**: everything out but the bass and the kick | **Gate**: the pad chopped in sixteenths | **Octave**: the bass an octave up | **Roll**: a snare every sixteenth, rising |
 
 ## 9. Saving
 

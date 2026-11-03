@@ -367,7 +367,7 @@ void en_prog_set(int s, int p, int i, uint16_t c)
 
 /* ------------------------------------------------------------ effects --- */
 const char *const EN_FX_NAME[EN_NFX] = {"Throw", "Time x2", "Tape stop", "Swell", "Low-pass", "High-pass", "Sweep",
-                                        "Phaser", "Reverb", "Wash", "Freeze", "Drop", "Stutter", "Gate", "Octave", "Roll"};
+                                        "Phaser", "Reverb", "Wash", "Freeze", "Stutter", "Drop", "Gate", "Octave", "Roll"};
 const char *const EN_FX_ROW[4] = {"Echo", "Filter", "Space", "Moves"};
 volatile uint16_t en_fx_on;
 static uint16_t fx_mask;

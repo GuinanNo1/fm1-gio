@@ -331,8 +331,8 @@ instrument's own.</p>
 <div class="fx">
 <b>Echo</b><span><small>1</small>Throw</span><span><small>2</small>Time x2</span><span><small>3</small>Tape stop</span><span><small>4</small>Swell</span>
 <b>Filter</b><span><small>5</small>Low-pass</span><span><small>6</small>High-pass</span><span><small>7</small>Sweep</span><span><small>8</small>Phaser</span>
-<b>Space</b><span><small>9</small>Reverb</span><span><small>10</small>Wash</span><span><small>11</small>Freeze</span><span><small>12</small>Drop</span>
-<b>Moves</b><span><small>13</small>Stutter</span><span><small>14</small>Gate</span><span><small>15</small>Octave</span><span><small>16</small>Roll</span>
+<b>Space</b><span><small>9</small>Reverb</span><span><small>10</small>Wash</span><span><small>11</small>Freeze</span><span><small>12</small>Stutter</span>
+<b>Moves</b><span><small>13</small>Drop</span><span><small>14</small>Gate</span><span><small>15</small>Octave</span><span><small>16</small>Roll</span>
 </div>
 </section>
 

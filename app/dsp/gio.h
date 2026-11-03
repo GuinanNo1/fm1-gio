@@ -71,7 +71,7 @@ void en_panic(void);                           /* everything quiet, now */
 void en_song(int i);                           /* a song: its form from the top (its parameters come by en_set) */
 /* the drop-in effects (the Effects page): bit i of the mask on while held; each eases in and out */
 enum { FX_THROW, FX_TIME, FX_TAPESTOP, FX_SWELL, FX_LOWPASS, FX_HIGHPASS, FX_SWEEP, FX_PHASER,
-       FX_REVERB, FX_WASH, FX_FREEZE, FX_DROP, FX_STUTTER, FX_GATE, FX_OCTAVE, FX_ROLL, EN_NFX };
+       FX_REVERB, FX_WASH, FX_FREEZE, FX_STUTTER, FX_DROP, FX_GATE, FX_OCTAVE, FX_ROLL, EN_NFX };
 extern const char *const EN_FX_NAME[EN_NFX];   /* "Throw", "Time x2" ... (the grid's labels) */
 extern const char *const EN_FX_ROW[4];         /* "Echo", "Filter", "Space", "Moves" */
 void en_fx(uint32_t mask);

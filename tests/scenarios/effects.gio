@@ -7,7 +7,7 @@ wait 100
 expect fx 1
 key b9 down
 wait 100
-expect fx 0x1001
+expect fx 0x801
 key b0 up
 key b9 up
 wait 100
