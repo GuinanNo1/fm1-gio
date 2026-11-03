@@ -110,7 +110,7 @@ header.site nav a:hover, header.site nav a[aria-current] { color: var(--magenta)
 header.site { margin-bottom: 8px; }</style>
 </head>
 <body>
-<div style="background:#2a2140;color:#fff;padding:10px 16px;font:15px/1.4 system-ui,sans-serif"><b>Preview</b>, not yet in a release: the start-up intro; the drums louder, Reverb and Wash quieter, Hats sets the hats' level; FX again goes through Bass FX, Pad FX, Lead FX and Drums FX, then Space; HOME again: the Mixer; GLO three times: the Mirror page. The released emulator: <a style="color:#ff7ac4" href="../emu/index.html">here</a>.</div>
+<div style="background:#2a2140;color:#fff;padding:10px 16px;font:15px/1.4 system-ui,sans-serif"><b>Preview</b>, not yet in a release: the start-up intro; the drums louder, Reverb and Wash quieter, Hats sets the hats' level; FX goes through Bass FX, Pad FX, Lead FX, Drums FX and Space, each with the effects grid on the white keys (Stutter and Drop swapped); HOME again: the Mixer; GLO three times: the Mirror page. The released emulator: <a style="color:#ff7ac4" href="../emu/index.html">here</a>.</div>
 
 <header class="site"><a class="home" href="../index.html">GIO-1</a><nav aria-label="GIO-1"><a href="../emu-preview/index.html" aria-current="page">Try it</a><a href="../install/index.html">Install</a><a href="../manual/index.html">Manual</a><a href="../quickstart/index.html">Quickstart</a><a href="../mirror-preview/index.html">Mirror</a><a href="https://github.com/GuinanNo1/fm1-gio">Source</a></nav></header>
 <main>
@@ -173,7 +173,7 @@ header.site { margin-bottom: 8px; }</style>
       bar, and <b>EDIT</b> shows the section's chords to change; a tap on <b>REC</b> holds the section you are in.</p>
     <p><b>Play the lead</b> on the white keys: every key is in the song's scale, and the lit ones are the chord's notes.
       Play three notes or more and pause: the lead answers you, then keeps your notes as its theme.
-      <b>Hold a black key</b> for an effect. <b>FX</b> (or REC held) puts all sixteen effects on the white keys.</p>
+      <b>Hold a black key</b> for an effect. <b>FX</b> (the FX pages, or REC held) puts all sixteen effects on the white keys.</p>
     <p class="note">This is the same code the FM-1 runs, compiled for the browser. What you save here stays in this
       browser; Factory reset forgets it.</p>
   </div>
@@ -190,15 +190,14 @@ header.site { margin-bottom: 8px; }</style>
         <tr><td>Lead 2 (ARP again)</td><td>Echo</td><td>Reverb</td><td>Octave</td><td>Tone</td></tr>
         <tr><td>Pad (LFO)</td><td>Level</td><td>Colour</td><td>Bright</td><td>Phaser</td></tr>
         <tr><td>Drums (SEQ)</td><td>Level</td><td>Fills</td><td>Hats</td><td>Swing</td></tr>
-        <tr><td>Bass FX (FX twice)</td><td>Echo</td><td>Reverb</td><td>Time*</td><td>Feedback*</td></tr>
-        <tr><td>Pad FX (FX 3 times)</td><td>Echo</td><td>Reverb</td><td>Time*</td><td>Feedback*</td></tr>
-        <tr><td>Lead FX (FX 4 times)</td><td>Echo</td><td>Reverb</td><td>Time*</td><td>Feedback*</td></tr>
-        <tr><td>Drums FX (FX 5 times)</td><td>Echo</td><td>Reverb</td><td>Time*</td><td>Feedback*</td></tr>
-        <tr><td>Space (FX 6 times)</td><td>Echo</td><td>Time*</td><td>Feedback*</td><td>Reverb</td></tr>
+        <tr><td>Bass FX (FX)</td><td>Echo</td><td>Reverb</td><td>Time*</td><td>Feedback*</td></tr>
+        <tr><td>Pad FX (FX twice)</td><td>Echo</td><td>Reverb</td><td>Time*</td><td>Feedback*</td></tr>
+        <tr><td>Lead FX (FX 3 times)</td><td>Echo</td><td>Reverb</td><td>Time*</td><td>Feedback*</td></tr>
+        <tr><td>Drums FX (FX 4 times)</td><td>Echo</td><td>Reverb</td><td>Time*</td><td>Feedback*</td></tr>
+        <tr><td>Space (FX 5 times)</td><td>Echo</td><td>Time*</td><td>Feedback*</td><td>Reverb</td></tr>
         <tr><td>Setup (GLO)</td><td>Key</td><td>Tune</td><td>MIDI out</td><td>Lights</td></tr>
         <tr><td>MIDI (GLO again)</td><td>MIDI out</td><td>Channels</td><td>Clock</td><td>Clock out</td></tr>
         <tr><td>Mirror (GLO 3 times)</td><td>Mirror on/off</td><td></td><td></td><td></td></tr>
-        <tr><td>Effects (FX)</td><td>Bass echo</td><td>Lead echo</td><td>Time*</td><td>Feedback*</td></tr>
         <tr><td>Chords (EDIT)</td><td>Chord</td><td>Root</td><td>Type</td><td>Bars</td></tr>
       </tbody>
     </table></div>
@@ -210,9 +209,9 @@ header.site { margin-bottom: 8px; }</style>
     <h2>Buttons and dials</h2>
     <div class="wrap"><table>
       <tbody>
-        <tr><td>White keys</td><td>The lead, a step of the song's scale each; the chord's notes lit. On the Effects page: the sixteen effects.</td></tr>
+        <tr><td>White keys</td><td>The lead, a step of the song's scale each; the chord's notes lit. On the FX pages: the sixteen effects.</td></tr>
         <tr><td>Black keys</td><td>Effects while held: Throw, Tape stop, Swell, Low-pass, High-pass, Sweep, Phaser, Freeze, Drop, Stutter, Roll.</td></tr>
-        <tr><td>FX</td><td>The Effects page; again: Bass FX, Pad FX, Lead FX, Drums FX, then Space, then round again.</td></tr>
+        <tr><td>FX</td><td>Bass FX, Pad FX, Lead FX, Drums FX, then Space, then round again; on each, the sixteen effects on the white keys.</td></tr>
         <tr><td>PLAY / STOP</td><td>Plays or stops. From stopped, the song starts at its first section.</td></tr>
         <tr><td>REC</td><td>A tap: the section repeats until you tap again. Held: the effects on the white keys.</td></tr>
         <tr><td>EDIT</td><td>The Chords page: the section's chords; KNOB 1 a chord, KNOB 2–4 its root, type and bars.</td></tr>
@@ -242,11 +241,11 @@ header.site { margin-bottom: 8px; }</style>
       <tbody>
         <tr><td>Echo</td><td>Throw</td><td>Time x2</td><td>Tape stop</td><td>Swell</td></tr>
         <tr><td>Filter</td><td>Low-pass</td><td>High-pass</td><td>Sweep</td><td>Phaser</td></tr>
-        <tr><td>Space</td><td>Reverb</td><td>Wash</td><td>Freeze</td><td>Drop</td></tr>
-        <tr><td>Moves</td><td>Stutter</td><td>Gate</td><td>Octave</td><td>Roll</td></tr>
+        <tr><td>Space</td><td>Reverb</td><td>Wash</td><td>Freeze</td><td>Stutter</td></tr>
+        <tr><td>Moves</td><td>Drop</td><td>Gate</td><td>Octave</td><td>Roll</td></tr>
       </tbody>
     </table></div>
-    <p class="note">On the Effects page (FX) or with REC held, white keys 1–16 play these, each while held.</p>
+    <p class="note">On the FX pages or with REC held, white keys 1–16 play these, each while held.</p>
   </div>
 
   <div>
