@@ -1,8 +1,8 @@
 /* SPDX-License-Identifier: MPL-2.0
  * Copyright (C) 2026 Ian Guinan */
 /* GIO-1's intro, once a power-on: the start-up screen (gio_splash.c) wipes in while the chime (gio_chime.c) rises,
- * the star lands with the chord, and when the chime has rung out the instrument starts as it always has (ui_init:
- * the screen, then the song from the top).
+ * the star lands with the chord, and INTRO_SONG_DELAY_MS later the instrument starts as it always has (ui_init: the
+ * screen, then the song from the top), the chime ringing out under the song's first bars.
  *
  * Safety: nothing here runs before the platform is up. fm1-base's own start-up screen (app_splash, also shown in
  * safe mode) only paints the background; the animation runs in the main loop, a few rows a frame, so USB, the
@@ -13,6 +13,7 @@
  * Any control touched skips it: the chime rings out under the song, and the instrument starts once every control is
  * let go (GIO-1's input acts on releases too), or after INTRO_RELEASE_MS (a key stuck down). */
 
+#define INTRO_SONG_DELAY_MS 1000u            /* the star's landing to the song: a breath (1.47 s from the start) */
 #define INTRO_MAX_MS 4000u                   /* the intro's end, whatever happens */
 #define INTRO_RELEASE_MS 1500u               /* a skip: the controls let go, or this long */
 
@@ -65,7 +66,7 @@ static void intro_frame(void)
         intro_finish();
         return;
     }
-    if (intro_skipped ? now - intro_skip_t >= INTRO_RELEASE_MS : drawn && !gio_chime_active())
+    if (intro_skipped ? now - intro_skip_t >= INTRO_RELEASE_MS : drawn && ms >= GIO_STAR_MS + INTRO_SONG_DELAY_MS)
         intro_finish();
     else if (wall >= INTRO_MAX_MS) {
         gio_chime_stop();

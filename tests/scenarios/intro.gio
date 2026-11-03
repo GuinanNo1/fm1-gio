@@ -1,5 +1,5 @@
 # the start-up intro (intro.c): at power-on the word GIO wipes in as the chime rises, the star lands with the chord,
-# and once the chime has rung out the song starts, as before. Any control skips it, the song starting when they are
+# and a second later the song starts, as before, the chime ringing out under it. Any control skips it, the song starting when they are
 # let go (or after 1.5 s: a stuck key); an "intro off" scenario or a second start (an update's return) has none
 wav intro.wav
 expect intro 1
@@ -13,13 +13,14 @@ wait 300
 shot splash.png
 expect intro 1
 expect playing 0
-wait 1500
+wait 600
 expect intro 1
 expect playing 0
-wait 1300
+wait 200
 expect intro 0
 expect playing 1
 expect section 0
+wait 1500
 wavstop
 expect peak_db_max -1
 expect peak_db_min -30
