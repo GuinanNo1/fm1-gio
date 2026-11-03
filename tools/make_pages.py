@@ -28,7 +28,7 @@ from pathlib import Path
 SRC = Path(__file__).resolve().parents[1]
 BASE = SRC / "base"
 sys.path.insert(0, str(BASE / "tools"))
-from make_site import MBOOT_VERSION, product_of, read_conf, strip_module, tool_pages  # noqa: E402  (fm1-base's: the package format)
+from make_site import MBOOT_VERSION, product_of, read_conf, strip_module  # noqa: E402  (fm1-base's: the package format)
 
 REPO = "https://github.com/GuinanNo1/fm1-gio"
 FONTS = ('<link rel="preconnect" href="https://fonts.googleapis.com">\n'
@@ -69,6 +69,28 @@ code { font: .88em ui-monospace, Menlo, Consolas, monospace; background: var(--c
 """ + HEADER_CSS
 
 NAV = [("emu/", "Try it"), ("install/", "Install"), ("manual/", "Manual"), ("quickstart/", "Quickstart"), ("mirror/", "Mirror")]
+
+
+def mirror_pages(conf):
+    """{"mirror/index.html": html} with mirror = true: tools/fm1base_web's page, filled in, with GIO-1's two changes
+    (tools/fm1base_web/README.md)"""
+    if not conf.get("mirror"):
+        return {}
+    web = SRC / "tools" / "fm1base_web"
+    mh = (web / "mirror.html").read_text(encoding="utf-8")
+    mh = mh.replace("{{NAME}}", "GIO-1").replace("{{PORTS_JS}}", strip_module((web / "fm1ports.js").read_text(encoding="utf-8")))
+    for old, new in (
+            ('navigator.permissions?.query({ name: "midi", sysex: true }).then((p) => { if (p.state === "granted") connect(); }).catch(() => {});',
+             "// (GIO-1: no connecting by itself when the page opens: Connect does it)"),
+            ('addEventListener("pagehide", () => { if (control) setControl(false); send(0); });',
+             "// (GIO-1: nothing sent as the page closes; the FM-1 stops mirroring by itself, MR_TIMEOUT_MS)")):
+        if mh.count(old) != 1:
+            raise SystemExit(f"tools/fm1base_web/mirror.html: not found once: {old[:50]}...")
+        mh = mh.replace(old, new)
+    left = sorted(set(re.findall(r"\{\{[A-Z_]+\}\}", mh)))
+    if left:
+        raise SystemExit(f"tools/fm1base_web/mirror.html: {' '.join(left)} not filled in")
+    return {"mirror/index.html": mh}
 
 
 def header(here, depth):
@@ -461,10 +483,9 @@ def main(out, pkg=None, version=None):
                   ' --muted: #aaa4d4; --accent: #ff5cb4; --teal: #2fd8f0; color-scheme: dark; }\n'
                   'header.site { margin-bottom: 8px; }</style>\n</head>', 1)
     (out / "emu" / "index.html").write_text(e, encoding="utf-8")
-    # the screen mirror (fm1.toml mirror = true): fm1-base's page, dark, with the site's header
-    for rel, mh in tool_pages(SRC / "app", conf, {"NAME": "GIO-1"}).items():
-        if not rel.startswith("mirror/"):
-            continue
+    # the screen mirror (fm1.toml mirror = true): fm1-base's newer page (tools/fm1base_web: it talks only to the FM-1),
+    # not connecting by itself and sending nothing as it closes; dark, with the site's header
+    for rel, mh in mirror_pages(conf).items():
         mh = mh.replace('<html lang="en">', '<html lang="en" data-theme="dark">', 1)
         mh = mh.replace("<title>Mirror · GIO-1</title>", "<title>GIO-1 Mirror</title>", 1)
         if mh.count("<body>") != 1:
