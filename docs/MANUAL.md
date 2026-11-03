@@ -77,7 +77,7 @@ does the same from Chrome or Edge once a site is published.
 | OCT− / OCT+ | The bass an octave down / up (−1 to +1). |
 | ALGORITHM | The bass pattern: Song (the song's own, section by section), Pump, Pump 16, Arpeggio, Gallop, Octaves, Slow. |
 | PRESETS | The song. Each remembers its settings as you left it. |
-| HOME, ENV, ARP, LFO, SEQ, FX, GLO | The pages: Song, Bass, Lead, Pad, Drums, Effects, Setup. HOME again: Mixer; ARP again: Lead 2; FX again: the four FX pages, then Space; GLO again: MIDI. Each press goes on to the button's next page, then round again. |
+| HOME, ENV, ARP, LFO, SEQ, FX, GLO | The pages: Song, Bass, Lead, Pad, Drums, Effects, Setup. HOME again: Mixer; ARP again: Lead 2; FX again: the four FX pages, then Space; GLO again: MIDI, then Mirror. Each press goes on to the button's next page, then round again. |
 | SELECT | The previous / next page. With HOME held: the tempo, 110 to 130. |
 | KNOB 1–4 | The page's four values. A quick turn speeds up; a slow one goes a step at a time. |
 | SAVE | Saves all the songs. Held 1.5 s: the song back to its recipe (then SAVE to keep that). |
@@ -200,6 +200,7 @@ GIO-1's own, written as it plays.
 | Space (FX 6 times) | Echo | Time | Feedback | Reverb |
 | Setup (GLO) | Key | Tune | MIDI out | Lights |
 | MIDI (GLO again) | MIDI out | Channels | Clock | Clock out |
+| Mirror (GLO 3 times) | Mirror (On, Off) | | | |
 | Effects (FX) | Bass echo | Lead echo | Time | Feedback |
 | Chords (EDIT) | Chord | Root | Type | Bars |
 
@@ -249,7 +250,10 @@ The FM-1 also shows up on a computer as a USB audio input: GIO-1 can be recorded
 **Screen mirror:** GIO-1's screen and panel can be shown live on a computer, big, for playing in front of people or
 for anyone who finds the 1.54-inch screen hard to read. Plug the FM-1 in with a USB cable, open the website's
 **Mirror** page in Chrome or Edge, press **Connect** and allow MIDI. The page can also play the panel. It costs the
-music nothing: GIO-1 sends its screen only while the page asks for it.
+music nothing: GIO-1 sends its screen only while the page asks for it. The FM-1's own **Mirror** page (GLO three times)
+says the same in short, shows when a computer is showing the screen, and has KNOB 1 to switch mirroring **Off**: then
+no computer sees the screen or plays the panel (it's saved; switch it off to rule the mirror out when something seems
+wrong).
 
 ---
 

@@ -32,3 +32,32 @@ mirror_rate 48
 wait 1500
 fbdump fb_slow.raw
 mirror off
+# GLO three times: the Mirror page. KNOB 1 Off: a computer's session gets no picture (tests/host/mirror_check.py
+# --none), and it stays off after a restart; On again: mirrored again
+mirror_rate 48
+tap GLO
+tap GLO
+tap GLO
+expect view 14
+shot mirrorpage.png
+turn K1 -1
+expect mirror 0
+tap SAVE
+wait 300
+reboot
+wait 500
+expect mirror 0
+mirror out:off.syx
+wait 1500
+tap ENV
+wait 500
+mirror off
+tap GLO
+tap GLO
+tap GLO
+turn K1 1
+expect mirror 1
+mirror out:on.syx
+wait 1500
+fbdump fb_on.raw
+mirror off

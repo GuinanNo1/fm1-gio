@@ -5,6 +5,7 @@
 itself (the simulator's fbdump): every pixel the same.
 
   python3 tests/host/mirror_check.py STREAM.syx FB.raw [MIN_FRAMES]
+  python3 tests/host/mirror_check.py --none STREAM.syx     (the mirror switched off: not one picture frame)
 """
 import sys
 from pathlib import Path
@@ -12,6 +13,12 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parents[2] / "base" / "tools"))
 import fm1_mirror  # noqa: E402
 
+if sys.argv[1] == "--none":
+    scr = fm1_mirror.Screen()
+    for m in fm1_mirror.split(Path(sys.argv[2]).read_bytes()):
+        scr.frame(m)
+    print(f"mirror off: {scr.frames} picture frames")
+    sys.exit(0 if scr.frames == 0 else 1)
 stream, fb = Path(sys.argv[1]).read_bytes(), Path(sys.argv[2]).read_bytes()
 need = int(sys.argv[3]) if len(sys.argv) > 3 else 1
 scr = fm1_mirror.Screen()

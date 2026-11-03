@@ -52,5 +52,7 @@ done
 M=$B/scenarios/mirror
 run mirror-fast "$PY" tests/host/mirror_check.py $M/stream.syx $M/fb.raw 50
 run mirror-recovers "$PY" tests/host/mirror_check.py $M/slow.syx $M/fb_slow.raw 10
+run mirror-switched-off "$PY" tests/host/mirror_check.py --none $M/off.syx
+run mirror-switched-on "$PY" tests/host/mirror_check.py $M/on.syx $M/fb_on.raw 10
 [ $FAIL -eq 0 ] && echo "all tests passed" || echo "TESTS FAILED"
 exit $FAIL

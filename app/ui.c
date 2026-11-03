@@ -22,15 +22,15 @@
 #include "fastmath.h"
 
 enum { V_SONG, V_MIXER, V_BASS, V_LEAD, V_LEAD2, V_PAD, V_DRUMS, V_BASSFX, V_PADFX, V_LEADFX, V_DRUMFX, V_SPACE, V_SETUP,
-       V_MIDI, V_FXGRID, V_CHORDS, NVIEWS };
+       V_MIDI, V_MIRROR, V_FXGRID, V_CHORDS, NVIEWS };
 static const char *const VIEW_NAME[NVIEWS] = {"Song", "Mixer", "Bass", "Lead", "Lead 2", "Pad", "Drums", "Bass FX",
-                                              "Pad FX", "Lead FX", "Drums FX", "Space", "Setup", "MIDI", "Effects",
-                                              "Chords"};
+                                              "Pad FX", "Lead FX", "Drums FX", "Space", "Setup", "MIDI", "Mirror",
+                                              "Effects", "Chords"};
 /* FX: the Effects page, each instrument's FX page, the Space page, and round again */
 static const uint8_t FX_CYCLE[] = {V_FXGRID, V_BASSFX, V_PADFX, V_LEADFX, V_DRUMFX, V_SPACE};
 static const uint8_t VIEW_BTN[NVIEWS] = {B_HOME, B_HOME, B_ENV, B_ARP, B_ARP, B_LFO, B_SEQ, B_FX, B_FX, B_FX, B_FX, B_FX,
-                                         B_GLO, B_GLO, B_FX, B_EDIT};
-enum { K_LEDS = 100, K_CPU, K_NONE, K_CSLOT, K_CROOT, K_CTYPE, K_CLEN };
+                                         B_GLO, B_GLO, B_GLO, B_FX, B_EDIT};
+enum { K_LEDS = 100, K_CPU, K_NONE, K_CSLOT, K_CROOT, K_CTYPE, K_CLEN, K_MIRROR };
 static const uint8_t VIEW_KNOB[NVIEWS][4] = {
     {P_TEMPO, P_EVOLVE, P_MOTION, P_ARRANGE},
     {P_BASS, P_PAD, P_LEAD, P_DRUMS},             /* the Mixer: each instrument's Level (its own page's KNOB 1) */
@@ -46,6 +46,7 @@ static const uint8_t VIEW_KNOB[NVIEWS][4] = {
     {P_ECHO, P_ETIME, P_FEEDBACK, P_REVERB},
     {P_ROOT, P_TUNE, P_MIDI, K_LEDS},
     {P_MIDI, P_MCHAN, P_MCLOCK, P_MCLKOUT},
+    {K_MIRROR, K_NONE, K_NONE, K_NONE},           /* the screen mirror: on or off (the FM-1's, not a song's) */
     {P_ECHO, P_LECHO, P_ETIME, P_FEEDBACK},
     {K_CSLOT, K_CROOT, K_CTYPE, K_CLEN},
 };
@@ -64,6 +65,7 @@ static const char *const KNOB_LABEL[NVIEWS][4] = {
     {"Echo", "Time", "Feedback", "Reverb"},
     {"Key", "Tune", "MIDI out", "Lights"},
     {"MIDI out", "Channels", "Clock", "Clock out"},
+    {"Mirror", "", "", ""},
     {"Bass echo", "Lead echo", "Time", "Feedback"},
     {"Chord", "Root", "Type", "Bars"},
 };
@@ -275,6 +277,8 @@ static int knob_get(int k)
         return proj.par[k];
     if (k == K_LEDS)
         return proj.leds;
+    if (k == K_MIRROR)
+        return !proj.nomirror;
     if (k == K_CPU)
         return (int)plat_cpu_pct();
     if (k == K_CSLOT)
@@ -295,7 +299,7 @@ static void knob_range(int k, int *lo, int *hi)
     } else {
         int n = ccount(), s = cslot();
         *lo = k == K_CLEN && s < n && !(s == n - 1 && n > 1) ? 1 : 0;
-        *hi = k == K_LEDS ? 2 : k == K_CPU ? 100 : k == K_CSLOT ? (n < EN_PROG_MAX ? n : EN_PROG_MAX - 1)
+        *hi = k == K_LEDS ? 2 : k == K_MIRROR ? 1 : k == K_CPU ? 100 : k == K_CSLOT ? (n < EN_PROG_MAX ? n : EN_PROG_MAX - 1)
             : k == K_CROOT ? 11 : k == K_CTYPE ? EN_NQUAL - 1 : k == K_CLEN ? 6 : 0;
     }
 }
@@ -304,7 +308,7 @@ static void knob_text(int k, char *b)
     int v = knob_get(k);
     if (k < P_NPARAMS) {
         en_param_text(k, v, b);
-    } else if (k == K_LEDS) {
+    } else if (k == K_LEDS || k == K_MIRROR) {
         const char *n = v == 2 ? "Keys" : v ? "On" : "Off";
         while ((*b++ = *n++))
             ;
@@ -349,6 +353,8 @@ static void knob_set(int k, int v)
         en_set(k, v);
     } else if (k == K_LEDS) {
         proj.leds = (uint8_t)v;
+    } else if (k == K_MIRROR) {
+        proj.nomirror = (uint8_t)!v;
     } else if (k == K_CSLOT) {
         ui.cslot = (uint8_t)v;
         return;
@@ -1009,7 +1015,7 @@ static int help_lines(int b, const char *l[HELP_LINES])
     case B_LFO: L("THE PAD"); L("LEVEL, COLOUR, BRIGHT,"); L(" PHASER"); break;
     case B_SEQ: L("THE DRUMS"); L("LEVEL, FILLS, HATS, SWING"); break;
     case B_FX: L("EFFECTS: 16 ON THE KEYS"); L("AGAIN: BASS, PAD, LEAD,"); L(" DRUMS FX: ECHO, REVERB,"); L(" TIME, FEEDBACK; SPACE"); break;
-    case B_GLO: L("SETUP"); L("KEY, TUNE, MIDI OUT, LIGHTS"); L("AGAIN: MIDI: CHANNELS,"); L(" CLOCK, CLOCK OUT"); break;
+    case B_GLO: L("SETUP: KEY, TUNE,"); L(" MIDI OUT, LIGHTS"); L("AGAIN: MIDI"); L("AGAIN: THE SCREEN MIRROR"); break;
     case B_EDIT: L("THE CHORDS: A CHORD,"); L(" ITS ROOT, TYPE AND BARS"); L("REC HOLDS THE SECTION"); L("SEL: THE NEXT ONE"); break;
     case B_SEL: L("THE NEXT SECTION,"); L("ON THE NEXT BAR"); break;
     case B_REC: L("HOLD: THE SECTION"); L(" REPEATS"); L("AGAIN: LET IT GO ON"); break;
@@ -1032,6 +1038,36 @@ static void draw_help(void)
     text_c(120, 18, &FONT_B, BTN_LABEL[ui.help - 1], K_BG);
     for (k = 0; k < n; k++)
         text_c(120, 50 + k * 20, &FONT_S, l[k] + (l[k][0] == ' '), K_TEXT);
+}
+
+/* the screen mirror (GLO three times): on or off (KNOB 1), and how to show it on a computer */
+static int mirror_showing(void)                  /* a computer is showing the screen now */
+{
+#if FM1B_MIRROR
+    return mirror_on;
+#else
+    return 0;
+#endif
+}
+void ui_mirror_guard(void)                       /* off: a computer's session ended at once (each main-loop pass, before
+                                                  * anything is drawn: it sees nothing, and plays nothing) */
+{
+#if FM1B_MIRROR
+    if (proj.nomirror && mirror_on)
+        mirror_off();
+#endif
+}
+static void draw_mirror(void)
+{
+    static const char *const L[] = {"1. USB CABLE TO A COMPUTER", "2. IN CHROME OR EDGE:", "GUINANNO1.GITHUB.IO/FM1-GIO",
+                                    "THEN MIRROR", "3. CONNECT, ALLOW MIDI"};
+    int k, show = mirror_showing();
+    text_c(120, 6, &FONT_B, "THIS SCREEN ON A COMPUTER", K_TEXT);
+    for (k = 0; k < 5; k++)
+        text_c(120, 32 + k * 18, &FONT_S, L[k], k == 2 || k == 3 ? K_ACC : K_DIM);
+    cv_round(40, 122, 160, 20, 6, proj.nomirror ? K_PANEL : show ? K_ACC : K_PANEL);
+    text_c(120, 124, &FONT_S, proj.nomirror ? "MIRROR OFF" : show ? "SHOWING NOW" : "MIRROR ON, READY",
+           proj.nomirror ? K_DIM : show ? K_BG : K_TEXT);
 }
 
 /* the effects grid (FX, or REC held): four rows of four, a white key each; lit while held */
@@ -1123,6 +1159,16 @@ static void draw_main(void)
             ui.sig[1] = h;
             cv_begin(240, MAIN_H, K_BG);
             draw_chords();
+            cv_blit(0, MAIN_Y);
+        }
+        return;
+    }
+    if (ui.view == V_MIRROR && !ui.rec_grid) {
+        h = hash(0x4D495252u, (uint32_t)proj.nomirror | (uint32_t)mirror_showing() << 1);
+        if (h != ui.sig[1]) {
+            ui.sig[1] = h;
+            cv_begin(240, MAIN_H, K_BG);
+            draw_mirror();
             cv_blit(0, MAIN_Y);
         }
         return;
@@ -1562,13 +1608,15 @@ static void speak_dump(void)
         for (i = 0; i < 4; i++) {
             int k = VIEW_KNOB[v][i];
             knob_range(k, &lo, &hi);
-            if (k >= K_CSLOT)                       /* the Chords page's: as they are */
+            if (k >= K_CSLOT && k <= K_CLEN)        /* the Chords page's: as they are */
                 lo = hi = knob_get(k);
             for (x = lo; x <= hi; x++) {
                 if (k < P_NPARAMS)
                     proj.par[k] = (int16_t)x;
                 else if (k == K_LEDS)
                     proj.leds = (uint8_t)x;
+                else if (k == K_MIRROR)
+                    proj.nomirror = (uint8_t)!x;
                 sp_n = 0;
                 sp_knob(v, i);
                 sp_print("KNOB", sp_buf);

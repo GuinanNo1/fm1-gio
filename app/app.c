@@ -41,6 +41,7 @@ void app_ui_init(void)                  /* at power-on the intro first; again (a
 }
 void app_frame(void)
 {
+    ui_mirror_guard();                   /* the screen mirror off: a computer's session ended */
     if (intro_on)
         intro_frame();
     else
@@ -48,6 +49,7 @@ void app_frame(void)
 }
 void app_input_only(void)
 {
+    ui_mirror_guard();
     if (!intro_on)
         ui_input_only();
 }

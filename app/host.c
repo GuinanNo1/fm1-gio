@@ -5,7 +5,7 @@
  *
  * GIO-1's checks: playing held view piece dirty sixteenths ext section bar layers key chordroot pad_level fx leadstep parN
  * nchords chordN (the section's progression: its length, chord N packed as gio.h's EN_CH) cslot progslot
- * battery intro blits (fm1-base's own: store_writes clocks_out midi_out peak_db_max peak_db_min). Its commands: intro off|on
+ * battery intro blits mirror (fm1-base's own: store_writes clocks_out midi_out peak_db_max peak_db_min). Its commands: intro off|on
  * (the start-up intro skipped, now and after a reboot: most scenarios start with it); battery N (the
  * battery read as N, plat.h's plat_battery: -1..4; "battery off" the simulator's own, full); saved_as old|v2|v3 (the project
  * saved now as an older firmware left it: under the instrument's old name, format 2 (before the chords), format 3
@@ -16,6 +16,8 @@ int app_expect(const char *what, int *got)
     int g;
     if (!strcmp(what, "intro"))                  /* the start-up intro on the screen (intro.c) */
         g = intro_on;
+    else if (!strcmp(what, "mirror"))            /* the Mirror page's setting: 1 on, 0 off */
+        g = !proj.nomirror;
     else if (!strcmp(what, "blits"))             /* the screen's blits so far (what the browser's emulator shows) */
         g = (int)blits;
     else if (!strcmp(what, "playing"))

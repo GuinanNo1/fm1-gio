@@ -85,7 +85,7 @@ static int project_valid(void)
 {
     int i;
     if (proj.magic != PROJ_MAGIC || proj.format != PROJ_FORMAT || proj.piece >= NPIECES || !pars_ok(proj.par) ||
-        proj.leds > 2)
+        proj.leds > 2 || proj.nomirror > 1)
         return 0;
     for (i = 0; i < NPIECES; i++)
         if (!pars_ok(proj.slot[i].par))

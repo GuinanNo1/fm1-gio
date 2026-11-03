@@ -21,7 +21,7 @@ key w5 up
 # FX: the Effects page; white key 7 is Sweep (bit 6), white key 16 Roll
 tap FX
 wait 100
-expect view 14
+expect view 15
 key w6 down
 key w15 down
 wait 300
@@ -57,13 +57,13 @@ tap FX
 expect view 11
 expect par21 1
 tap FX
-expect view 14
+expect view 15
 tap SEL
-expect view 14
+expect view 15
 # from another page, FX: the Effects page
 tap LFO
 tap FX
-expect view 14
+expect view 15
 tap HOME
 expect view 0
 # HOME again: the Mixer, each instrument's level (the same as its own page's KNOB 1); again: the Song page

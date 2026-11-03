@@ -296,6 +296,7 @@ QUICK_BODY = """<main>
 <tr><td>Space (FX ×6)</td><td>Echo</td><td>Time*</td><td>Feedback*</td><td>Reverb</td></tr>
 <tr><td>Setup (GLO)</td><td>Key</td><td>Tune</td><td>MIDI out</td><td>Lights</td></tr>
 <tr><td>MIDI (GLO ×2)</td><td>MIDI out</td><td>Channels</td><td>Clock</td><td>Clock out</td></tr>
+<tr><td>Mirror (GLO ×3)</td><td>Mirror on/off</td><td></td><td></td><td></td></tr>
 <tr><td>Effects (FX)</td><td>Bass echo</td><td>Lead echo</td><td>Time*</td><td>Feedback*</td></tr>
 <tr><td>Chords (EDIT)</td><td>Chord</td><td>Root</td><td>Type</td><td>Bars</td></tr>
 </table></div>

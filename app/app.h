@@ -38,7 +38,8 @@ typedef struct {
     int16_t par[P_NPARAMS];              /* the song playing, as it is now (gio.h P_*) */
     uint8_t leds;                        /* lights: 0 off, 1 keys and the buttons' glow, 2 keys only */
     uint8_t piece;                       /* which song */
-    uint8_t rsv0[2];
+    uint8_t nomirror;                    /* the screen mirror: 0 on (the default, and every save before it), 1 off */
+    uint8_t rsv0;
     slot_t slot[NPIECES];                /* every song as it was left (Tune and MIDI out are global) */
     uint8_t rsv[16];                     /* room to grow */
     uint16_t chords[NPIECES][EN_NPROG * EN_PROG_MAX];   /* every song's chord changes (gio.h EN_CH), as edited */
@@ -70,6 +71,7 @@ void project_piece_reset(void);          /* the song playing back to its recipe 
 void ui_init(void);
 void ui_frame(void);
 void ui_input_only(void);
+void ui_mirror_guard(void);              /* the screen mirror switched off (the Mirror page): a session ended */
 int ui_dirty(void);
 void ui_say(const char *a, const char *b);
 
