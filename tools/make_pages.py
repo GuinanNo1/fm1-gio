@@ -275,7 +275,7 @@ QUICK_BODY = """<main>
   <li>Switch on: <b>Feel</b> plays from its intro.</li>
   <li><b>PRESETS</b>: another song, from the top.</li>
   <li><b>White keys</b>: play the lead, always in key. Three notes and a pause: it answers, and keeps your line as its theme.</li>
-  <li><b>Black keys</b>: an effect while held. <b>FX</b>: the FX pages, all sixteen on the white keys.</li>
+  <li><b>Black keys</b>: an effect while held. <b>FX</b>: each press the next instrument's echo and reverb (Bass, Pad, Lead, Drums, then Space), the white keys playing all sixteen effects meanwhile.</li>
   <li><b>SEL</b>: the next section. A tap on <b>REC</b>: stay in this one.</li>
   <li><b>EDIT</b>: the section's chords, to change: KNOB 1 a chord, KNOB 2–4 its root, type and bars.</li>
   <li><b>ENV</b>, KNOB 2: open the bass filter.</li>
@@ -291,7 +291,7 @@ QUICK_BODY = """<main>
 <tr><td>REC</td><td>Tap: hold the section. Held: the effects grid</td></tr>
 <tr><td>EDIT</td><td>The Chords page: the section's chords</td></tr>
 <tr><td>SEL</td><td>The next section, on the next bar</td></tr>
-<tr><td>FX</td><td>Bass FX, Pad FX, Lead FX, Drums FX, Space, round again; on each, the 16 effects on the white keys</td></tr>
+<tr><td>FX</td><td>Each press pages through the echo and reverb settings of the Bass, Pad, Lead and Drums, then Space, then round again; on every one, the white keys play the 16-effect grid live</td></tr>
 <tr><td>OCT− / OCT+</td><td>The bass's octave</td></tr>
 <tr><td>ALGORITHM</td><td>The bass pattern: Song, Pump, Pump 16, Arpeggio, Gallop, Octaves, Slow</td></tr>
 <tr><td>PRESETS</td><td>The song (each keeps its settings)</td></tr>
