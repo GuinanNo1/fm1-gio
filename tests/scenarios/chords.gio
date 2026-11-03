@@ -7,6 +7,10 @@ expect piece 0
 tap EDIT
 wait 200
 expect view 16
+# (EDIT again: the Chords page; the Bassline is first)
+tap EDIT
+wait 200
+expect view 17
 # Feel's intro: C, four bars (EN_CH: root | type << 4 | beats << 8)
 expect nchords 1
 expect chord0 4096

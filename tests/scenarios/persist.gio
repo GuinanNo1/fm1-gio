@@ -22,6 +22,7 @@ expect playing 1
 turn PRESET 1
 expect piece 6
 tap EDIT
+tap EDIT
 spin K2 2
 expect chord0 4114
 saved_as old

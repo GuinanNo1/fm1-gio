@@ -299,7 +299,7 @@ QUICK_BODY = """<main>
   <li><b>White keys</b>: play the lead, always in key. Three notes and a pause: it answers, and keeps your line as its theme.</li>
   <li><b>Black keys</b>: an effect while held. <b>FX</b>: each press the next instrument's echo and reverb (Bass, Pad, Lead, Drums, then Space), the white keys playing all sixteen effects meanwhile.</li>
   <li><b>SEL</b>: the next section. A tap on <b>REC</b>: stay in this one.</li>
-  <li><b>EDIT</b>: the section's chords, to change: KNOB 1 a chord, KNOB 2–4 its root, type and bars.</li>
+  <li><b>EDIT</b>: the bassline (a white key picks a step, KNOB 2 its note); again: the section's chords; again: the drum grid (a white key a step on or off).</li>
   <li><b>ENV</b>, KNOB 2: open the bass filter.</li>
 </ol>
 </section>
@@ -311,7 +311,7 @@ QUICK_BODY = """<main>
 <tr><td>Black keys</td><td>Effects while held: Throw, Tape stop, Swell, Low-pass, High-pass, Sweep, Phaser, Freeze, Stutter, Drop, Roll</td></tr>
 <tr><td>PLAY</td><td>Play / stop (the song from the top)</td></tr>
 <tr><td>REC</td><td>Tap: hold the section. Held: the effects grid</td></tr>
-<tr><td>EDIT</td><td>The Chords page: the section's chords</td></tr>
+<tr><td>EDIT</td><td>The edit pages: Bassline, Chords, Drum grid</td></tr>
 <tr><td>SEL</td><td>The next section, on the next bar</td></tr>
 <tr><td>FX</td><td>Each press pages through the echo and reverb settings of the Bass, Pad, Lead and Drums, then Space, then round again; on every one, the white keys play the 16-effect grid live</td></tr>
 <tr><td>OCT− / OCT+</td><td>The bass's octave</td></tr>
@@ -342,7 +342,9 @@ QUICK_BODY = """<main>
 <tr><td>Setup (GLO)</td><td>Key</td><td>Tune</td><td>MIDI out</td><td>Lights</td></tr>
 <tr><td>MIDI (GLO ×2)</td><td>MIDI out</td><td>Channels</td><td>Clock</td><td>Clock out</td></tr>
 <tr><td>Mirror (GLO ×3)</td><td>Mirror on/off</td><td></td><td></td><td></td></tr>
-<tr><td>Chords (EDIT)</td><td>Chord</td><td>Root</td><td>Type</td><td>Bars</td></tr>
+<tr><td>Bassline (EDIT)</td><td>Step</td><td>Note</td><td>Accent</td><td>Length</td></tr>
+<tr><td>Chords (EDIT again)</td><td>Chord</td><td>Root</td><td>Type</td><td>Bars</td></tr>
+<tr><td>Drum grid (EDIT 3 times)</td><td>Drum</td><td>Step</td><td>Level</td><td></td></tr>
 </table></div>
 <p>* One echo for all: Time and Feedback are the same on every page. On the FX pages, Echo and Reverb are that
 instrument's own.</p>

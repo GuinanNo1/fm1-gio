@@ -10,7 +10,9 @@
  *   FX             the FX pages, one a press: BASS FX, PAD FX, LEAD FX, DRUMS FX (each instrument's echo and reverb,
  *                  the one echo's time and feedback), SPACE; on each, the sixteen effects on the white keys (REC held:
  *                  the same, on any page, for as long)
- *   EDIT           the Chords page: the section's chord changes, a chord at a time (its root, type and length)
+ *   EDIT           the Bassline page: the bass pattern playing, a step at a time (its note, accent and length; the
+ *                  white keys pick the step); again: the Chords page, the section's chord changes, a chord at a time
+ *                  (its root, type and length); again: the Drum grid, the song's drums (a white key a step on or off)
  *   SEL            the next section, on the next bar
  *   PLAY           plays / stops
  *   REC            a tap: HOLD, the section repeats until let go  OCT- / OCT+   the bass's octave
@@ -24,17 +26,20 @@
 #include "fastmath.h"
 
 enum { V_SONG, V_MIXER, V_BASS, V_BASS2, V_LEAD, V_LEAD2, V_PAD, V_DRUMS, V_BASSFX, V_PADFX, V_LEADFX, V_DRUMFX, V_SPACE, V_SETUP,
-       V_MIDI, V_MIRROR, V_CHORDS, NVIEWS };
+       V_MIDI, V_MIRROR, V_BASSLINE, V_CHORDS, V_DGRID, NVIEWS };
 static const char *const VIEW_NAME[NVIEWS] = {"Song", "Mixer", "Bass", "Bass FM", "Lead", "Lead 2", "Pad", "Drums", "Bass FX",
                                               "Pad FX", "Lead FX", "Drums FX", "Space", "Setup", "MIDI", "Mirror",
-                                              "Chords"};
+                                              "Bassline", "Chords", "Drum grid"};
+/* the pages where the white keys are the bar's sixteen steps (the Bassline's and the Drum grid's) */
+#define STEP_PAGE(v) ((v) == V_BASSLINE || (v) == V_DGRID)
 /* FX: each instrument's FX page, the Space page, and round again. On each, the effects grid: the white keys play the
  * sixteen effects (as REC held does anywhere) */
 static const uint8_t FX_CYCLE[] = {V_BASSFX, V_PADFX, V_LEADFX, V_DRUMFX, V_SPACE};
 #define GRID_PAGE(v) ((v) >= V_BASSFX && (v) <= V_SPACE)
 static const uint8_t VIEW_BTN[NVIEWS] = {B_HOME, B_HOME, B_ENV, B_ENV, B_ARP, B_ARP, B_LFO, B_SEQ, B_FX, B_FX, B_FX, B_FX, B_FX,
-                                         B_GLO, B_GLO, B_GLO, B_EDIT};
-enum { K_LEDS = 100, K_CPU, K_NONE, K_CSLOT, K_CROOT, K_CTYPE, K_CLEN, K_MIRROR };
+                                         B_GLO, B_GLO, B_GLO, B_EDIT, B_EDIT, B_EDIT};
+enum { K_LEDS = 100, K_CPU, K_NONE, K_CSLOT, K_CROOT, K_CTYPE, K_CLEN, K_MIRROR, K_BSTEP, K_BNOTE, K_BACC, K_BLEN, K_DDRUM,
+       K_DSTEP, K_DLVL };
 static const uint8_t VIEW_KNOB[NVIEWS][4] = {
     {P_TEMPO, P_EVOLVE, P_MOTION, P_ARRANGE},
     {P_BASS, P_PAD, P_LEAD, P_DRUMS},             /* the Mixer: each instrument's Level (its own page's KNOB 1) */
@@ -52,7 +57,9 @@ static const uint8_t VIEW_KNOB[NVIEWS][4] = {
     {P_ROOT, P_TUNE, P_MIDI, K_LEDS},
     {P_MIDI, P_MCHAN, P_MCLOCK, P_MCLKOUT},
     {K_MIRROR, K_NONE, K_NONE, K_NONE},           /* the screen mirror: on or off (the FM-1's, not a song's) */
+    {K_BSTEP, K_BNOTE, K_BACC, K_BLEN},           /* the Bassline: a step of the pattern playing */
     {K_CSLOT, K_CROOT, K_CTYPE, K_CLEN},
+    {K_DDRUM, K_DSTEP, K_DLVL, K_NONE},           /* the Drum grid: a drum's step */
 };
 static const char *const KNOB_LABEL[NVIEWS][4] = {
     {"Tempo", "Evolve", "Motion", "Arrange"},
@@ -71,7 +78,9 @@ static const char *const KNOB_LABEL[NVIEWS][4] = {
     {"Key", "Tune", "MIDI out", "Lights"},
     {"MIDI out", "Channels", "Clock", "Clock out"},
     {"Mirror", "", "", ""},
+    {"Step", "Note", "Accent", "Length"},
     {"Chord", "Root", "Type", "Bars"},
+    {"Drum", "Step", "Level", ""},
 };
 /* a page's knob i and its label: Bass FM's follow its Voice (Analog: the filter's Cutoff, Resonance and Decay, as on the
  * Bass page; FM: the FM's Ratio, depth and decay) */
@@ -142,6 +151,8 @@ static struct {
     uint32_t fx_keys, lead_keys;       /* keys down as effects, as the lead (each keeps its role until let go) */
     uint16_t fx_sent;
     uint8_t cslot;                     /* the Chords page: the chord being edited (its progression's length: a new one) */
+    uint8_t bstep;                     /* the Bassline page: the step being edited */
+    uint8_t ddrum, dstep;              /* the Drum grid: the drum and the step being edited */
 } ui;
 
 static uint8_t sp_said;
@@ -284,6 +295,62 @@ static void chord_text(uint16_t c, char *b)     /* "Eb", "Fm7" ... in the key no
     *b = 0;
 }
 
+/* ---------------------------------------------------------- bassline --- */
+/* The Bassline page edits the bass pattern playing (ALGORITHM picks it; Song: the section's), a step at a time: its
+ * note (a chord tone, so it moves with the chords), its accent, its length (Auto: until the next note, up to a
+ * quarter, as the songs play; or tied over that many sixteenths, the steps under it silent). Each song keeps its own
+ * patterns. A note put under a tie shortens the tie, so it is heard. */
+static const char *const BNOTE_NAME[EN_NBN] = {"Rest", "Root", "3rd", "5th", "7th", "Octave", "5th up"};
+static const char *const DRUM_NAME[EN_NDRUM] = {"Kick", "Snare", "Hat", "Open hat", "Tom"};
+static const char *const DLVL_NAME[EN_NDLEVEL] = {"Off", "Soft", "Normal", "Accent"};
+static int bshape(void) { return en_bshape > 0 && en_bshape <= EN_NSHAPES ? en_bshape : 1; }
+static uint8_t *bstep_p(int i) { return &proj.bass[proj.piece][bshape() - 1][i]; }
+static void bput(int i, uint8_t v)
+{
+    *bstep_p(i) = v;
+    en_bstep_set(proj.piece, bshape(), i, v);
+}
+static void bass_edit(int k, int v)             /* a value on the Bassline page */
+{
+    int i = ui.bstep, j;
+    uint8_t c = *bstep_p(i);
+    if (k == K_BNOTE) {
+        if (v != EN_BN_REST)                     /* under a tie: the tie ends before it */
+            for (j = 0; j < i; j++) {
+                uint8_t t = *bstep_p(j);
+                if (EN_BS_NOTE(t) != EN_BN_REST && j + EN_BS_LEN(t) > i)
+                    bput(j, EN_BS(EN_BS_NOTE(t), i - j));
+            }
+        bput(i, EN_BS(v, EN_BS_LEN(c)));
+    } else if (k == K_BLEN) {
+        bput(i, EN_BS(EN_BS_NOTE(c), v));
+    } else if (k == K_BACC) {
+        uint16_t *a = &proj.bacc[proj.piece][bshape() - 1];
+        *a = (uint16_t)(v ? *a | 1u << i : *a & ~(1u << i));
+        en_bacc_set(proj.piece, bshape(), *a);
+    }
+}
+static void note_text(int n, char *b)            /* "G2" */
+{
+    const char *r = EN_NOTE_NAME[n % 12];
+    while (*r)
+        *b++ = *r++;
+    itoa_u((uint32_t)(n / 12 - 1), b);
+}
+
+/* --------------------------------------------------------- drum grid --- */
+/* The Drum grid edits the song's drums: a drum's step, its level. Until then the song's drums are made bar by bar
+ * (the engine's); the first edit takes them as they are into the grid */
+static int dlevel(int d, int i) { return (int)(en_drum_row(proj.piece, d) >> (2 * i) & 3u); }
+static void drum_edit(int d, int i, int lv)
+{
+    int k;
+    en_drum_set(proj.piece, d, i, lv);
+    for (k = 0; k < EN_NDRUM; k++)
+        proj.drums[proj.piece][k] = en_drum_row(proj.piece, k);
+    proj.drums_edited = (uint16_t)(proj.drums_edited | 1u << proj.piece);
+}
+
 /* ------------------------------------------------------------ values --- */
 static int knob_get(int k)
 {
@@ -303,6 +370,20 @@ static int knob_get(int k)
         return EN_CH_Q(cshown());
     if (k == K_CLEN)
         return EN_CH_BEATS(cshown()) ? len_index(EN_CH_BEATS(cshown())) : 0;
+    if (k == K_BSTEP)
+        return ui.bstep;
+    if (k == K_BNOTE)
+        return EN_BS_NOTE(*bstep_p(ui.bstep));
+    if (k == K_BACC)
+        return (int)(proj.bacc[proj.piece][bshape() - 1] >> ui.bstep & 1u);
+    if (k == K_BLEN)
+        return EN_BS_LEN(*bstep_p(ui.bstep));
+    if (k == K_DDRUM)
+        return ui.ddrum;
+    if (k == K_DSTEP)
+        return ui.dstep;
+    if (k == K_DLVL)
+        return dlevel(ui.ddrum, ui.dstep);
     return 0;
 }
 static void knob_range(int k, int *lo, int *hi)
@@ -314,13 +395,27 @@ static void knob_range(int k, int *lo, int *hi)
         int n = ccount(), s = cslot();
         *lo = k == K_CLEN && s < n && !(s == n - 1 && n > 1) ? 1 : 0;
         *hi = k == K_LEDS ? 2 : k == K_MIRROR ? 1 : k == K_CPU ? 100 : k == K_CSLOT ? (n < EN_PROG_MAX ? n : EN_PROG_MAX - 1)
-            : k == K_CROOT ? 11 : k == K_CTYPE ? EN_NQUAL - 1 : k == K_CLEN ? 6 : 0;
+            : k == K_CROOT ? 11 : k == K_CTYPE ? EN_NQUAL - 1 : k == K_CLEN ? 6 : k == K_BSTEP || k == K_DSTEP ? EN_STEPS - 1
+            : k == K_BNOTE ? EN_NBN - 1 : k == K_BACC ? 1 : k == K_BLEN ? EN_STEPS - ui.bstep : k == K_DDRUM ? EN_NDRUM - 1
+            : k == K_DLVL ? EN_NDLEVEL - 1 : 0;
     }
+}
+static void knob_text_v(int k, int v, char *b)  /* the Bassline's and Drum grid's: value v */
+{
+    const char *n = k == K_BNOTE ? BNOTE_NAME[v] : k == K_BACC ? (v ? "On" : "Off") : k == K_BLEN && !v ? "Auto"
+                    : k == K_DDRUM ? DRUM_NAME[v] : k == K_DLVL ? DLVL_NAME[v] : 0;
+    if (n)
+        while ((*b++ = *n++))
+            ;
+    else
+        itoa_u((uint32_t)v + (k == K_BLEN ? 0u : 1u), b);
 }
 static void knob_text(int k, char *b)
 {
     int v = knob_get(k);
-    if (k < P_NPARAMS) {
+    if (k >= K_BSTEP && k <= K_DLVL) {
+        knob_text_v(k, v, b);
+    } else if (k < P_NPARAMS) {
         en_param_text(k, v, b);
     } else if (k == K_LEDS || k == K_MIRROR) {
         const char *n = v == 2 ? "Keys" : v ? "On" : "Off";
@@ -372,6 +467,13 @@ static void knob_set(int k, int v)
     } else if (k == K_CSLOT) {
         ui.cslot = (uint8_t)v;
         return;
+    } else if (k == K_BSTEP || k == K_DSTEP || k == K_DDRUM) {
+        *(k == K_BSTEP ? &ui.bstep : k == K_DSTEP ? &ui.dstep : &ui.ddrum) = (uint8_t)v;
+        return;
+    } else if (k >= K_BNOTE && k <= K_BLEN) {
+        bass_edit(k, v);
+    } else if (k == K_DLVL) {
+        drum_edit(ui.ddrum, ui.dstep, v);
     } else {
         chord_edit(k, v);
     }
@@ -554,6 +656,34 @@ static void help_tick(uint32_t btn, uint32_t keys)
         }
 }
 
+static void step_key(int r)
+{
+    ui.touch_until = plat_ms() + 1200u;
+    if (ui.view == V_BASSLINE) {
+        ui.bstep = (uint8_t)r;
+        ui.touched = 0;
+        return;
+    }
+    {
+        char t[16], n[4];
+        int on = !dlevel(ui.ddrum, r);
+        ui.dstep = (uint8_t)r;
+        ui.touched = 2;
+        drum_edit(ui.ddrum, r, on ? 2 : 0);
+        mark_dirty();
+        caps(t, DRUM_NAME[ui.ddrum], 10);
+        {
+            int32_t k = 0;
+            while (t[k])
+                k++;
+            t[k++] = ' ';
+            itoa_u((uint32_t)r + 1u, n);
+            caps(t + k, n, 4);
+        }
+        say(t, on ? "ON" : "OFF");
+    }
+}
+
 static void input(void)
 {
     uint32_t btn = plat_buttons(), keys = plat_keys(), ch, i;
@@ -594,6 +724,9 @@ static void input(void)
                 int f = (r & 0x80) ? BLACK_FX[r & 0x7F] : r;
                 ui.fx_keys |= m;
                 say("EFFECT", EN_FX_NAME[f]);
+            } else if (STEP_PAGE(ui.view)) {     /* the bar's steps: the Bassline's picks one, the Drum grid's turns it
+                                                  * on (Normal) or off */
+                step_key(r);
             } else {
                 ui.lead_keys |= m;
                 en_lead_key(r, 1);
@@ -1030,7 +1163,7 @@ static int help_lines(int b, const char *l[HELP_LINES])
     case B_SEQ: L("THE DRUMS"); L("LEVEL, FILLS, HATS, SWING"); break;
     case B_FX: L("BASS, PAD, LEAD, DRUMS FX:"); L(" ECHO, REVERB, TIME,"); L(" FEEDBACK; THEN SPACE"); L("THE 16 EFFECTS ON THE KEYS"); break;
     case B_GLO: L("SETUP: KEY, TUNE,"); L(" MIDI OUT, LIGHTS"); L("AGAIN: MIDI"); L("AGAIN: THE SCREEN MIRROR"); break;
-    case B_EDIT: L("THE CHORDS: A CHORD,"); L(" ITS ROOT, TYPE AND BARS"); L("REC HOLDS THE SECTION"); L("SEL: THE NEXT ONE"); break;
+    case B_EDIT: L("BASSLINE: STEP, NOTE,"); L(" ACCENT, LENGTH"); L("AGAIN: THE CHORDS"); L("AGAIN: THE DRUM GRID"); break;
     case B_SEL: L("THE NEXT SECTION,"); L("ON THE NEXT BAR"); break;
     case B_REC: L("TAP: THE SECTION REPEATS"); L("AGAIN: LET IT GO ON"); L("HELD: THE EFFECTS GRID"); L("AT POWER-ON: UPDATE MODE"); break;
     case B_OCTDN: L("THE BASS AN OCTAVE DOWN"); L("BOTH AT POWER-ON:"); L(" THE PANEL'S CALIBRATION"); break;
@@ -1147,6 +1280,129 @@ static void draw_chords(void)
     }
 }
 
+/* the Bassline page: the bar as a piano roll in the notes it plays now (they move with the chords): a column a
+ * step, a note's bar as long as it sounds; the step playing lit, the one edited outlined, the accents marked under
+ * it; Evolve's changes dim (the note written outlined, the one it plays instead a dim block) */
+#define BR_X 26
+#define BR_W 13
+#define BR_TOP 18
+#define BR_BOT 124
+static int32_t roll_y(int n, int lo)
+{
+    int32_t y = BR_BOT - 5 - (int32_t)((n - lo) * (BR_BOT - BR_TOP - 5) / 31);
+    return y < BR_TOP ? BR_TOP : y > BR_BOT - 5 ? BR_BOT - 5 : y;
+}
+static void draw_bassline(void)
+{
+    int lo = 31 + 12 * proj.par[P_BOCT], s, n;
+    char t[24], nm[16];
+    caps(t, EN_PATTERN_NAME[bshape()], 12);
+    {
+        int32_t x = cv_text(4, 1, &FONT_XS, t, K_BASS);
+        chord_now(nm);
+        cv_text(x + 8, 1, &FONT_XS, nm, K_TEXT);
+    }
+    t[0] = 0;
+    caps(t, "STEP ", 8);
+    itoa_u((uint32_t)ui.bstep + 1u, t + 5);
+    if (en_bhome[ui.bstep] >= 0) {
+        int32_t k = 0;
+        while (t[k])
+            k++;
+        t[k++] = ' ';
+        t[k++] = ' ';
+        note_text(en_bhome[ui.bstep], t + k);
+    }
+    cv_text(236 - text_w(&FONT_XS, t), 1, &FONT_XS, t, K_TEXT);
+    for (s = 0; s < EN_STEPS; s++) {             /* the beats, the step playing */
+        int32_t x = BR_X + s * BR_W;
+        if (en_playing && s == en_step)
+            cv_rect(x, BR_TOP, BR_W - 1, BR_BOT - BR_TOP, K_LINE);
+        else if ((s / 4) & 1)
+            cv_rect(x, BR_TOP, BR_W - 1, BR_BOT - BR_TOP, mix(K_BG, K_PANEL, 7));
+    }
+    for (n = lo; n <= lo + 31; n++)              /* the octaves: a line at each C */
+        if (n % 12 == 0) {
+            int32_t y = roll_y(n, lo) + 2;
+            note_text(n, nm);
+            cv_rect(BR_X, y, BR_W * EN_STEPS - 1, 1, K_PANEL);
+            cv_text(2, y - 7, &FONT_XS, nm, K_DIM);
+        }
+    for (s = 0; s < EN_STEPS; s++) {
+        int h = en_bhome[s], l = en_bpat[s], cur = en_playing && s == en_step;
+        int32_t x = BR_X + s * BR_W;
+        if (h >= 0) {
+            int len = en_blen[s] ? en_blen[s] : 1;
+            int32_t w = (s + len > EN_STEPS ? EN_STEPS - s : len) * BR_W - 3, y = roll_y(h, lo);
+            if (l == h) {
+                uint16_t c = en_bacc[s] ? mix(K_BASS, K_TEXT, 7) : K_BASS;
+                cv_round(x + 1, y, w, 6, 2, cur ? mix(c, K_TEXT, q16(en_bass_glow) / 2) : c);
+            } else {                             /* Evolve: the note written, outlined */
+                cv_round(x + 1, y, w, 6, 2, K_BASS_T);
+                cv_round(x + 2, y + 1, w - 2, 4, 1, K_BG);
+            }
+        }
+        if (l >= 0 && l != h)                    /* ... and what it plays instead, dim */
+            cv_round(x + 1, roll_y(l, lo), BR_W - 3, 6, 2, mix(K_BASS_T, K_BASS, 5));
+        if (h >= 0 && en_bacc[s])
+            cv_round(x + 4, BR_BOT + 4, 5, 5, 2, K_ACC);
+        else
+            cv_rect(x + 5, BR_BOT + 6, 2, 1, (s & 3) ? K_PANEL : K_LINE);
+    }
+    {
+        int32_t x = BR_X + ui.bstep * BR_W;      /* the step edited */
+        cv_rect(x - 1, BR_TOP - 2, BR_W + 1, 1, K_ACC);
+        cv_rect(x - 1, BR_BOT + 1, BR_W + 1, 1, K_ACC);
+        cv_rect(x - 1, BR_TOP - 2, 1, BR_BOT - BR_TOP + 4, K_ACC);
+        cv_rect(x + BR_W - 1, BR_TOP - 2, 1, BR_BOT - BR_TOP + 4, K_ACC);
+    }
+}
+
+/* the Drum grid: a row a drum, a cell a step, its height its level; the drum edited named in magenta, the step
+ * edited outlined, the step playing lit; what plays beside the grid this bar (a fill, Evolve) a dim dot */
+#define DG_X 52
+#define DG_W 11
+static void draw_dgrid(void)
+{
+    static const char *const SHORT[EN_NDRUM] = {"KICK", "SNARE", "HAT", "OPEN", "TOM"};
+    int d, s;
+    cv_text(4, 1, &FONT_XS, en_drums_edited(proj.piece) ? "THE SONG'S GRID" : "AS THE SONG MAKES THEM", K_DRUM);
+    if (en_drums_own())
+        cv_text(236 - text_w(&FONT_XS, "THIS SECTION: ITS OWN"), 1, &FONT_XS, "THIS SECTION: ITS OWN", K_DIM);
+    for (s = 0; s < EN_STEPS; s++) {
+        int32_t x = DG_X + s * DG_W;
+        if (en_playing && s == en_step)
+            cv_rect(x, 18, DG_W - 1, 122, K_LINE);
+        else if ((s / 4) & 1)
+            cv_rect(x, 18, DG_W - 1, 122, mix(K_BG, K_PANEL, 7));
+    }
+    for (d = 0; d < EN_NDRUM; d++) {
+        int32_t y = 20 + d * 24;
+        uint32_t row = en_drum_row(proj.piece, d);
+        cv_text(4, y + 3, &FONT_XS, SHORT[d], d == ui.ddrum ? K_ACC : K_DIM);
+        for (s = 0; s < EN_STEPS; s++) {
+            int32_t x = DG_X + s * DG_W;
+            int lv = (int)(row >> (2 * s) & 3u), cur = en_playing && s == en_step && (en_dpat[d] >> s & 1u);
+            if (lv) {
+                int32_t hh = lv == 1 ? 7 : lv == 2 ? 13 : 20;
+                uint16_t c = lv == 3 ? K_DRUM : lv == 2 ? mix(K_DRUM_T, K_DRUM, 10) : mix(K_DRUM_T, K_DRUM, 5);
+                cv_round(x + 1, y + 20 - hh, DG_W - 3, hh, 2, cur ? mix(c, K_TEXT, q16(en_drum_glow[d]) / 2) : c);
+            } else if (en_dpat[d] >> s & 1u) {
+                cv_round(x + 3, y + 14, 4, 4, 2, K_DIM);
+            } else {
+                cv_rect(x + 4, y + 16, 2, 2, (s & 3) ? K_PANEL : K_LINE);
+            }
+        }
+    }
+    {
+        int32_t x = DG_X + ui.dstep * DG_W - 1, y = 20 + ui.ddrum * 24 - 2;
+        cv_rect(x, y, DG_W + 1, 1, K_ACC);
+        cv_rect(x, y + 23, DG_W + 1, 1, K_ACC);
+        cv_rect(x, y, 1, 24, K_ACC);
+        cv_rect(x + DG_W, y, 1, 24, K_ACC);
+    }
+}
+
 static void draw_main(void)
 {
     uint32_t h = hash(2166136261u, proj.piece | (uint32_t)en_sec << 8 | (uint32_t)en_sec_bar << 12 |
@@ -1173,6 +1429,36 @@ static void draw_main(void)
             ui.sig[1] = h;
             cv_begin(240, MAIN_H, K_BG);
             draw_chords();
+            cv_blit(0, MAIN_Y);
+        }
+        return;
+    }
+    if (ui.view == V_BASSLINE && !ui.rec_grid) {
+        h = hash(hash(h, en_step | (uint32_t)en_key << 8 | (uint32_t)ui.bstep << 16 | (uint32_t)en_bshape << 24),
+                 (uint32_t)en_chord_root | (uint32_t)q16(en_bass_glow) << 8 | (uint32_t)(proj.par[P_BOCT] + 1) << 16);
+        for (i = 0; i < EN_NPAD; i++)
+            h = hash(h, en_chord[i]);
+        for (i = 0; i < EN_STEPS; i++)
+            h = hash(h, (uint32_t)(uint8_t)en_bpat[i] | (uint32_t)(uint8_t)en_bhome[i] << 8 | (uint32_t)en_blen[i] << 16 |
+                            (uint32_t)en_bacc[i] << 24);
+        if (h != ui.sig[1]) {
+            ui.sig[1] = h;
+            cv_begin(240, MAIN_H, K_BG);
+            draw_bassline();
+            cv_blit(0, MAIN_Y);
+        }
+        return;
+    }
+    if (ui.view == V_DGRID && !ui.rec_grid) {
+        h = hash(hash(h, en_step | (uint32_t)ui.ddrum << 8 | (uint32_t)ui.dstep << 16 |
+                             (uint32_t)en_drums_edited(proj.piece) << 24 | (uint32_t)en_drums_own() << 25),
+                 0x44475244u);
+        for (i = 0; i < EN_NDRUM; i++)
+            h = hash(hash(h, en_drum_row(proj.piece, (int)i)), en_dpat[i] ^ (uint32_t)q16(en_drum_glow[i]) << 20);
+        if (h != ui.sig[1]) {
+            ui.sig[1] = h;
+            cv_begin(240, MAIN_H, K_BG);
+            draw_dgrid();
             cv_blit(0, MAIN_Y);
         }
         return;
@@ -1290,6 +1576,9 @@ static void leds(void)
                 on = !(ui.keys >> i & 1u);
             else if (grid)
                 on = (int)(en_fx_on >> r & 1u) || (r & 3) == 0;
+            else if (STEP_PAGE(ui.view))         /* the steps with a note, or a hit of the drum edited; the one playing
+                                                  * the other way */
+                on = (ui.view == V_BASSLINE ? en_bhome[r] >= 0 : dlevel(ui.ddrum, r) > 0) ^ (en_playing && r == en_step);
             else
                 on = (int)(ch >> en_step_pc(r) & 1u) || (ui.keys >> i & 1u);
             if (on)
@@ -1354,10 +1643,16 @@ static int sp_same(const char *a, const char *b)
 static void sp_knob(int view, int i)
 {
     char t[16];
+    int k = vknob(view, (int)i);
     sp_cat(vlabel(view, (int)i));
     sp_cat(" ");
-    knob_text(vknob(view, (int)i), t);
+    knob_text(k, t);
     sp_cat(t);
+    if ((k == K_BSTEP || k == K_BNOTE) && en_bhome[ui.bstep] >= 0) {   /* the note it plays now */
+        sp_cat(", ");
+        note_text(en_bhome[ui.bstep], t);
+        sp_cat(t);
+    }
 }
 static void sp_chord_q(int root, const char *q)
 {
@@ -1623,6 +1918,18 @@ static void speak_dump(void)
             knob_range(k, &lo, &hi);
             if (k >= K_CSLOT && k <= K_CLEN)        /* the Chords page's: as they are */
                 lo = hi = knob_get(k);
+            if (k >= K_BSTEP && k <= K_DLVL) {      /* the Bassline's and Drum grid's: each value's words */
+                hi = k == K_BLEN ? EN_STEPS : hi;
+                for (x = lo; x <= hi; x++) {
+                    sp_n = 0;
+                    sp_cat(vlabel(v, i));
+                    sp_cat(" ");
+                    knob_text_v(k, x, t);
+                    sp_cat(t);
+                    sp_print("KNOB", sp_buf);
+                }
+                continue;
+            }
             for (x = lo; x <= hi; x++) {
                 if (k < P_NPARAMS)
                     proj.par[k] = (int16_t)x;
@@ -1686,6 +1993,14 @@ static void speak_dump(void)
     }
     for (x = 0; x < EN_NFX; x++) {
         msg_text("EFFECT", EN_FX_NAME[x], t);
+        sp_print("MSG", t);
+    }
+    for (x = 0; x < EN_NDRUM; x++) {
+        char d[16];
+        caps(d, DRUM_NAME[x], 10);
+        msg_text(d, "ON", t);
+        sp_print("MSG", t);
+        msg_text(d, "OFF", t);
         sp_print("MSG", t);
     }
     for (x = -1; x <= 1; x++) {

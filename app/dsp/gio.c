@@ -396,7 +396,7 @@ static float m_lp[4], m_hp[2], m_ph[2][6], m_phfb[2], m_pha[2], m_phlfo, gate_g 
 #define FXA(i) fx_a[FX_##i]
 
 /* ------------------------------------------------------------ commands --- */
-enum { C_SET, C_PLAY, C_NEXT, C_HOLD, C_SEED, C_PANIC, C_CLOCK, C_SONG, C_FX, C_LKEY };
+enum { C_SET, C_PLAY, C_NEXT, C_HOLD, C_SEED, C_PANIC, C_CLOCK, C_SONG, C_FX, C_LKEY, C_BEDIT, C_DEDIT };
 #define QN 64u
 static uint32_t q[QN];
 static volatile uint32_t q_w, q_r;
@@ -429,6 +429,8 @@ volatile int8_t en_key;
 volatile uint8_t en_chord[EN_NPAD], en_chord_root, en_chord_n;
 volatile uint8_t en_step;
 volatile int8_t en_bpat[EN_STEPS];
+volatile int8_t en_bshape = 1, en_bhome[EN_STEPS];
+volatile uint8_t en_blen[EN_STEPS];
 volatile uint8_t en_bacc[EN_STEPS];
 volatile float en_bass_glow, en_lead_glow, en_pad_level, en_bass_cut;
 volatile uint8_t en_lead_note;
@@ -572,7 +574,8 @@ static const char *const SHAPE[EN_NPATTERNS] = {
     "R...5...O...5..."};
 static const uint16_t ACCENT[EN_NPATTERNS] = {0, 0x1111u, 0x1111u, 0x0101u, 0x1111u, 0x4444u, 0x1111u};
 static int8_t bcode[EN_STEPS], bbase[EN_STEPS];  /* the pattern now, and its shape (codes: -1 rest, 0..5) */
-static uint16_t bacc;
+static uint8_t blen[EN_STEPS];                  /* each step's length as written (0 Auto) */
+static uint16_t bacc, bcover;                   /* the accents; the steps under a tie */
 static int bpat_shape;
 
 static int code_of(char c)
@@ -602,22 +605,111 @@ static int bass_note(int code)
         n -= 12;                                  /* the root in E1..F#2 .. kept low and near */
     return n;
 }
+/* the shapes as each song has them (the Bassline page edits them): EN_BS steps, the accents */
+static uint8_t bsteps[EN_NSONGS][EN_NSHAPES][EN_STEPS];
+static uint16_t baccs[EN_NSONGS][EN_NSHAPES];
+static uint8_t bsteps_ready;
+static int shape_ok(int a) { return a > 0 && a < EN_NPATTERNS ? a : A_PUMP; }
+uint8_t en_bstep_recipe(int a, int i)
+{
+    return (unsigned)i < EN_STEPS ? EN_BS(code_of(SHAPE[shape_ok(a)][i]) + 1, 0) : 0u;
+}
+uint16_t en_bacc_recipe(int a) { return ACCENT[shape_ok(a)]; }
+static void bsteps_init(void)
+{
+    int s, a, i;
+    for (s = 0; s < EN_NSONGS; s++)
+        for (a = 1; a < EN_NPATTERNS; a++) {
+            for (i = 0; i < EN_STEPS; i++)
+                bsteps[s][a - 1][i] = en_bstep_recipe(a, i);
+            baccs[s][a - 1] = ACCENT[a];
+        }
+    bsteps_ready = 1;
+}
+uint8_t en_bstep_get(int s, int a, int i)
+{
+    if (!bsteps_ready)
+        bsteps_init();
+    return (unsigned)i < EN_STEPS ? bsteps[song_ok(s)][shape_ok(a) - 1][i] : 0u;
+}
+uint16_t en_bacc_get(int s, int a)
+{
+    if (!bsteps_ready)
+        bsteps_init();
+    return baccs[song_ok(s)][shape_ok(a) - 1];
+}
+void en_bstep_set(int s, int a, int i, uint8_t v)
+{
+    if (!bsteps_ready)
+        bsteps_init();
+    if ((unsigned)i >= EN_STEPS || EN_BS_NOTE(v) >= EN_NBN || EN_BS_LEN(v) > EN_STEPS - i)
+        return;
+    bsteps[song_ok(s)][shape_ok(a) - 1][i] = v;
+    post(C_BEDIT, 0, 0);
+}
+void en_bacc_set(int s, int a, uint16_t acc)
+{
+    if (!bsteps_ready)
+        bsteps_init();
+    baccs[song_ok(s)][shape_ok(a) - 1] = acc;
+    post(C_BEDIT, 0, 0);
+}
+void en_bshape_put(int s, int a, const uint8_t *v, uint16_t acc)   /* (no command: before the song starts) */
+{
+    int i;
+    if (!bsteps_ready)
+        bsteps_init();
+    for (i = 0; i < EN_STEPS; i++)
+        if (EN_BS_NOTE(v[i]) < EN_NBN && EN_BS_LEN(v[i]) <= EN_STEPS - i)
+            bsteps[song_ok(s)][shape_ok(a) - 1][i] = v[i];
+    baccs[song_ok(s)][shape_ok(a) - 1] = acc;
+}
+static void bass_home(void)                     /* the shape as written, taken up (Evolve's changes kept elsewhere) */
+{
+    const uint8_t *t;
+    int i, k;
+    if (!bsteps_ready)
+        bsteps_init();
+    t = bsteps[en_song_i][bpat_shape - 1];
+    bcover = 0;
+    for (i = 0; i < EN_STEPS; i++) {
+        int8_t c = (int8_t)(EN_BS_NOTE(t[i]) - 1);
+        if (c != bbase[i])
+            bbase[i] = bcode[i] = c;
+        blen[i] = (uint8_t)EN_BS_LEN(t[i]);
+        if (c >= 0)
+            for (k = 1; k < blen[i] && i + k < EN_STEPS; k++)
+                bcover |= (uint16_t)(1u << (i + k));
+    }
+    bacc = baccs[en_song_i][bpat_shape - 1];
+}
 static void bass_shape(int a)                   /* a shape into the pattern, its home */
 {
     int i;
-    a = a > 0 && a < EN_NPATTERNS ? a : A_PUMP;
-    bpat_shape = a;
+    bpat_shape = shape_ok(a);
     for (i = 0; i < EN_STEPS; i++)
-        bbase[i] = bcode[i] = (int8_t)code_of(SHAPE[a][i]);
-    bacc = ACCENT[a];
+        bbase[i] = bcode[i] = -1;
+    bass_home();
+    for (i = 0; i < EN_STEPS; i++)
+        bcode[i] = bbase[i];
+}
+static int bass_auto_len(const int8_t *c, int st)   /* Auto: until the next note, up to a quarter (Slow: three) */
+{
+    int len16 = 1, k;
+    for (k = st + 1; k < EN_STEPS && c[k] < 0 && len16 < 4; k++)
+        len16++;
+    return bpat_shape == A_SLOW ? 3 : len16;
 }
 static void bass_publish(void)
 {
     int i;
     for (i = 0; i < EN_STEPS; i++) {
-        en_bpat[i] = (int8_t)(bcode[i] >= 0 ? bass_note(bcode[i]) : -1);
+        en_bpat[i] = (int8_t)(bcode[i] >= 0 && !(bcover >> i & 1u) ? bass_note(bcode[i]) : -1);
         en_bacc[i] = (uint8_t)(bacc >> i & 1u);
+        en_bhome[i] = (int8_t)(bcover >> i & 1u ? -2 : bbase[i] >= 0 ? bass_note(bbase[i]) : -1);
+        en_blen[i] = (uint8_t)(bbase[i] < 0 ? 0 : blen[i] ? blen[i] : bass_auto_len(bbase, i));
     }
+    en_bshape = (int8_t)bpat_shape;
 }
 static void bass_evolve(void)                   /* a bar: a weak step changes, or one goes back home */
 {
@@ -630,7 +722,7 @@ static void bass_evolve(void)                   /* a bar: a weak step changes, o
             static const int8_t ALT[5] = {0, 4, 2, 3, 5};
             bcode[s] = frand() < evolve * 0.4f ? (int8_t)-1 : ALT[irand(5)];
         } else if (bpat_shape != A_SLOW) {
-            bcode[s] = (int8_t)(frand() < 0.5f ? 0 : 4);   /* a ghost note */
+            bcode[s] = (int8_t)(frand() < 0.5f ? 0 : 4);   /* a ghost note (none under a tie: bcover) */
         }
     }
     if (frand() < 0.2f) {                        /* and home again, a step at a time */
@@ -1202,14 +1294,114 @@ static void drums_wait_step(int32_t k)
         }
 }
 
-/* a bar's drums, from the section's layers and flags, the knobs and the fill */
+/* the drum grids (the Drum grid page): each song's, once edited; two bits a step, its level (0 off). The levels are
+ * the velocities the drums are made with, so a song's own drums, taken into its grid, play exactly as they did */
+static uint32_t dgrid[EN_NSONGS][EN_NDRUM];
+static volatile uint16_t dedited;
+static const float DLVL[EN_NDRUM][EN_NDLEVEL] = {
+    {0.0f, 0.6f, 0.92f, 1.0f}, {0.0f, 0.3f, 0.85f, 1.0f}, {0.0f, 0.35f, 0.55f, 0.75f}, {0.0f, 0.4f, 0.7f, 0.9f},
+    {0.0f, 0.4f, 0.6f, 0.9f}};
+static uint32_t drum_base(int d)                /* a row as the drums are made: a full section, every drum in, the
+                                                 * Hats knob's density */
+{
+    uint32_t r = 0;
+    int i, lv;
+    for (i = 0; i < EN_STEPS; i++) {
+        lv = 0;
+        if (d == D_KICK)
+            lv = (i & 3) ? 0 : i ? 2 : 3;
+        else if (d == D_SNARE)
+            lv = i == 4 || i == 12 ? 2 : 0;
+        else if (d == D_HAT)
+            lv = (i & 3) == 2 ? 0 : (par[P_HATS] >= 35 || !(i & 1)) ? ((i & 1) ? 1 : 2) : 0;
+        else if (d == D_OHAT)
+            lv = (i & 3) == 2 ? 2 : 0;
+        r |= (uint32_t)lv << (2 * i);
+    }
+    return r;
+}
+uint32_t en_drum_row(int s, int d)
+{
+    if ((unsigned)d >= EN_NDRUM)
+        return 0;
+    return (dedited >> song_ok(s) & 1u) ? dgrid[song_ok(s)][d] : drum_base(d);
+}
+int en_drums_edited(int s) { return (int)(dedited >> song_ok(s) & 1u); }
+void en_drum_set(int s, int d, int i, int lv)
+{
+    unsigned g = song_ok(s);
+    int k;
+    if ((unsigned)d >= EN_NDRUM || (unsigned)i >= EN_STEPS || (unsigned)lv >= EN_NDLEVEL)
+        return;
+    if (!(dedited >> g & 1u)) {                  /* the first edit: the drums as they are made, into the grid */
+        for (k = 0; k < EN_NDRUM; k++)
+            dgrid[g][k] = drum_base(k);
+        BARRIER();
+        dedited = (uint16_t)(dedited | 1u << g);
+    }
+    dgrid[g][d] = (dgrid[g][d] & ~(3u << (2 * i))) | (uint32_t)lv << (2 * i);
+    post(C_DEDIT, d, i);
+}
+void en_drums_put(int s, int edited, const uint32_t *rows)
+{
+    unsigned g = song_ok(s);
+    int k;
+    for (k = 0; k < EN_NDRUM; k++)
+        dgrid[g][k] = rows[k];
+    dedited = (uint16_t)(edited ? dedited | 1u << g : dedited & ~(1u << g));
+}
+static int grid_on(void)                        /* the section plays the song's grid */
+{
+    return (dedited >> en_song_i & 1u) && !(sec_now()->flags & (F_HALF | F_CLICK));
+}
+int en_drums_own(void) { return (sec_now()->flags & (F_HALF | F_CLICK)) != 0; }
+static void grid_step(int d, int i)             /* a grid step into this bar: its drum, if its layer plays (an open
+                                                 * hat with the open hats out: a closed one, as the songs do) */
+{
+    int lv = (int)(dgrid[en_song_i][d] >> (2 * i) & 3u), dd = d;
+    static const uint8_t LAY[EN_NDRUM] = {L_KICK, L_SNARE, L_HATS, L_OHAT, L_TOMS | L_SNARE};
+    float v = DLVL[d][lv];
+    dpat[d] &= ~(1u << i);
+    if (!lv)
+        return;
+    if (d == D_OHAT && !(layers & L_OHAT)) {
+        if (!(layers & L_HATS) || (dgrid[en_song_i][D_HAT] >> (2 * i) & 3u))
+            return;
+        dd = D_HAT;
+        v = DLVL[D_HAT][3];
+    } else if (!(layers & LAY[d])) {
+        return;
+    }
+    dpat[dd] |= 1u << i;
+    dvel[dd][i] = v;
+}
+static void drum_edited(int d, int i)           /* a grid step edited: into this bar at once */
+{
+    if (!grid_on() || (unsigned)d >= EN_NDRUM || (unsigned)i >= EN_STEPS)
+        return;
+    if (d == D_HAT || d == D_OHAT) {             /* (the two hats share a step) */
+        dpat[D_HAT] &= ~(1u << i);
+        grid_step(D_HAT, i);
+        grid_step(D_OHAT, i);
+    } else {
+        grid_step(d, i);
+    }
+    en_dpat[D_HAT] = dpat[D_HAT];
+    en_dpat[d] = dpat[d];
+}
+
+/* a bar's drums, from the section's layers and flags, the knobs and the fill (or the song's grid, edited) */
 static void drums_bar(void)
 {
     const sec_t *s = sec_now();
-    int i, half = (s->flags & F_HALF) != 0, last = sbar == slen - 1, fills = par[P_FILLS];
+    int i, half = (s->flags & F_HALF) != 0, last = sbar == slen - 1, fills = par[P_FILLS], d, grid = grid_on();
     for (i = 0; i < EN_NDRUM; i++)
         dpat[i] = 0;
-    for (i = 0; i < EN_STEPS; i++) {
+    if (grid)
+        for (i = 0; i < EN_STEPS; i++)
+            for (d = 0; d < EN_NDRUM; d++)
+                grid_step(d, i);
+    for (i = 0; i < EN_STEPS && !grid; i++) {
         int beat = (i & 3) == 0;
         if (layers & L_KICK) {
             if (half ? (i == 0 || i == 8) : beat) {
@@ -1416,13 +1608,11 @@ static void tick(void)
         chord_at(sbar * 4 + st / 4);
     en_step = (uint8_t)st;
     /* the bass: its step */
-    if ((layers & L_BASS) && bcode[st] >= 0) {
-        int acc = (int)(bacc >> st & 1u), len16 = 1, k;
-        for (k = st + 1; k < EN_STEPS && bcode[k] < 0 && len16 < 4; k++)
-            len16++;
-        if (bpat_shape == A_SLOW)
-            len16 = 3;
-        bass_trigger(bass_note(bcode[st]), acc, (int32_t)((float)len16 * step_len * (0.45f + 0.004f * (float)par[P_DECAY])));
+    if ((layers & L_BASS) && bcode[st] >= 0 && !(bcover >> st & 1u)) {   /* (under a tie: the tied note sounds on) */
+        int acc = (int)(bacc >> st & 1u);
+        const float f = 0.45f + 0.004f * (float)par[P_DECAY];
+        float len = blen[st] ? (float)(blen[st] - 1) + f : (float)bass_auto_len(bcode, st) * f;   /* a tie: held */
+        bass_trigger(bass_note(bcode[st]), acc, (int32_t)(len * step_len));
     }
     player_tick(sixteenth);
     lead_step(st);
@@ -1941,6 +2131,13 @@ static void drain(void)
             fx_mask = (uint16_t)(c & 0xFFFFu);
             en_fx_on = fx_mask;
             break;
+        case C_BEDIT:                            /* a step edited: the pattern's home again, heard next time round */
+            if (bpat_shape > 0) {
+                bass_home();
+                bass_publish();
+            }
+            break;
+        case C_DEDIT: drum_edited(a, b); break;
         }
     }
 }

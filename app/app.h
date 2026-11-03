@@ -3,6 +3,7 @@
 /* GIO-1 app: the project (everything that is saved), the app's entry points and its half of the contract with
  * fm1-base (device/unity.c, host/plat_host.c). */
 #pragma once
+#include <stddef.h>
 #include <stdint.h>
 #include "plat.h"
 #include "gio.h"
@@ -25,8 +26,10 @@ enum { OBJ_PROJ, OBJ_PANEL, OBJ_NOBJ };
 #define APP_STORE_MAP {0xFC000u, 0xDC000u}
 #define PROJ_MAGIC 0x314F4947u           /* "GIO1" */
 #define PROJ_MAGIC_OLD 0x31524F4Du       /* the same instrument before its name was GIO-1: taken up as GIO-1's */
-#define PROJ_FORMAT 4u                   /* 2: the lead's echo, reverb and tone; ten lead voices; 3: the chords;
-                                          * 4: the FX pages' sends (P_BREV .. P_DREV), Bass FM (P_BVOICE ..) */
+#define PROJ_FORMAT 5u                   /* 2: the lead's echo, reverb and tone; ten lead voices; 3: the chords;
+                                          * 4: the FX pages' sends (P_BREV .. P_DREV), Bass FM (P_BVOICE ..);
+                                          * 5: the bass patterns and the drum grids (the Bassline and Drum grid
+                                          * pages), after the rest */
 #define NPIECES EN_NSONGS
 
 typedef struct {
@@ -43,8 +46,15 @@ typedef struct {
     slot_t slot[NPIECES];                /* every song as it was left (Tune and MIDI out are global) */
     uint8_t rsv[16];                     /* room to grow */
     uint16_t chords[NPIECES][EN_NPROG * EN_PROG_MAX];   /* every song's chord changes (gio.h EN_CH), as edited */
+    uint8_t bass[NPIECES][EN_NSHAPES][EN_STEPS];        /* every song's bass patterns (gio.h EN_BS), as edited */
+    uint16_t bacc[NPIECES][EN_NSHAPES];                 /* their accents, a bit a step */
+    uint32_t drums[NPIECES][EN_NDRUM];                  /* every song's drum grid (gio.h en_drum_row) */
+    uint16_t drums_edited;                              /* bit i: song i plays its grid (else its drums as made) */
+    uint8_t rsv2[2];
 } project_t;
-/* formats 2 and 3: 36 parameters a song (up to P_MCLKOUT); format 2 had no chords. Taken up as format 4, the new
+/* format 4: the same up to the chords; taken up as format 5, the patterns each song's own, the drums as made */
+#define PROJ_V4_SIZE offsetof(project_t, bass)
+/* formats 2 and 3: 36 parameters a song (up to P_MCLKOUT); format 2 had no chords. Taken up as format 5, the new
  * parameters from each song's recipe (project.c) */
 #define NPAR_V3 36
 typedef struct {

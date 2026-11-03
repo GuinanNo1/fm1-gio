@@ -9,7 +9,7 @@
  * (the start-up intro skipped, now and after a reboot: most scenarios start with it); battery N (the
  * battery read as N, plat.h's plat_battery: -1..4; "battery off" the simulator's own, full); saved_as old|v2|v3 (the project
  * saved now as an older firmware left it: under the instrument's old name, format 2 (before the chords), format 3
- * (before the FX pages)). */
+ * (before the FX pages)), v4 (format 4: before the bass patterns and drum grids)). */
 
 int app_expect(const char *what, int *got)
 {
@@ -60,6 +60,24 @@ int app_expect(const char *what, int *got)
         g = en_prog_slot;
     else if (!strncmp(what, "chord", 5) && what[5] >= '0' && what[5] <= '7')
         g = *cslot_p(what[5] - '0');
+    else if (!strcmp(what, "bshape"))            /* the Bassline: the shape playing (1..6) */
+        g = en_bshape;
+    else if (!strcmp(what, "bstep"))             /* ... the step edited */
+        g = ui.bstep;
+    else if (!strncmp(what, "bcode", 5))         /* bcodeN: step N of the shape playing as saved (gio.h EN_BS) */
+        g = *bstep_p(atoi(what + 5) & 15);
+    else if (!strncmp(what, "bhome", 5))         /* bhomeN: its note now (-1 rest, -2 under a tie) */
+        g = en_bhome[atoi(what + 5) & 15];
+    else if (!strcmp(what, "baccs"))             /* its accents as saved */
+        g = proj.bacc[proj.piece][bshape() - 1];
+    else if (!strcmp(what, "ddrum"))             /* the Drum grid: the drum edited */
+        g = ui.ddrum;
+    else if (!strcmp(what, "dstep"))
+        g = ui.dstep;
+    else if (!strcmp(what, "drumsedited"))       /* the song's grid plays: 1 the engine's, 2 the project's */
+        g = en_drums_edited(proj.piece) | (int)(proj.drums_edited >> proj.piece & 1u) << 1;
+    else if (!strncmp(what, "dlvl", 4))          /* dlvlD.S: drum D's level on step S (0 off .. 3 accent) */
+        g = dlevel((what[4] - '0') % EN_NDRUM, atoi(what + 6) & 15);
     else if (!strncmp(what, "par", 3))           /* parN: parameter N (gio.h P_*) */
         g = proj.par[atoi(what + 3)];
     else
@@ -83,10 +101,16 @@ int app_host_cmd(const char *cmd, const char *a, const char *b, const char *c, c
         batt_host = (int8_t)(strcmp(a, "off") ? atoi(a) : -2);
         return 1;
     }
-    if (!strcmp(cmd, "saved_as")) {             /* saved_as old|v2|v3: the project as an older firmware saved it */
+    if (!strcmp(cmd, "saved_as")) {             /* saved_as old|v2|v3|v4: the project as an older firmware saved it */
         static project_v3_t o;
         int k, p;
         project_save();
+        if (!strcmp(a, "v4")) {                  /* format 4: up to the chords */
+            proj.format = 4u;
+            plat_store_save(OBJ_PROJ, &proj, (uint32_t)PROJ_V4_SIZE);
+            proj.format = PROJ_FORMAT;
+            return 1;
+        }
         memset(&o, 0, sizeof o);                 /* formats 2 and 3: 36 parameters a song */
         o.magic = strcmp(a, "old") ? PROJ_MAGIC : PROJ_MAGIC_OLD;   /* (under the old name: format 3) */
         o.format = strcmp(a, "v2") ? 3u : 2u;

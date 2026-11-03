@@ -20,7 +20,7 @@ static int fails;
         }                                                                                                          \
     } while (0)
 
-static uint32_t midi_count, lead_lo = 999, lead_hi, bass_lo = 999, bass_hi, lead_count, chans;
+static uint32_t midi_count, lead_lo = 999, lead_hi, bass_lo = 999, bass_hi, lead_count, chans, bass_count;
 void en_midi_out(uint32_t st, uint32_t d1, uint32_t d2)
 {
     midi_count++;
@@ -32,6 +32,7 @@ void en_midi_out(uint32_t st, uint32_t d1, uint32_t d2)
             lead_lo = d1 < lead_lo ? d1 : lead_lo;
             lead_hi = d1 > lead_hi ? d1 : lead_hi;
         } else if ((st & 15u) == 0u) {           /* the bass */
+            bass_count++;
             bass_lo = d1 < bass_lo ? d1 : bass_lo;
             bass_hi = d1 > bass_hi ? d1 : bass_hi;
         }
@@ -302,6 +303,79 @@ int main(void)
     chans = 0;
     run(30.0f);
     CHECK(chans == (1u << 3 | 1u << 4 | 1u << 5 | 1u << 10), "channels, the other set: 0x%X", chans);
+    /* the drum grids: each song's own drums, taken into its grid (as the first edit does), play exactly as they were
+     * made: the same render, sample for sample */
+    for (s = 0; s < EN_NSONGS; s++) {
+        uint32_t rows[EN_NDRUM], h0;
+        start(s, 40, 11);                        /* (twice: each render after the same, the echo's and the plate's
+                                                  * tails the same) */
+        run(60.0f);
+        start(s, 40, 11);
+        run(60.0f);
+        h0 = hash;
+        for (k = 0; k < EN_NDRUM; k++)
+            rows[k] = en_drum_row(s, k);
+        CHECK(!en_drums_edited(s), "song %d: drums edited before any edit", s);
+        CHECK((rows[0] & 3u) == 3u && (rows[0] >> 8 & 3u) == 2u, "song %d: the kick's row 0x%08X", s, rows[0]);
+        start(s, 40, 11);
+        en_drums_put(s, 1, rows);
+        run(60.0f);
+        CHECK(hash == h0, "song %d: its drums as a grid sound different", s);
+        en_drums_put(s, 0, rows);
+    }
+    {   /* a grid edit: a kick taken off is gone from the bar at once; another song's drums untouched */
+        start(0, 0, 12);
+        run(20.0f);                              /* Feel's verse: the kick in */
+        en_drum_set(0, 0, 4, 0);
+        run(0.05f);
+        CHECK(en_drums_edited(0) && !en_drums_edited(1), "edited: 0x%X", en_drums_edited(0) | en_drums_edited(1) << 1);
+        CHECK(!(en_dpat[0] >> 4 & 1u) && (en_dpat[0] & 1u), "the kick's bar: 0x%04X", en_dpat[0]);
+        CHECK((en_drum_row(0, 0) >> 8 & 3u) == 0u, "the kick's row: 0x%08X", en_drum_row(0, 0));
+        run(4.0f);
+        CHECK(!(en_dpat[0] >> 4 & 1u), "the kick back on step 5: 0x%04X", en_dpat[0]);
+        {
+            uint32_t z[EN_NDRUM] = {0};
+            en_drums_put(0, 0, z);
+        }
+    }
+    {   /* the bass patterns: a note added, a tie (the steps under it silent), an accent; each heard at once */
+        uint8_t keep[EN_STEPS];
+        uint32_t n0, n1;
+        for (k = 0; k < EN_STEPS; k++)
+            keep[k] = en_bstep_get(0, 1, k);
+        CHECK(EN_BS_NOTE(keep[0]) == EN_BN_ROOT && EN_BS_NOTE(keep[1]) == EN_BN_REST && EN_BS_NOTE(keep[2]) == EN_BN_OCT &&
+                  !EN_BS_LEN(keep[0]), "Pump's first steps: %d %d %d", keep[0], keep[1], keep[2]);
+        start(0, 0, 13);                         /* Feel: Pump, R.O.R.O.R.O.R.O. */
+        en_set(P_EVOLVE, 0);
+        run(1.0f);
+        CHECK(en_bshape == 1 && en_bhome[1] == -1 && en_blen[0] == 2, "Pump: shape %d, step 2 %d, length %d", en_bshape,
+              en_bhome[1], en_blen[0]);
+        en_bstep_set(0, 1, 1, EN_BS(EN_BN_5TH, 0));
+        run(0.05f);
+        CHECK(en_bhome[1] == en_bhome[0] + 7 && en_blen[0] == 1, "a fifth on step 2: %d over %d", en_bhome[1], en_bhome[0]);
+        {   /* nine notes a bar now; with a tie over four, two fewer (steps 3 and 4 under it) */
+            uint32_t b;
+            bass_count = 0;
+            for (b = 0; b < 4; b++)
+                run(60.0f / 126.0f * 4.0f);
+            n0 = bass_count;
+            en_bstep_set(0, 1, 0, EN_BS(EN_BN_ROOT, 4));
+            run(0.05f);
+            CHECK(en_bhome[1] == -2 && en_bhome[2] == -2 && en_bhome[3] == -2 && en_blen[0] == 4, "the tie: %d %d %d, %d",
+                  en_bhome[1], en_bhome[2], en_bhome[3], en_blen[0]);
+            CHECK(en_bpat[2] == -1, "under the tie, the octave plays: %d", en_bpat[2]);
+            bass_count = 0;
+            for (b = 0; b < 4; b++)
+                run(60.0f / 126.0f * 4.0f);
+            n1 = bass_count;
+            CHECK(n0 >= 34 && n0 <= 38 && n1 >= 26 && n1 <= 30, "the tie: %u bass notes in 4 bars, %u without", n1, n0);
+        }
+        en_bacc_set(0, 1, 0x0001u);
+        run(0.05f);
+        CHECK(en_bacc[0] && !en_bacc[4], "the accents: %d %d", en_bacc[0], en_bacc[4]);
+        en_bshape_put(0, 1, keep, en_bacc_recipe(1));
+        CHECK(en_bstep_get(0, 1, 0) == en_bstep_recipe(1, 0), "Pump back as it was");
+    }
     /* stopped: silence after the tails */
     start(1, 0, 3);
     run(20.0f);

@@ -43,7 +43,7 @@ All of it is a table in `app/dsp/gio.c` (`SONGS`), easy to change.
 | Black keys | Eleven drop-in effects, each while held |
 | FX | The FX pages, one a press: Bass FX, Pad FX, Lead FX, Drums FX (each: Echo, Reverb, and the one echo's Time and Feedback), then Space; on each, the sixteen effects on the white keys (REC held: the same, on any page) |
 | PLAY · REC · SEL | Play / stop · a tap holds the section · the next section, on the next bar |
-| EDIT | The Chords page: the section's chord changes, each chord's root, type and length, edited as it plays |
+| EDIT | The edit pages, one a press: the Bassline (the bass pattern as a piano roll; each step's note, accent and length), the Chords (the section's chord changes), the Drum grid (each drum's steps and levels); on the Bassline and Drum grid the white keys are the bar's sixteen steps |
 | HOME · ENV · ARP · LFO · SEQ · FX · GLO | The pages: Song (again: Mixer, the four levels), Bass (again: Bass FM, the Analog or FM voice), Lead (again: Lead 2), Pad, Drums, FX (the four FX pages, then Space), Setup (again: MIDI, then Mirror: the screen mirror on or off); KNOB 1–4 set their values |
 | SELECT | The previous or next page; with HOME held, the tempo (110–130) |
 | ALGORITHM · PRESETS | The bass pattern · the song |

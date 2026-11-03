@@ -21,6 +21,29 @@ static void chords_recipe(int i)                 /* song i's chord changes, its 
         proj.chords[i][k] = en_prog_recipe(i, k / EN_PROG_MAX, k % EN_PROG_MAX);
 }
 
+static void patterns_recipe(int i)               /* song i's bass patterns, the shapes as they are; its drums as made */
+{
+    int a, k;
+    for (a = 1; a <= EN_NSHAPES; a++) {
+        for (k = 0; k < EN_STEPS; k++)
+            proj.bass[i][a - 1][k] = en_bstep_recipe(a, k);
+        proj.bacc[i][a - 1] = en_bacc_recipe(a);
+    }
+    for (k = 0; k < EN_NDRUM; k++)
+        proj.drums[i][k] = 0;
+    proj.drums_edited = (uint16_t)(proj.drums_edited & ~(1u << i));
+}
+
+static int patterns_ok(int i)                    /* every step a note the Bassline page gives, no tie past the bar */
+{
+    int a, k;
+    for (a = 0; a < EN_NSHAPES; a++)
+        for (k = 0; k < EN_STEPS; k++)
+            if (EN_BS_NOTE(proj.bass[i][a][k]) >= EN_NBN || EN_BS_LEN(proj.bass[i][a][k]) > EN_STEPS - k)
+                return 0;
+    return 1;
+}
+
 static int chords_ok(int i)                      /* a length the Chords page gives; after an end, nothing */
 {
     int p, k;
@@ -63,6 +86,7 @@ void project_defaults(void)
     for (i = 0; i < NPIECES; i++) {
         recipe(i, &proj.slot[i]);
         chords_recipe(i);
+        patterns_recipe(i);
     }
     for (i = 0; i < P_NPARAMS; i++)
         proj.par[i] = en_param_info(i)->def;
@@ -93,7 +117,7 @@ static int project_valid(void)
     return 1;
 }
 
-static void from_v3(int n)                       /* a format 2 or 3 project (in proj's bytes) as format 4 */
+static void from_v3(int n)                       /* a format 2 or 3 project (in proj's bytes) as format 5 */
 {
     static project_v3_t o;
     slot_t r;
@@ -112,6 +136,7 @@ static void from_v3(int n)                       /* a format 2 or 3 project (in 
             memcpy(proj.chords[i], o.chords[i], sizeof proj.chords[i]);
         else
             chords_recipe(i);                     /* format 2: the songs' own chords */
+        patterns_recipe(i);
     }
     recipe(o.piece < NPIECES ? o.piece : 0, &r);
     for (p = 0; p < P_NPARAMS; p++)
@@ -129,11 +154,19 @@ int project_load(void)
                                      (proj.format == 2u && n == (int)PROJ_V2_SIZE))) {
         from_v3(n);
         n = (int)sizeof proj;
+    } else if (proj.magic == PROJ_MAGIC && proj.format == 4u && n == (int)PROJ_V4_SIZE) {
+        for (i = 0; i < NPIECES; i++)            /* format 4: as it was, and the patterns and drums each song's own */
+            patterns_recipe(i);
+        proj.format = PROJ_FORMAT;
+        n = (int)sizeof proj;
     }
     if (n == (int)sizeof proj && project_valid()) {   /* (its own size: format 4 grew before its release) */
-        for (i = 0; i < NPIECES; i++)
+        for (i = 0; i < NPIECES; i++) {
             if (!chords_ok(i))
                 chords_recipe(i);
+            if (!patterns_ok(i))
+                patterns_recipe(i);
+        }
         return 0;
     }
     project_defaults();
@@ -159,14 +192,19 @@ void project_piece_reset(void)
     recipe(proj.piece, &s);
     take(&s);
     chords_recipe(proj.piece);
+    patterns_recipe(proj.piece);
 }
 
 void project_apply(void)
 {
     int i, k;
-    for (i = 0; i < NPIECES; i++)
+    for (i = 0; i < NPIECES; i++) {
         for (k = 0; k < EN_NPROG * EN_PROG_MAX; k++)
             en_prog_set(i, k / EN_PROG_MAX, k % EN_PROG_MAX, proj.chords[i][k]);
+        for (k = 1; k <= EN_NSHAPES; k++)
+            en_bshape_put(i, k, proj.bass[i][k - 1], proj.bacc[i][k - 1]);
+        en_drums_put(i, (int)(proj.drums_edited >> i & 1u), proj.drums[i]);
+    }
     for (i = 0; i < P_NPARAMS; i++)
         en_set(i, proj.par[i]);
     en_song(proj.piece);                         /* after the values: the song starts with them */

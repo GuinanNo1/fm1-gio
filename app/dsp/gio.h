@@ -120,6 +120,36 @@ uint16_t en_prog_get(int song, int prog, int i);
 void en_prog_set(int song, int prog, int i, uint16_t c);
 extern volatile int8_t en_prog_slot;           /* (UI) the chord playing in its progression, -1 none */
 
+/* the bass patterns (the Bassline page): each song has its own copy of the six shapes (P_PATTERN 1..6), a step
+ * packed as its note (0 rest, then the chord's root, 3rd, 5th, 7th, octave, 5th up: EN_BN_*) | its length << 3 (0
+ * Auto: until the next note, up to a quarter, as the songs always played; 1..16 sixteenths, tied over the steps
+ * under it, which stay silent); the accents a bit a step. Live: an edit is heard the next time round */
+#define EN_NSHAPES (EN_NPATTERNS - 1)
+enum { EN_BN_REST, EN_BN_ROOT, EN_BN_3RD, EN_BN_5TH, EN_BN_7TH, EN_BN_OCT, EN_BN_5UP, EN_NBN };
+#define EN_BS(note, len) ((uint8_t)((unsigned)(note) | (unsigned)(len) << 3))
+#define EN_BS_NOTE(s) ((int)((s) & 7u))
+#define EN_BS_LEN(s) ((int)((s) >> 3))
+uint8_t en_bstep_recipe(int shape, int i);     /* shape 1..EN_NSHAPES */
+uint16_t en_bacc_recipe(int shape);
+uint8_t en_bstep_get(int song, int shape, int i);
+uint16_t en_bacc_get(int song, int shape);
+void en_bstep_set(int song, int shape, int i, uint8_t s);
+void en_bacc_set(int song, int shape, uint16_t acc);
+void en_bshape_put(int song, int shape, const uint8_t *steps, uint16_t acc);   /* the project's, at start */
+extern volatile int8_t en_bshape;              /* (UI) the shape playing, 1..EN_NSHAPES */
+extern volatile int8_t en_bhome[EN_STEPS];     /* (UI) the pattern as written, as notes now: -1 rest, -2 under a tie */
+extern volatile uint8_t en_blen[EN_STEPS];     /* (UI) each written note's length in sixteenths */
+
+/* the drums (the Drum grid page): a song's drums are made bar by bar from its sections until its grid is edited;
+ * then the grid plays, two bits a step for each drum (0 off, 1 soft, 2 normal, 3 accent), in every section but the
+ * half-time and click ones; the sections still bring the drums in and out, the fills and builds still come */
+#define EN_NDLEVEL 4
+uint32_t en_drum_row(int song, int d);         /* the grid's row (as made, while not edited) */
+int en_drums_edited(int song);
+void en_drum_set(int song, int d, int i, int level);   /* the first edit takes the song's drums as they are made */
+void en_drums_put(int song, int edited, const uint32_t *rows);   /* the project's, at start */
+int en_drums_own(void);                        /* (UI) the section playing makes its own (half-time, click) */
+
 /* layers, as a section's mask */
 enum { L_BASS = 1, L_PAD = 2, L_LEAD = 4, L_KICK = 8, L_SNARE = 16, L_HATS = 32, L_OHAT = 64, L_TOMS = 128 };
 

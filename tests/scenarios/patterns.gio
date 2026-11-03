@@ -1,0 +1,133 @@
+# the Bassline page (EDIT) and the Drum grid (EDIT three times): the bass pattern playing, a step at a time (a white
+# key picks it; KNOB 2 its note, 3 its accent, 4 its length: a tie over the steps under it), heard at once; a note
+# under a tie shortens it. The song's drums: a white key a step on or off for the drum KNOB 1 picks, KNOB 3 its
+# level; the first edit takes the song's drums as they are made. Kept with the song, saved, back to the song's own
+# with SAVE held; a format 4 save (before them) taken up with each song's own
+intro off
+wait 500
+expect piece 0
+tap EDIT
+wait 200
+expect view 16
+# Feel: Pump (R.O.R.O.R.O.R.O.), in C: the root C2, step 2 a rest (EN_BS: note | length << 3; notes 1 root .. 6)
+expect bshape 1
+expect bcode0 1
+expect bcode1 0
+expect bhome0 36
+expect bhome1 -1
+tapkey w1
+expect bstep 1
+# step 2 a fifth: G2, heard at once
+spin K2 3
+expect bcode1 3
+wait 200
+expect bhome1 43
+expect dirty 1
+# step 1 tied over four: the fifth and the octave under it silent
+tapkey w0
+expect bstep 0
+spin K4 4
+expect bcode0 33
+wait 200
+expect bhome1 -2
+expect bhome2 -2
+expect bhome3 -2
+shot bassline.png
+# a root on step 3, under the tie: the tie ends before it (two steps)
+tapkey w2
+spin K2 -4
+expect bcode2 1
+expect bcode0 17
+wait 200
+expect bhome1 -2
+expect bhome2 36
+# its accent on (Pump's: every beat, 0x1111)
+spin K3 1
+expect baccs 4373
+# another pattern (ALGORITHM): its own steps, ours kept in Pump
+turn ALGO 2
+wait 300
+expect bshape 2
+expect bcode1 5
+turn ALGO -2
+wait 300
+expect bshape 1
+expect bcode1 3
+# the Drum grid: Feel's drums as made (the kick on every beat), until the first edit
+tap EDIT
+tap EDIT
+wait 200
+expect view 18
+expect drumsedited 0
+expect dlvl0.0 3
+expect dlvl0.4 2
+expect dlvl2.2 0
+expect dlvl3.2 2
+# the kick off on step 5; the song's grid from now
+tapkey w4
+expect dlvl0.4 0
+expect dlvl0.8 2
+expect dstep 4
+expect drumsedited 3
+# a snare on step 7, then accented
+spin K1 1
+expect ddrum 1
+tapkey w6
+expect dlvl1.6 2
+spin K3 1
+expect dlvl1.6 3
+wait 300
+shot drumgrid.png
+# and off again with its key
+tapkey w6
+expect dlvl1.6 0
+tapkey w6
+# kept after a restart
+tap SAVE
+wait 300
+reboot
+wait 500
+expect piece 0
+expect bcode0 17
+expect bcode1 3
+expect bcode2 1
+expect baccs 4373
+expect drumsedited 3
+expect dlvl0.4 0
+expect dlvl1.6 2
+# another song: its own (Gio: Arpeggio, its drums as made)
+turn PRESET 1
+wait 300
+expect piece 1
+expect bshape 3
+expect bcode1 2
+expect drumsedited 0
+turn PRESET -1
+wait 300
+expect piece 0
+expect drumsedited 3
+expect bcode1 3
+# SAVE held: the song back to its own, the patterns and the drums with it
+press SAVE
+wait 1700
+release SAVE
+wait 300
+expect bcode0 1
+expect bcode1 0
+expect baccs 4369
+expect drumsedited 0
+expect dlvl0.4 2
+# a format 4 save (before the patterns): taken up, each song's own patterns and drums
+tap EDIT
+tapkey w1
+spin K2 3
+expect bcode1 3
+tap SAVE
+wait 300
+saved_as v4
+reboot
+wait 500
+expect piece 0
+expect bcode1 0
+expect drumsedited 0
+expect dlvl0.4 2

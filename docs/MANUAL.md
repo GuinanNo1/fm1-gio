@@ -57,8 +57,8 @@ does the same from Chrome or Edge once a site is published.
 4. Hold a **black key**: an effect while you hold it (Throw, Tape stop, Sweep ...). Press **FX** for all sixteen.
 5. Turn **ALGORITHM** for another bass pattern; back to **Song** for the song's own.
 6. Press **SEL** to move on to the next section on the next bar; press **REC** to stay in this one.
-7. Press **EDIT** to see the section's chords, and change them: KNOB 1 picks a chord, KNOB 2–4 set its root, type
-   and length.
+7. Press **EDIT** to see the bassline: tap a white key to pick a step, turn KNOB 2 for its note. Press **EDIT** again
+   for the section's chords, and again for the drum grid (a white key turns a step on or off).
 8. Press **ENV** for the Bass page and turn KNOB 2: the cutoff opens.
 
 ---
@@ -67,12 +67,12 @@ does the same from Chrome or Edge once a site is published.
 
 | Control | What it does |
 |---|---|
-| White keys | The lead: each key a step of the song's scale, from its key note up. The keys of the chord playing are lit (the safest notes). Three notes or more and a pause of two beats: the lead answers (see The lead, below). On the FX pages: the sixteen effects. |
+| White keys | The lead: each key a step of the song's scale, from its key note up. The keys of the chord playing are lit (the safest notes). Three notes or more and a pause of two beats: the lead answers (see The lead, below). On the FX pages: the sixteen effects. On the Bassline and Drum grid pages: the bar's sixteen steps. |
 | Black keys | Eleven effects, each while its key is held, left to right: Throw, Tape stop, Swell, Low-pass, High-pass, Sweep, Phaser, Freeze, Stutter, Drop, Roll. Lit; dark while held. |
 | FX | The FX pages, one a press: Bass FX, Pad FX, Lead FX, Drums FX, then Space, then round again. On each, the white keys play the sixteen effects (see Effects). |
 | PLAY | Plays / stops. From stopped, the song starts from its first section. |
 | REC | A tap: HOLD, the section repeats until you tap it again. Held: the effects grid on the white keys for as long as it's held. |
-| EDIT | The Chords page (see [The Chords page](#the-chords-page)). |
+| EDIT | The edit pages, one a press: Bassline, Chords, Drum grid, then round again (see [The Bassline page](#the-bassline-page), [The Chords page](#the-chords-page), [The Drum grid](#the-drum-grid)). |
 | SEL | The next section, on the next bar. |
 | OCT− / OCT+ | The bass an octave down / up (−1 to +1). |
 | ALGORITHM | The bass pattern: Song (the song's own, section by section), Pump, Pump 16, Arpeggio, Gallop, Octaves, Slow. |
@@ -203,9 +203,38 @@ GIO-1's own, written as it plays.
 | Setup (GLO) | Key | Tune | MIDI out | Lights |
 | MIDI (GLO again) | MIDI out | Channels | Clock | Clock out |
 | Mirror (GLO 3 times) | Mirror (On, Off) | | | |
-| Chords (EDIT) | Chord | Root | Type | Bars |
+| Bassline (EDIT) | Step | Note | Accent | Length |
+| Chords (EDIT again) | Chord | Root | Type | Bars |
+| Drum grid (EDIT 3 times) | Drum | Step | Level | |
 
 The Setup page also shows the audio's load (CPU) in the top line.
+
+### The Bassline page
+
+![The Bassline page on Feel: Pump, the first note tied over four steps, step 1 edited](img/screen-bassline.png)
+
+**EDIT** shows the bass pattern playing as a piano roll: a column for each sixteenth of the bar, each note at the
+pitch it plays now, its bar as long as it sounds. The notes are chord tones, so they move as the chords change. The
+step playing is lit; the step you're editing is outlined in magenta; accented steps have a magenta dot underneath. When
+Evolve changes a step, the note as written is shown as an outline and the note it plays instead as a dim block. The
+top line names the pattern and the chord, and the edited step's note (STEP 5 G2).
+
+Tap a **white key** to pick its step (the keys are the bar's sixteen steps, left to right; the lit ones have a note,
+the step playing blinks). Changes are heard the next time round.
+
+| Knob | |
+|---|---|
+| KNOB 1 · Step | which step to edit (1–16), as the white keys |
+| KNOB 2 · Note | Rest, Root, 3rd, 5th, 7th, Octave, 5th up: tones of the chord playing (on a chord with no 7th, the 7th is the octave; on a Sus4, the 3rd is the 4th) |
+| KNOB 3 · Accent | Off, On: louder and brighter |
+| KNOB 4 · Length | **Auto** (until the next note, up to a quarter: as the songs play), or 1–16 sixteenths, tied: the note holds over the steps under it, which stay silent |
+
+Putting a note on a step under a tie shortens the tie so it ends just before it. Shortening a tie brings back the
+notes under it.
+
+The page edits the pattern playing: **ALGORITHM** picks it (Pump, Pump 16, Arpeggio, Gallop, Octaves, Slow); on
+**Song**, each section plays its own, and the page follows. Each song keeps its own copy of all six patterns, saved with
+its settings; **SAVE held** puts them back to the song's own, with everything else.
 
 ### The Chords page
 
@@ -229,6 +258,30 @@ sections share their chords (a song's two verses, say): editing one changes both
 The chords are written relative to the song's key, so changing the key (the Setup page, or a MIDI note) moves them
 with it. Each song keeps its own chords, saved with its settings; **SAVE held** puts them back to the song's own, with
 everything else.
+
+### The Drum grid
+
+![The Drum grid on Feel: the kick off on step 5, an accented snare on step 7](img/screen-drumgrid.png)
+
+**EDIT** three times shows the song's drums: a row for each drum (kick, snare, closed hat, open hat, tom), a cell for
+each sixteenth, its height its level. The drum you're editing is named in magenta and the step outlined; the step
+playing is lit. A dim dot is something the song adds that bar beside the grid: a fill, or Evolve's ghost snare.
+
+Tap a **white key** to turn that step on (Normal) or off for the drum you're editing; the lit keys are its hits.
+
+| Knob | |
+|---|---|
+| KNOB 1 · Drum | Kick, Snare, Hat, Open hat, Tom |
+| KNOB 2 · Step | which step (1–16) |
+| KNOB 3 · Level | Off, Soft, Normal, Accent |
+
+Until you edit them, a song's drums are made bar by bar, as they always were ("AS THE SONG MAKES THEM"). The first
+edit takes them, as they are made in a full section, into the song's grid ("THE SONG'S GRID"), so nothing else changes.
+From then on the grid plays in every section except the half-time and click ones (Heaven's slow start, Gio's
+opening), which keep their own drums ("THIS SECTION: ITS OWN"). The sections still bring each drum in and out, and
+the fills, builds and Evolve's extras still come; an open hat in a section without open hats plays as a closed one.
+Once the grid is edited, the Drums page's Hats knob sets the hats' level and tone, no longer how many there are. Each
+song keeps its own grid, saved; **SAVE held** puts its drums back to the song's own.
 
 ---
 
