@@ -189,7 +189,8 @@ GIO-1's own, written as it plays.
 | Song (HOME) | Tempo | Evolve | Motion | Arrange |
 | Mixer (HOME again) | Bass | Pad | Lead | Drums |
 | Bass (ENV) | Level | Cutoff | Emphasis | Decay |
-| Bass 2 (ENV again) | Voice (Analog, FM) | Ratio | FM depth | FM decay |
+| Bass 2 (ENV again), Analog | Voice | Cutoff | Emphasis | Decay |
+| Bass 2 (ENV again), FM | Voice | Ratio | FM depth | FM decay |
 | Lead (ARP) | Level | Voice | Busy | Glide |
 | Lead 2 (ARP again) | Echo | Reverb | Octave | Tone |
 | Pad (LFO) | Level | Colour | Bright | Phaser |
@@ -271,7 +272,8 @@ modulated by a sine, with a sine an octave down for weight), and the FM voice's 
 modulator's pitch against the note (0.5, 1, 1.5, 2, 3, 4: 1 and 2 the classic FM basses, 3 and 4 metallic), **FM
 depth**, how bright and growling it is, and **FM decay**, how fast that brightness falls after each note (short: a
 pluck; long: a growl that stays). Both voices go through the same ladder filter and envelope, so the Bass page's
-Level, Cutoff, Emphasis and Decay work on either. Each song keeps its own; every song starts on Analog.
+Level, Cutoff, Emphasis and Decay work on either. Bass 2's other three knobs follow the voice: with Analog they are
+the filter's Cutoff, Emphasis and Decay (the Bass page's own), with FM the FM's Ratio, FM depth and FM decay. Each song keeps its own; every song starts on Analog.
 
 **The Mixer** (HOME again): the four instruments' levels side by side, KNOB 1–4 Bass, Pad, Lead and Drums. They are
 the same settings as each instrument's own page's Level, so a change shows on both.

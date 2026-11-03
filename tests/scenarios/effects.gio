@@ -92,10 +92,14 @@ tap HOME
 expect view 0
 tap SEQ
 expect par16 71
-# ENV, ENV: Bass 2, the voice (Analog, FM) and the FM's ratio, depth and decay; ENV again: the Bass page
+# ENV, ENV: Bass 2: the voice; with Analog the filter's Cutoff, Emphasis and Decay (the Bass page's), with FM the
+# FM's ratio, depth and decay; ENV again: the Bass page
 tap ENV
 tap ENV
 expect view 3
+turn K2 1
+expect par5 43
+shot bass2analog.png
 turn K1 1
 expect par41 1
 turn K2 1

@@ -39,7 +39,7 @@ static const uint8_t VIEW_KNOB[NVIEWS][4] = {
     {P_TEMPO, P_EVOLVE, P_MOTION, P_ARRANGE},
     {P_BASS, P_PAD, P_LEAD, P_DRUMS},             /* the Mixer: each instrument's Level (its own page's KNOB 1) */
     {P_BASS, P_CUTOFF, P_RESO, P_DECAY},
-    {P_BVOICE, P_BRATIO, P_BFM, P_BFMDEC},        /* Bass 2: the voice, and the FM's (the Bass page's filter and decay on both) */
+    {P_BVOICE, P_BRATIO, P_BFM, P_BFMDEC},        /* Bass 2 with FM (Analog: vknob, the filter's) */
     {P_LEAD, P_LVOICE, P_BUSY, P_GLIDE},
     {P_LECHO, P_LREV, P_LOCT, P_LTONE},
     {P_PAD, P_PCOLOUR, P_BRIGHT, P_PHASER},
@@ -73,6 +73,16 @@ static const char *const KNOB_LABEL[NVIEWS][4] = {
     {"Mirror", "", "", ""},
     {"Chord", "Root", "Type", "Bars"},
 };
+/* a page's knob i and its label: Bass 2's follow its Voice (Analog: the filter's Cutoff, Emphasis and Decay, as on the
+ * Bass page; FM: the FM's Ratio, depth and decay) */
+static const uint8_t BASS2_ANALOG[4] = {P_BVOICE, P_CUTOFF, P_RESO, P_DECAY};
+static const char *const BASS2_ANALOG_LABEL[4] = {"Voice", "Cutoff", "Emphasis", "Decay"};
+static int vknob(int v, int i) { return v == V_BASS2 && !proj.par[P_BVOICE] ? BASS2_ANALOG[i] : VIEW_KNOB[v][i]; }
+static const char *vlabel(int v, int i)
+{
+    return v == V_BASS2 && !proj.par[P_BVOICE] ? BASS2_ANALOG_LABEL[i] : KNOB_LABEL[v][i];
+}
+
 /* the black keys' effects, left to right */
 static const uint8_t BLACK_FX[11] = {FX_THROW, FX_TAPESTOP, FX_SWELL, FX_LOWPASS, FX_HIGHPASS, FX_SWEEP, FX_PHASER,
                                      FX_FREEZE, FX_STUTTER, FX_DROP, FX_ROLL};
@@ -648,7 +658,7 @@ static void input(void)
     }
     for (i = 0; i < 4; i++)
         if ((e = plat_enc(EN_K1 + (int)i)) != 0) {
-            turn(EN_K1 + (int)i, VIEW_KNOB[ui.view][i], e);
+            turn(EN_K1 + (int)i, vknob(ui.view, (int)i), e);
             ui.touched = (int8_t)i;
             ui.touch_until = plat_ms() + 1200u;
             ui.act_t = ui.turn_t = plat_ms();
@@ -1014,7 +1024,7 @@ static int help_lines(int b, const char *l[HELP_LINES])
 #define L(t) (l[n++] = (t))
     switch (b) {
     case B_HOME: L("THE SONG: TEMPO, EVOLVE,"); L(" MOTION, ARRANGE"); L("AGAIN: THE MIXER"); L("+ SELECT: TEMPO"); break;
-    case B_ENV: L("THE BASS: LEVEL, CUTOFF,"); L(" EMPHASIS, DECAY"); L("AGAIN: BASS 2: VOICE,"); L(" RATIO, FM DEPTH, FM DECAY"); break;
+    case B_ENV: L("THE BASS: LEVEL, CUTOFF,"); L(" EMPHASIS, DECAY"); L("AGAIN: BASS 2: VOICE, AND"); L(" ITS FILTER, OR THE FM"); break;
     case B_ARP: L("THE LEAD"); L("LEVEL, VOICE, BUSY, GLIDE"); L("AGAIN: LEAD 2: ECHO,"); L(" REVERB, OCTAVE, TONE"); break;
     case B_LFO: L("THE PAD"); L("LEVEL, COLOUR, BRIGHT,"); L(" PHASER"); break;
     case B_SEQ: L("THE DRUMS"); L("LEVEL, FILLS, HATS, SWING"); break;
@@ -1215,7 +1225,7 @@ static void draw_knobs(void)
     uint32_t h = hash(2166136261u, ui.view | (uint32_t)ui.touched << 8), i;
     int now_touch = plat_ms() < ui.touch_until;
     for (i = 0; i < 4; i++)
-        h = hash(h, (uint32_t)knob_get(VIEW_KNOB[ui.view][i]));
+        h = hash(h, (uint32_t)knob_get(vknob(ui.view, (int)i)));
     h = hash(h, (uint32_t)now_touch);
     if (h == ui.sig[2])
         return;
@@ -1233,7 +1243,7 @@ static void draw_knobs(void)
             cv_round(xd + k * 6, 3, 4, 4, 2, k == ui.view ? K_ACC : K_LINE);
     }
     for (i = 0; i < 4; i++) {
-        int k = VIEW_KNOB[ui.view][i], lo, hi, v, hot = now_touch && ui.touched == (int)i;
+        int k = vknob(ui.view, (int)i), lo, hi, v, hot = now_touch && ui.touched == (int)i;
         int32_t x = (int32_t)i * 60, cx = x + 30;
         char t[16];
         uint16_t bg = hot ? K_PANEL : K_BG, fill = hot ? K_ACC : K_BASS;
@@ -1245,7 +1255,7 @@ static void draw_knobs(void)
             cv_round(x + 3, 11, 54, 57, 6, K_PANEL);
         knob_range(k, &lo, &hi);
         v = knob_get(k);
-        caps(t, KNOB_LABEL[ui.view][i], sizeof t);
+        caps(t, vlabel(ui.view, (int)i), sizeof t);
         text_c(cx, 12, &FONT_XS, t, hot ? K_TEXT : K_DIM);
         if (k != K_CPU && hi - lo < 6) {
             int n = hi - lo + 1, j, pw = n > 4 ? 6 : 9, gap = 3, w0 = n * (pw + gap) - gap;
@@ -1344,9 +1354,9 @@ static int sp_same(const char *a, const char *b)
 static void sp_knob(int view, int i)
 {
     char t[16];
-    sp_cat(KNOB_LABEL[view][i]);
+    sp_cat(vlabel(view, (int)i));
     sp_cat(" ");
-    knob_text(VIEW_KNOB[view][i], t);
+    knob_text(vknob(view, (int)i), t);
     sp_cat(t);
 }
 static void sp_chord_q(int root, const char *q)
@@ -1496,7 +1506,7 @@ static void sp_snap(void)
 {
     int i;
     for (i = 0; i < 4; i++)
-        sp.val[i] = (int16_t)knob_get(VIEW_KNOB[ui.view][i]);
+        sp.val[i] = (int16_t)knob_get(vknob(ui.view, (int)i));
     sp.view = ui.view;
     sp.help = ui.help;
     sp.ext = en_ext;
@@ -1563,7 +1573,7 @@ static void speak(void)
         return;
     }
     for (i = 0; i < 4; i++) {
-        int v = knob_get(VIEW_KNOB[ui.view][i]);
+        int v = knob_get(vknob(ui.view, (int)i));
         if (v != sp.val[i]) {
             sp.val[i] = (int16_t)v;
             if (changed < 0)
@@ -1610,7 +1620,7 @@ static void speak_dump(void)
         sp_page(0);
         sp_print("SCREEN", sp_buf);
         for (i = 0; i < 4; i++) {
-            int k = VIEW_KNOB[v][i];
+            int k = vknob(v, (int)i);
             knob_range(k, &lo, &hi);
             if (k >= K_CSLOT && k <= K_CLEN)        /* the Chords page's: as they are */
                 lo = hi = knob_get(k);
