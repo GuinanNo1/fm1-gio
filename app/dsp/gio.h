@@ -46,6 +46,7 @@ enum {
     P_PATTERN, P_BOCT, P_LOCT,                        /* ALGORITHM, OCT- / OCT+, the lead's octave */
     P_LECHO, P_LREV, P_LTONE,                         /* the lead's own echo and reverb sends, its brightness */
     P_MCHAN, P_MCLOCK, P_MCLKOUT,                     /* MIDI: the channel set, the clock's source, clock out */
+    P_BREV, P_PECHO, P_PREV, P_DECHO, P_DREV,         /* the FX pages: the bass's reverb, the pad's and drums' sends */
     P_NPARAMS
 };
 typedef struct {

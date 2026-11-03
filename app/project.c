@@ -93,6 +93,31 @@ static int project_valid(void)
     return 1;
 }
 
+static void from_v3(int n)                       /* a format 2 or 3 project (in proj's bytes) as format 4 */
+{
+    static project_v3_t o;
+    slot_t r;
+    int i, p;
+    memcpy(&o, &proj, sizeof o);
+    memset(&proj, 0, sizeof proj);
+    proj.magic = PROJ_MAGIC;
+    proj.format = PROJ_FORMAT;
+    proj.leds = o.leds;
+    proj.piece = o.piece;
+    for (i = 0; i < NPIECES; i++) {               /* each song: its 36 as left, the FX pages' from its recipe */
+        recipe(i, &r);
+        for (p = 0; p < P_NPARAMS; p++)
+            proj.slot[i].par[p] = p < NPAR_V3 ? o.slot[i].par[p] : r.par[p];
+        if (n == (int)sizeof o)
+            memcpy(proj.chords[i], o.chords[i], sizeof proj.chords[i]);
+        else
+            chords_recipe(i);                     /* format 2: the songs' own chords */
+    }
+    recipe(o.piece < NPIECES ? o.piece : 0, &r);
+    for (p = 0; p < P_NPARAMS; p++)
+        proj.par[p] = p < NPAR_V3 ? o.par[p] : r.par[p];
+}
+
 int project_load(void)
 {
     int n, i;
@@ -100,11 +125,9 @@ int project_load(void)
     n = plat_store_load(OBJ_PROJ, &proj, sizeof proj);
     if (n >= 8 && proj.magic == PROJ_MAGIC_OLD)
         proj.magic = PROJ_MAGIC;
-    if (n == (int)PROJ_V2_SIZE && proj.magic == PROJ_MAGIC && proj.format == 2u) {   /* format 2: the songs' own chords */
-        proj.format = PROJ_FORMAT;
-        for (i = 0; i < NPIECES; i++)
-            chords_recipe(i);
-    }
+    if (proj.magic == PROJ_MAGIC && ((proj.format == 3u && n == (int)sizeof(project_v3_t)) ||
+                                     (proj.format == 2u && n == (int)PROJ_V2_SIZE)))
+        from_v3(n);
     if (n >= 8 && project_valid()) {
         for (i = 0; i < NPIECES; i++)
             if (!chords_ok(i))

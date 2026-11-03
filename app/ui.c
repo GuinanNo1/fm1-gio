@@ -21,10 +21,14 @@
  *                  held 1.5 s: the song back to its recipe */
 #include "fastmath.h"
 
-enum { V_SONG, V_BASS, V_LEAD, V_LEADFX, V_PAD, V_DRUMS, V_SPACE, V_SETUP, V_MIDI, V_FXGRID, V_CHORDS, NVIEWS };
-static const char *const VIEW_NAME[NVIEWS] = {"Song", "Bass", "Lead", "Lead FX", "Pad", "Drums", "Space", "Setup",
-                                              "MIDI", "Effects", "Chords"};
-static const uint8_t VIEW_BTN[NVIEWS] = {B_HOME, B_ENV, B_ARP, B_ARP, B_LFO, B_SEQ, B_FX, B_GLO, B_GLO, B_FX, B_EDIT};
+enum { V_SONG, V_BASS, V_LEAD, V_LEAD2, V_PAD, V_DRUMS, V_BASSFX, V_PADFX, V_LEADFX, V_DRUMFX, V_SPACE, V_SETUP, V_MIDI,
+       V_FXGRID, V_CHORDS, NVIEWS };
+static const char *const VIEW_NAME[NVIEWS] = {"Song", "Bass", "Lead", "Lead 2", "Pad", "Drums", "Bass FX", "Pad FX",
+                                              "Lead FX", "Drums FX", "Space", "Setup", "MIDI", "Effects", "Chords"};
+/* FX: the Effects page, each instrument's FX page, the Space page, and round again */
+static const uint8_t FX_CYCLE[] = {V_FXGRID, V_BASSFX, V_PADFX, V_LEADFX, V_DRUMFX, V_SPACE};
+static const uint8_t VIEW_BTN[NVIEWS] = {B_HOME, B_ENV, B_ARP, B_ARP, B_LFO, B_SEQ, B_FX, B_FX, B_FX, B_FX, B_FX,
+                                         B_GLO, B_GLO, B_FX, B_EDIT};
 enum { K_LEDS = 100, K_CPU, K_NONE, K_CSLOT, K_CROOT, K_CTYPE, K_CLEN };
 static const uint8_t VIEW_KNOB[NVIEWS][4] = {
     {P_TEMPO, P_EVOLVE, P_MOTION, P_ARRANGE},
@@ -33,6 +37,10 @@ static const uint8_t VIEW_KNOB[NVIEWS][4] = {
     {P_LECHO, P_LREV, P_LOCT, P_LTONE},
     {P_PAD, P_PCOLOUR, P_BRIGHT, P_PHASER},
     {P_DRUMS, P_FILLS, P_HATS, P_SWING},
+    {P_ECHO, P_BREV, P_ETIME, P_FEEDBACK},        /* the FX pages: the instrument's echo and reverb, the echo's own */
+    {P_PECHO, P_PREV, P_ETIME, P_FEEDBACK},       /* time and feedback (one echo, shared: the same on each) */
+    {P_LECHO, P_LREV, P_ETIME, P_FEEDBACK},
+    {P_DECHO, P_DREV, P_ETIME, P_FEEDBACK},
     {P_ECHO, P_ETIME, P_FEEDBACK, P_REVERB},
     {P_ROOT, P_TUNE, P_MIDI, K_LEDS},
     {P_MIDI, P_MCHAN, P_MCLOCK, P_MCLKOUT},
@@ -46,6 +54,10 @@ static const char *const KNOB_LABEL[NVIEWS][4] = {
     {"Echo", "Reverb", "Octave", "Tone"},
     {"Level", "Colour", "Bright", "Phaser"},
     {"Level", "Fills", "Hats", "Swing"},
+    {"Echo", "Reverb", "Time", "Feedback"},
+    {"Echo", "Reverb", "Time", "Feedback"},
+    {"Echo", "Reverb", "Time", "Feedback"},
+    {"Echo", "Reverb", "Time", "Feedback"},
     {"Echo", "Time", "Feedback", "Reverb"},
     {"Key", "Tune", "MIDI out", "Lights"},
     {"MIDI out", "Channels", "Clock", "Clock out"},
@@ -421,11 +433,15 @@ static void button(int b)
         say("NEXT SECTION", en_playing ? "ON THE BAR" : 0);
         return;
     }
-    if (b == B_FX) {                             /* FX: the Effects page; again: Space, and back */
-        set_view(ui.view == V_FXGRID ? V_SPACE : V_FXGRID);
+    if (b == B_FX) {                             /* FX: the Effects page; again: each instrument's FX page, Space, and
+                                                  * round again (from any other page: the Effects page) */
+        for (v = 0; v < (int)sizeof FX_CYCLE; v++)
+            if (FX_CYCLE[v] == ui.view)
+                break;
+        set_view(FX_CYCLE[v < (int)sizeof FX_CYCLE ? (v + 1) % (int)sizeof FX_CYCLE : 0]);
         return;
     }
-    if (VIEW_BTN[ui.view] == b) {                /* its page again: the button's next page (ARP: Lead FX) */
+    if (VIEW_BTN[ui.view] == b) {                /* its page again: the button's next page (ARP: Lead 2) */
         for (v = ui.view + 1; v < NVIEWS && VIEW_BTN[v] != b; v++)
             ;
         if (v < NVIEWS) {
@@ -986,10 +1002,10 @@ static int help_lines(int b, const char *l[HELP_LINES])
     switch (b) {
     case B_HOME: L("THE SONG"); L("TEMPO, EVOLVE, MOTION,"); L(" ARRANGE"); L("+ SELECT: TEMPO"); break;
     case B_ENV: L("THE BASS SEQUENCE"); L("LEVEL, CUTOFF, EMPHASIS,"); L(" DECAY"); break;
-    case B_ARP: L("THE LEAD"); L("LEVEL, VOICE, BUSY, GLIDE"); L("AGAIN: ITS ECHO, REVERB,"); L(" OCTAVE, TONE"); break;
+    case B_ARP: L("THE LEAD"); L("LEVEL, VOICE, BUSY, GLIDE"); L("AGAIN: LEAD 2: ECHO,"); L(" REVERB, OCTAVE, TONE"); break;
     case B_LFO: L("THE PAD"); L("LEVEL, COLOUR, BRIGHT,"); L(" PHASER"); break;
     case B_SEQ: L("THE DRUMS"); L("LEVEL, FILLS, HATS, SWING"); break;
-    case B_FX: L("THE EFFECTS PAGE"); L("16 ON THE WHITE KEYS"); L("AGAIN: THE SPACE: ECHO,"); L(" TIME, FEEDBACK, REVERB"); break;
+    case B_FX: L("EFFECTS: 16 ON THE KEYS"); L("AGAIN: BASS, PAD, LEAD,"); L(" DRUMS FX: ECHO, REVERB,"); L(" TIME, FEEDBACK; SPACE"); break;
     case B_GLO: L("SETUP"); L("KEY, TUNE, MIDI OUT, LIGHTS"); L("AGAIN: MIDI: CHANNELS,"); L(" CLOCK, CLOCK OUT"); break;
     case B_EDIT: L("THE CHORDS: A CHORD,"); L(" ITS ROOT, TYPE AND BARS"); L("REC HOLDS THE SECTION"); L("SEL: THE NEXT ONE"); break;
     case B_SEL: L("THE NEXT SECTION,"); L("ON THE NEXT BAR"); break;

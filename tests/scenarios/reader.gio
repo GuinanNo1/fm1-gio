@@ -17,7 +17,7 @@ tap FX
 wait 300
 tap FX
 wait 300
-said Space page: Echo 60, Time 1/16, Feedback 30, Reverb 35
+said Bass FX page: Echo 60, Reverb 50, Time 1/16, Feedback 30
 tap REC
 wait 100
 said HOLD ON

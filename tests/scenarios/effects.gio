@@ -1,5 +1,5 @@
 # the drop-in effects: the black keys while held; FX, the Effects page, the white keys all sixteen; REC held, the
-# same for as long; ARP twice the Lead FX page; GLO twice the MIDI page
+# same for as long; FX again each instrument's FX page, then Space; ARP twice Lead 2; GLO twice the MIDI page
 intro off
 wait 1000
 key b0 down
@@ -21,7 +21,7 @@ key w5 up
 # FX: the Effects page; white key 7 is Sweep (bit 6), white key 16 Roll
 tap FX
 wait 100
-expect view 9
+expect view 13
 key w6 down
 key w15 down
 wait 300
@@ -31,12 +31,39 @@ key w6 up
 key w15 up
 wait 100
 expect fx 0
+# FX again: each instrument's FX page (Echo, Reverb, Time, Feedback: Time and Feedback the one echo's, the same on
+# each), then Space, then the Effects page again
 tap FX
 expect view 6
+spin K2 5
+expect par36 55
+spin K3 1
+expect par21 1
+shot bassfx.png
+tap FX
+expect view 7
+spin K1 10
+expect par37 10
+expect par21 1
+shot padfx.png
+tap FX
+expect view 8
 tap FX
 expect view 9
+turn K1 -1
+expect par39 59
+shot drumsfx.png
+tap FX
+expect view 10
+expect par21 1
+tap FX
+expect view 13
 tap SEL
-expect view 9
+expect view 13
+# from another page, FX: the Effects page
+tap LFO
+tap FX
+expect view 13
 tap HOME
 expect view 0
 # REC held: the grid while held; a key held keeps its effect after REC is let go; a tap of REC still holds
@@ -57,7 +84,7 @@ tap REC
 wait 100
 expect held 1
 tap REC
-# ARP, ARP: Lead FX; its first knob the lead's echo
+# ARP, ARP: Lead 2; its first knob the lead's echo
 tap ARP
 expect view 2
 tap ARP
@@ -70,7 +97,7 @@ expect view 2
 # GLO, GLO: the MIDI page; Channels to 4, 5, 6, 11
 tap GLO
 tap GLO
-expect view 8
+expect view 12
 spin K2 1
 expect par33 1
 shot midi.png

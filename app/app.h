@@ -25,7 +25,8 @@ enum { OBJ_PROJ, OBJ_PANEL, OBJ_NOBJ };
 #define APP_STORE_MAP {0xFC000u, 0xDC000u}
 #define PROJ_MAGIC 0x314F4947u           /* "GIO1" */
 #define PROJ_MAGIC_OLD 0x31524F4Du       /* the same instrument before its name was GIO-1: taken up as GIO-1's */
-#define PROJ_FORMAT 3u                   /* 2: the lead's echo, reverb and tone; ten lead voices; 3: the chords */
+#define PROJ_FORMAT 4u                   /* 2: the lead's echo, reverb and tone; ten lead voices; 3: the chords;
+                                          * 4: the FX pages' sends (P_BREV .. P_DREV) */
 #define NPIECES EN_NSONGS
 
 typedef struct {
@@ -42,7 +43,19 @@ typedef struct {
     uint8_t rsv[16];                     /* room to grow */
     uint16_t chords[NPIECES][EN_NPROG * EN_PROG_MAX];   /* every song's chord changes (gio.h EN_CH), as edited */
 } project_t;
-#define PROJ_V2_SIZE (sizeof(project_t) - sizeof(((project_t *)0)->chords))   /* format 2 had no chords */
+/* formats 2 and 3: 36 parameters a song (up to P_MCLKOUT); format 2 had no chords. Taken up as format 4, the new
+ * parameters from each song's recipe (project.c) */
+#define NPAR_V3 36
+typedef struct {
+    uint32_t magic, format;
+    int16_t par[NPAR_V3];
+    uint8_t leds, piece, rsv0[2];
+    struct { int16_t par[NPAR_V3]; } slot[NPIECES];
+    uint8_t rsv[16];
+    uint16_t chords[NPIECES][EN_NPROG * EN_PROG_MAX];
+} project_v3_t;
+#define PROJ_V2_SIZE (sizeof(project_v3_t) - sizeof(((project_v3_t *)0)->chords))
+typedef char proj_v3_par_count[P_BREV == NPAR_V3 ? 1 : -1];   /* (the new ones after the old, in gio.h) */
 
 extern project_t proj;
 

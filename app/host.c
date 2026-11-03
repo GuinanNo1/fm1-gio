@@ -7,8 +7,9 @@
  * nchords chordN (the section's progression: its length, chord N packed as gio.h's EN_CH) cslot progslot
  * battery intro blits (fm1-base's own: store_writes clocks_out midi_out peak_db_max peak_db_min). Its commands: intro off|on
  * (the start-up intro skipped, now and after a reboot: most scenarios start with it); battery N (the
- * battery read as N, plat.h's plat_battery: -1..4; "battery off" the simulator's own, full); saved_as old|v2 (the project
- * saved now as an older firmware left it: under the instrument's old name, or format 2, before the chords). */
+ * battery read as N, plat.h's plat_battery: -1..4; "battery off" the simulator's own, full); saved_as old|v2|v3 (the project
+ * saved now as an older firmware left it: under the instrument's old name, format 2 (before the chords), format 3
+ * (before the FX pages)). */
 
 int app_expect(const char *what, int *got)
 {
@@ -80,17 +81,22 @@ int app_host_cmd(const char *cmd, const char *a, const char *b, const char *c, c
         batt_host = (int8_t)(strcmp(a, "off") ? atoi(a) : -2);
         return 1;
     }
-    if (!strcmp(cmd, "saved_as")) {             /* saved_as old|v2: the project as an older firmware saved it */
-        static project_t o;
+    if (!strcmp(cmd, "saved_as")) {             /* saved_as old|v2|v3: the project as an older firmware saved it */
+        static project_v3_t o;
+        int k, p;
         project_save();
-        o = proj;
-        if (!strcmp(a, "old")) {
-            o.magic = PROJ_MAGIC_OLD;
-            plat_store_save(OBJ_PROJ, &o, sizeof o);
-        } else {
-            o.format = 2u;
-            plat_store_save(OBJ_PROJ, &o, (uint32_t)PROJ_V2_SIZE);
+        memset(&o, 0, sizeof o);                 /* formats 2 and 3: 36 parameters a song */
+        o.magic = strcmp(a, "old") ? PROJ_MAGIC : PROJ_MAGIC_OLD;   /* (under the old name: format 3) */
+        o.format = strcmp(a, "v2") ? 3u : 2u;
+        o.leds = proj.leds;
+        o.piece = proj.piece;
+        for (p = 0; p < NPAR_V3; p++) {
+            o.par[p] = proj.par[p];
+            for (k = 0; k < NPIECES; k++)
+                o.slot[k].par[p] = proj.slot[k].par[p];
         }
+        memcpy(o.chords, proj.chords, sizeof o.chords);
+        plat_store_save(OBJ_PROJ, &o, o.format == 2u ? (uint32_t)PROJ_V2_SIZE : (uint32_t)sizeof o);
         return 1;
     }
     return 0;

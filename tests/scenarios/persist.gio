@@ -41,3 +41,17 @@ expect par12 35
 turn PRESET 1
 expect piece 6
 expect chord0 4112
+# saved in format 3, before the FX pages: the settings kept, the new ones (P_BREV ..) from each song's recipe
+turn PRESET -1
+expect piece 5
+saved_as v3
+reboot
+wait 500
+expect piece 5
+expect par12 35
+expect par36 50
+expect par37 0
+expect par39 30
+turn PRESET 1
+expect piece 6
+expect par39 35

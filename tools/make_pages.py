@@ -269,7 +269,7 @@ QUICK_BODY = """<main>
 <tr><td>REC</td><td>Tap: hold the section. Held: the effects grid</td></tr>
 <tr><td>EDIT</td><td>The Chords page: the section's chords</td></tr>
 <tr><td>SEL</td><td>The next section, on the next bar</td></tr>
-<tr><td>FX</td><td>The Effects page; again: the Space page</td></tr>
+<tr><td>FX</td><td>The Effects page; again: Bass FX, Pad FX, Lead FX, Drums FX, Space, round again</td></tr>
 <tr><td>OCT− / OCT+</td><td>The bass's octave</td></tr>
 <tr><td>ALGORITHM</td><td>The bass pattern: Song, Pump, Pump 16, Arpeggio, Gallop, Octaves, Slow</td></tr>
 <tr><td>PRESETS</td><td>The song (each keeps its settings)</td></tr>
@@ -285,15 +285,21 @@ QUICK_BODY = """<main>
 <tr><td>Song (HOME)</td><td>Tempo</td><td>Evolve</td><td>Motion</td><td>Arrange</td></tr>
 <tr><td>Bass (ENV)</td><td>Level</td><td>Cutoff</td><td>Emphasis</td><td>Decay</td></tr>
 <tr><td>Lead (ARP)</td><td>Level</td><td>Voice</td><td>Busy</td><td>Glide</td></tr>
-<tr><td>Lead FX (ARP ×2)</td><td>Echo</td><td>Reverb</td><td>Octave</td><td>Tone</td></tr>
+<tr><td>Lead 2 (ARP ×2)</td><td>Echo</td><td>Reverb</td><td>Octave</td><td>Tone</td></tr>
 <tr><td>Pad (LFO)</td><td>Level</td><td>Colour</td><td>Bright</td><td>Phaser</td></tr>
 <tr><td>Drums (SEQ)</td><td>Level</td><td>Fills</td><td>Hats</td><td>Swing</td></tr>
-<tr><td>Space (FX twice)</td><td>Echo</td><td>Time</td><td>Feedback</td><td>Reverb</td></tr>
+<tr><td>Bass FX (FX ×2)</td><td>Echo</td><td>Reverb</td><td>Time*</td><td>Feedback*</td></tr>
+<tr><td>Pad FX (FX ×3)</td><td>Echo</td><td>Reverb</td><td>Time*</td><td>Feedback*</td></tr>
+<tr><td>Lead FX (FX ×4)</td><td>Echo</td><td>Reverb</td><td>Time*</td><td>Feedback*</td></tr>
+<tr><td>Drums FX (FX ×5)</td><td>Echo</td><td>Reverb</td><td>Time*</td><td>Feedback*</td></tr>
+<tr><td>Space (FX ×6)</td><td>Echo</td><td>Time*</td><td>Feedback*</td><td>Reverb</td></tr>
 <tr><td>Setup (GLO)</td><td>Key</td><td>Tune</td><td>MIDI out</td><td>Lights</td></tr>
 <tr><td>MIDI (GLO ×2)</td><td>MIDI out</td><td>Channels</td><td>Clock</td><td>Clock out</td></tr>
-<tr><td>Effects (FX)</td><td>Bass echo</td><td>Lead echo</td><td>Time</td><td>Feedback</td></tr>
+<tr><td>Effects (FX)</td><td>Bass echo</td><td>Lead echo</td><td>Time*</td><td>Feedback*</td></tr>
 <tr><td>Chords (EDIT)</td><td>Chord</td><td>Root</td><td>Type</td><td>Bars</td></tr>
 </table></div>
+<p>* One echo for all: Time and Feedback are the same on every page. On the FX pages, Echo and Reverb are that
+instrument's own.</p>
 </section>
 
 <section class="card" style="--c: var(--red)">

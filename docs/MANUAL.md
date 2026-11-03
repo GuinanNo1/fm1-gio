@@ -69,7 +69,7 @@ does the same from Chrome or Edge once a site is published.
 |---|---|
 | White keys | The lead: each key a step of the song's scale, from its key note up. The keys of the chord playing are lit (the safest notes). Three notes or more and a pause of two beats: the lead answers (see The lead, below). On the Effects page: the sixteen effects. |
 | Black keys | Eleven effects, each while its key is held, left to right: Throw, Tape stop, Swell, Low-pass, High-pass, Sweep, Phaser, Freeze, Drop, Stutter, Roll. Lit; dark while held. |
-| FX | The Effects page (see Effects); again: the Space page. |
+| FX | The Effects page (see Effects); again: the Bass FX, Pad FX, Lead FX and Drums FX pages, one a press, then the Space page, then round again. |
 | PLAY | Plays / stops. From stopped, the song starts from its first section. |
 | REC | A tap: HOLD, the section repeats until you tap it again. Held: the effects grid on the white keys for as long as it's held. |
 | EDIT | The Chords page (see [The Chords page](#the-chords-page)). |
@@ -77,7 +77,7 @@ does the same from Chrome or Edge once a site is published.
 | OCT− / OCT+ | The bass an octave down / up (−1 to +1). |
 | ALGORITHM | The bass pattern: Song (the song's own, section by section), Pump, Pump 16, Arpeggio, Gallop, Octaves, Slow. |
 | PRESETS | The song. Each remembers its settings as you left it. |
-| HOME, ENV, ARP, LFO, SEQ, FX, GLO | The pages: Song, Bass, Lead, Pad, Drums, Effects, Setup. ARP again: Lead FX; FX again: Space; GLO again: MIDI. |
+| HOME, ENV, ARP, LFO, SEQ, FX, GLO | The pages: Song, Bass, Lead, Pad, Drums, Effects, Setup. ARP again: Lead 2; FX again: the four FX pages, then Space; GLO again: MIDI. |
 | SELECT | The previous / next page. With HOME held: the tempo, 110 to 130. |
 | KNOB 1–4 | The page's four values. A quick turn speeds up; a slow one goes a step at a time. |
 | SAVE | Saves all the songs. Held 1.5 s: the song back to its recipe (then SAVE to keep that). |
@@ -128,7 +128,7 @@ each repeat. **Glide** slides between notes; past 60 it also swoops up into a ph
 Ten voices: **Mini** (three saws, one an octave down, through a ladder filter), **Odyssey** (a saw and a narrow pulse,
 resonant), **Synthi** (a triangle and a square, drifting), **Flute** (a sine with breath), **Theremin** (a sine, always
 gliding, its vibrato wide), **FM Lead**, **FM Brass** and **FM Reed** (two-operator FM), **Choir** (two saws through three
-vowel resonances; Tone is the vowel) and **Robot** (a square through two formants, short notes, no vibrato). The Lead FX
+vowel resonances; Tone is the vowel) and **Robot** (a square through two formants, short notes, no vibrato). The Lead 2
 page (ARP again) has the lead's own **Echo** and **Reverb** sends, its **Octave** and its **Tone**.
 
 **Playing the lead.** The white keys play it: each key a step of the song's scale from its key note up, so every note
@@ -189,10 +189,14 @@ GIO-1's own, written as it plays.
 | Song (HOME) | Tempo | Evolve | Motion | Arrange |
 | Bass (ENV) | Level | Cutoff | Emphasis | Decay |
 | Lead (ARP) | Level | Voice | Busy | Glide |
-| Lead FX (ARP again) | Echo | Reverb | Octave | Tone |
+| Lead 2 (ARP again) | Echo | Reverb | Octave | Tone |
 | Pad (LFO) | Level | Colour | Bright | Phaser |
 | Drums (SEQ) | Level | Fills | Hats | Swing |
-| Space (FX twice) | Echo | Time | Feedback | Reverb |
+| Bass FX (FX twice) | Echo | Reverb | Time | Feedback |
+| Pad FX (FX 3 times) | Echo | Reverb | Time | Feedback |
+| Lead FX (FX 4 times) | Echo | Reverb | Time | Feedback |
+| Drums FX (FX 5 times) | Echo | Reverb | Time | Feedback |
+| Space (FX 6 times) | Echo | Time | Feedback | Reverb |
 | Setup (GLO) | Key | Tune | MIDI out | Lights |
 | MIDI (GLO again) | MIDI out | Channels | Clock | Clock out |
 | Effects (FX) | Bass echo | Lead echo | Time | Feedback |
@@ -257,6 +261,13 @@ page, where the white keys play them (white key 1 is the lowest); **REC held** b
 it's held, and a key still held when REC is let go keeps its effect until it's let go. Eleven of them are also on the
 black keys at all times. The page's knobs are the echo's: Bass echo, Lead echo, Time, Feedback.
 
+**The FX pages.** FX again goes through a page for each instrument: **Bass FX**, **Pad FX**, **Lead FX** and **Drums FX**,
+then **Space**, then back to the Effects page. On each, KNOB 1 **Echo** and KNOB 2 **Reverb** are how much of that
+instrument goes into the tape echo and the plate; KNOB 3 **Time** and KNOB 4 **Feedback** are the echo's own. There is
+one echo for all four, so Time and Feedback are the same on every page: turn them on one and the others follow. The
+Space page's Reverb is the plate's overall level, over all four sends. Each song keeps its own settings; the songs
+start with the pad out of the echo (Pad echo 0).
+
 | Row | 1 | 2 | 3 | 4 |
 |---|---|---|---|---|
 | Echo (white 1–4) | **Throw**: everything into the echo | **Time x2**: the echo's time doubled, gliding there and back | **Tape stop**: the tape slowing to a quarter, the repeats diving | **Swell**: the echo fed back to the edge |
@@ -307,7 +318,8 @@ back from there.
 | Pad Colour | Strings, Choir, Saws | |
 | Drums Level · Fills · Hats | 0–100 | The kit's level, how often and how long the fills, the hats' level, colour and density (sixteenths from 35) |
 | Swing | 50–75% | The off sixteenths late |
-| Echo · Feedback · Reverb | 0–100 | The echo's send (mostly the bass), its repeats, the plate's send |
+| Echo · Feedback · Reverb | 0–100 | The bass's send to the echo, the echo's repeats, the plate's overall level |
+| Bass verb · Pad echo · Pad verb · Drum echo · Drum verb | 0–100 | Each instrument's sends (the FX pages): 50 the reverbs as they were; Drum echo the snare's and toms' |
 | Echo time | 1/16, 1/8, 1/8., 1/4, 1/4., 1/2 | In time with the tempo |
 | Key | C–B | The song's key |
 | Tune | ±50 cents | |
