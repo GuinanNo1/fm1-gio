@@ -241,6 +241,11 @@ to a song.
 
 The FM-1 also shows up on a computer as a USB audio input: GIO-1 can be recorded over the cable.
 
+**Screen mirror:** GIO-1's screen and panel can be shown live on a computer, big, for playing in front of people or
+for anyone who finds the 1.54-inch screen hard to read. Plug the FM-1 in with a USB cable, open the website's
+**Mirror** page in Chrome or Edge, press **Connect** and allow MIDI. The page can also play the panel. It costs the
+music nothing: GIO-1 sends its screen only while the page asks for it.
+
 ---
 
 ## 8a. Effects
@@ -300,7 +305,7 @@ back from there.
 | Clock out | Off, On | |
 | Pad Level · Bright · Phaser | 0–100 | The pad's level, its brightness (the choir's vowel), the phaser's depth and feedback |
 | Pad Colour | Strings, Choir, Saws | |
-| Drums Level · Fills · Hats | 0–100 | The kit's level, how often and how long the fills, the hats' colour and density |
+| Drums Level · Fills · Hats | 0–100 | The kit's level, how often and how long the fills, the hats' level, colour and density (sixteenths from 35) |
 | Swing | 50–75% | The off sixteenths late |
 | Echo · Feedback · Reverb | 0–100 | The echo's send (mostly the bass), its repeats, the plate's send |
 | Echo time | 1/16, 1/8, 1/8., 1/4, 1/4., 1/2 | In time with the tempo |

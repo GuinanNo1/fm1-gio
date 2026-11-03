@@ -68,6 +68,8 @@ void app_ui_init(void);
 void app_frame(void);
 void app_input_only(void);
 void app_say(const char *a, const char *b);
+#define APP_REDRAW                       /* the screen mirror (fm1.toml mirror = true): everything drawn again */
+void app_redraw(void);
 
 /* the host simulator's part (app/host.c): GIO-1's checks, its commands, the screen reader's dump */
 #define APP_HOST_EXPECT

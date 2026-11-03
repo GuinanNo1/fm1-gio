@@ -52,6 +52,16 @@ void app_input_only(void)
         ui_input_only();
 }
 void app_say(const char *a, const char *b) { ui_say(a, b); }
+void app_redraw(void)                   /* the mirror lost part of the screen: all of it again at the next frame */
+{
+    if (intro_on)
+        gs_wiped = -1;                   /* (the start-up screen: its picture as it is now, whole) */
+    else {
+        ui.sig[0] ^= 1u;                 /* the header, main area and knobs each drawn when its signature changes */
+        ui.sig[1] ^= 1u;
+        ui.sig[2] ^= 1u;
+    }
+}
 
 #ifdef PLAT_HOST
 #include "host.c"                        /* the host simulator's part: checks and commands */

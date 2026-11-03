@@ -4,6 +4,7 @@ id_prefix = "FM-1_58"          # package identity: dev FM-1_5800, releases FM-1_
 usb_manufacturer = "GIO-1"
 usb_product = "GIO-1 FM-1"
 ble = false                    # GIO-1 never uses the radio
+mirror = true                  # the screen and panel live on a computer (the site's Mirror page; fm1-base device/mirror.c)
 usb_audio_in = true            # the music recordable over USB
 usb_audio_out = false
 words = "words.tsv"

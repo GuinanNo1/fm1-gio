@@ -374,11 +374,12 @@ static float drop_g = 1.0f, gate_ph;            /* Drop's gain now; where in its
 static uint32_t roll_n;                         /* Roll: sixteenths so far */
 
 /* ------------------------------------------------------ master effects --- */
-/* Stutter keeps a sixteenth of the mix (16-bit, stereo, in the pool) and loops it; Low-pass and High-pass are two
+/* Stutter keeps a sixteenth of the mix (16-bit, stereo: 25.6 KB in ordinary RAM, not the pool, which the screen
+ * mirror's buffers need; the same RAM, as fast) and loops it; Low-pass and High-pass are two
  * one-poles each on the mix; Phaser six all-passes a side, swept; Gate chops the pad in sixteenths; Drop takes all but
  * the bass and the kick out. */
 #define STUT_N 6400
-static int16_t stut[2 * STUT_N] EN_POOL;
+static int16_t stut[2 * STUT_N];
 static int stut_len, stut_pos, stut_on;        /* stut_on: 1 recording, 2 looping */
 static float m_lp[4], m_hp[2], m_ph[2][6], m_phfb[2], m_pha[2], m_phlfo, gate_g = 1.0f;
 

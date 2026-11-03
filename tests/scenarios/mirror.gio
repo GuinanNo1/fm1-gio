@@ -1,0 +1,34 @@
+# the screen mirrored to a computer over USB (fm1.toml mirror = true: fm1-base's device/mirror.c, the site's Mirror
+# page): a viewer's picture is the screen, pixel for pixel (tests/host/mirror_check.py, run_tests.sh), on a fast link
+# and on one so slow that frames are dropped: once the link keeps up again, GIO-1 has drawn everything again
+# (app_redraw) and the picture is whole
+intro off
+wait 1000
+mirror out:stream.syx
+wait 1500
+tap ENV
+wait 500
+tap FX
+wait 500
+tap HOME
+wait 300
+tap PLAY
+wait 1500
+fbdump fb.raw
+mirror off
+wait 200
+tap PLAY
+mirror_rate 2
+mirror out:slow.syx
+wait 1500
+tap EDIT
+wait 300
+tap SEQ
+wait 300
+tap PLAY
+wait 4000
+# the link back to USB's pace: what was dropped is drawn again, and the viewer's picture is whole
+mirror_rate 48
+wait 1500
+fbdump fb_slow.raw
+mirror off

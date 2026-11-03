@@ -28,7 +28,7 @@ from pathlib import Path
 SRC = Path(__file__).resolve().parents[1]
 BASE = SRC / "base"
 sys.path.insert(0, str(BASE / "tools"))
-from make_site import MBOOT_VERSION, product_of, read_conf, strip_module  # noqa: E402  (fm1-base's: the package format)
+from make_site import MBOOT_VERSION, product_of, read_conf, strip_module, tool_pages  # noqa: E402  (fm1-base's: the package format)
 
 REPO = "https://github.com/GuinanNo1/fm1-gio"
 FONTS = ('<link rel="preconnect" href="https://fonts.googleapis.com">\n'
@@ -68,7 +68,7 @@ code { font: .88em ui-monospace, Menlo, Consolas, monospace; background: var(--c
         padding-top: 1rem; }
 """ + HEADER_CSS
 
-NAV = [("emu/", "Try it"), ("install/", "Install"), ("manual/", "Manual"), ("quickstart/", "Quickstart")]
+NAV = [("emu/", "Try it"), ("install/", "Install"), ("manual/", "Manual"), ("quickstart/", "Quickstart"), ("mirror/", "Mirror")]
 
 
 def header(here, depth):
@@ -453,10 +453,25 @@ def main(out, pkg=None, version=None):
                   ' --muted: #aaa4d4; --accent: #ff5cb4; --teal: #2fd8f0; color-scheme: dark; }\n'
                   'header.site { margin-bottom: 8px; }</style>\n</head>', 1)
     (out / "emu" / "index.html").write_text(e, encoding="utf-8")
+    # the screen mirror (fm1.toml mirror = true): fm1-base's page, dark, with the site's header
+    for rel, mh in tool_pages(SRC / "app", conf, {"NAME": "GIO-1"}).items():
+        if not rel.startswith("mirror/"):
+            continue
+        mh = mh.replace('<html lang="en">', '<html lang="en" data-theme="dark">', 1)
+        mh = mh.replace("<title>Mirror · GIO-1</title>", "<title>GIO-1 Mirror</title>", 1)
+        if mh.count("<body>") != 1:
+            raise SystemExit("base/web/mirror/index.html: <body> not found once")
+        mh = mh.replace("<body>", "<body>\n" + header("mirror/", 1), 1)
+        mh = mh.replace("</head>", FONTS + "<style>" + TOKENS + HEADER_CSS +
+                        ':root[data-theme="dark"] { --ground: #100e22; --card: #1c1a3a; --rule: #3a3668; --ink: #f2eeff;'
+                        ' --muted: #aaa4d4; --accent: #ff5cb4; --teal: #2fd8f0; color-scheme: dark; }\n'
+                        'header.site { margin-bottom: 8px; }</style>\n</head>', 1)
+        (out / "mirror").mkdir(parents=True, exist_ok=True)
+        (out / rel).write_text(mh, encoding="utf-8")
     # the screen reader's words files (fm1-reader): every one ever made, for the devices that point at them
     shutil.copytree(SRC / "app" / "web" / "words", out / "words")
     (out / ".nojekyll").write_text("")
-    print(f"site: {out}: index.html, quickstart/, manual/, emu/, words/, install/ ({product or 'coming with the first build'})")
+    print(f"site: {out}: index.html, quickstart/, manual/, emu/, mirror/, words/, install/ ({product or 'coming with the first build'})")
 
 
 if __name__ == "__main__":
