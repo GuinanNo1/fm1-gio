@@ -57,7 +57,7 @@ static const uint8_t VIEW_KNOB[NVIEWS][4] = {
 static const char *const KNOB_LABEL[NVIEWS][4] = {
     {"Tempo", "Evolve", "Motion", "Arrange"},
     {"Bass", "Pad", "Lead", "Drums"},
-    {"Level", "Cutoff", "Emphasis", "Decay"},
+    {"Level", "Cutoff", "Resonance", "Decay"},
     {"Voice", "Ratio", "FM depth", "FM decay"},
     {"Level", "Voice", "Busy", "Glide"},
     {"Echo", "Reverb", "Octave", "Tone"},
@@ -73,10 +73,10 @@ static const char *const KNOB_LABEL[NVIEWS][4] = {
     {"Mirror", "", "", ""},
     {"Chord", "Root", "Type", "Bars"},
 };
-/* a page's knob i and its label: Bass FM's follow its Voice (Analog: the filter's Cutoff, Emphasis and Decay, as on the
+/* a page's knob i and its label: Bass FM's follow its Voice (Analog: the filter's Cutoff, Resonance and Decay, as on the
  * Bass page; FM: the FM's Ratio, depth and decay) */
 static const uint8_t BASS2_ANALOG[4] = {P_BVOICE, P_CUTOFF, P_RESO, P_DECAY};
-static const char *const BASS2_ANALOG_LABEL[4] = {"Voice", "Cutoff", "Emphasis", "Decay"};
+static const char *const BASS2_ANALOG_LABEL[4] = {"Voice", "Cutoff", "Resonance", "Decay"};
 static int vknob(int v, int i) { return v == V_BASS2 && !proj.par[P_BVOICE] ? BASS2_ANALOG[i] : VIEW_KNOB[v][i]; }
 static const char *vlabel(int v, int i)
 {
@@ -1024,7 +1024,7 @@ static int help_lines(int b, const char *l[HELP_LINES])
 #define L(t) (l[n++] = (t))
     switch (b) {
     case B_HOME: L("THE SONG: TEMPO, EVOLVE,"); L(" MOTION, ARRANGE"); L("AGAIN: THE MIXER"); L("+ SELECT: TEMPO"); break;
-    case B_ENV: L("THE BASS: LEVEL, CUTOFF,"); L(" EMPHASIS, DECAY"); L("AGAIN: BASS FM: VOICE, AND"); L(" ITS FILTER, OR THE FM"); break;
+    case B_ENV: L("THE BASS: LEVEL, CUTOFF,"); L(" RESONANCE, DECAY"); L("AGAIN: BASS FM: VOICE, AND"); L(" ITS FILTER, OR THE FM"); break;
     case B_ARP: L("THE LEAD"); L("LEVEL, VOICE, BUSY, GLIDE"); L("AGAIN: LEAD 2: ECHO,"); L(" REVERB, OCTAVE, TONE"); break;
     case B_LFO: L("THE PAD"); L("LEVEL, COLOUR, BRIGHT,"); L(" PHASER"); break;
     case B_SEQ: L("THE DRUMS"); L("LEVEL, FILLS, HATS, SWING"); break;

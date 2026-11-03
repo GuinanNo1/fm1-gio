@@ -18,7 +18,7 @@ enum { A_SONG, A_PUMP, A_PUMP16, A_ARP, A_GALLOP, A_OCT, A_SLOW };
 
 static const en_param_t PARAMS[P_NPARAMS] = {
     {"Tempo", 110, 130, 122}, {"Evolve", 0, 100, 40}, {"Motion", 0, 100, 50}, {"Arrange", 0, 100, 40},
-    {"Bass", 0, 100, 80},     {"Cutoff", 0, 100, 45}, {"Emphasis", 0, 100, 45}, {"Decay", 0, 100, 35},
+    {"Bass", 0, 100, 80},     {"Cutoff", 0, 100, 45}, {"Resonance", 0, 100, 45}, {"Decay", 0, 100, 35},
     {"Lead", 0, 100, 50},     {"Voice", 0, 9, 0},     {"Busy", 0, 100, 45},   {"Glide", 0, 100, 30},
     {"Pad", 0, 100, 55},      {"Colour", 0, 2, 0},    {"Bright", 0, 100, 50}, {"Phaser", 0, 100, 40},
     {"Drums", 0, 100, 70},    {"Fills", 0, 100, 40},  {"Hats", 0, 100, 55},   {"Swing", 0, 100, 0},

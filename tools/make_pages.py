@@ -200,7 +200,7 @@ and enjoy!</p>
 
 <h2>What plays</h2>
 <ul class="parts">
-  <li style="--c: var(--cyan)"><b>Bass.</b> A Moog-style sequence out in front: two saws and a square through a four-pole ladder, short decays, the dry note on one side and its echo on the other. Seven pattern shapes, written in chord degrees so they follow the changes.</li>
+  <li style="--c: var(--cyan)"><b>Bass.</b> An analog-style sequence out in front: two saws and a square through a four-pole ladder (or an FM voice), short decays, the dry note on one side and its echo on the other. Seven pattern shapes, written in chord degrees so they follow the changes.</li>
   <li style="--c: var(--violet)"><b>Pad.</b> Strings, a choir or detuned saws on the chord, voice-led, through a slow stereo phaser.</li>
   <li style="--c: var(--gold)"><b>Lead.</b> Ten voices, from Mini and Odyssey to Theremin, FM Brass and Robot. It writes its own phrases. Play the white keys and it follows your line, answers it, and makes it the song's theme.</li>
   <li style="--c: var(--red)"><b>Drums.</b> Four on the floor, claps on two and four, open hats off the beat, and syndrum fills.</li>
@@ -306,8 +306,8 @@ QUICK_BODY = """<main>
 <tr><th>Page</th><th>1</th><th>2</th><th>3</th><th>4</th></tr>
 <tr><td>Song (HOME)</td><td>Tempo</td><td>Evolve</td><td>Motion</td><td>Arrange</td></tr>
 <tr><td>Mixer (HOME ×2)</td><td>Bass</td><td>Pad</td><td>Lead</td><td>Drums</td></tr>
-<tr><td>Bass (ENV)</td><td>Level</td><td>Cutoff</td><td>Emphasis</td><td>Decay</td></tr>
-<tr><td>Bass FM (ENV ×2)</td><td>Voice: Analog, FM</td><td>Cutoff / Ratio</td><td>Emphasis / FM depth</td><td>Decay / FM decay</td></tr>
+<tr><td>Bass (ENV)</td><td>Level</td><td>Cutoff</td><td>Resonance</td><td>Decay</td></tr>
+<tr><td>Bass FM (ENV ×2)</td><td>Voice: Analog, FM</td><td>Cutoff / Ratio</td><td>Resonance / FM depth</td><td>Decay / FM decay</td></tr>
 <tr><td>Lead (ARP)</td><td>Level</td><td>Voice</td><td>Busy</td><td>Glide</td></tr>
 <tr><td>Lead 2 (ARP ×2)</td><td>Echo</td><td>Reverb</td><td>Octave</td><td>Tone</td></tr>
 <tr><td>Pad (LFO)</td><td>Level</td><td>Colour</td><td>Bright</td><td>Phaser</td></tr>

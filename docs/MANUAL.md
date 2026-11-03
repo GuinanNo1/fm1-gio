@@ -1,7 +1,7 @@
 # GIO-1
 
 GIO-1 turns the M-VAVE FM-1 into a generative electronic disco machine, after Giorgio Moroder's Munich sound. It
-plays itself from the moment it's switched on: a Moog-style bass sequence out in front, a pad of strings, a choir
+plays itself from the moment it's switched on: an analog-style bass sequence (or FM) out in front, a pad of strings, a choir
 or saws through a phaser, a synth lead that writes its own phrases, and four on the floor. Each song is a form of
 sections with their own chord changes; it loops for ever and changes as it goes. You steer it.
 
@@ -111,7 +111,7 @@ Hold any button for a second and a card says what it does; let go and nothing el
 ## 5. The music
 
 **The bass** is the loudest thing: two saws and a square an octave down through a four-pole ladder low-pass, a
-short decay on its level and its filter (Cutoff, Emphasis and Decay on the Bass page). It steps through a 16-step
+short decay on its level and its filter (Cutoff, Resonance and Decay on the Bass page). It steps through a 16-step
 pattern written in chord degrees (root, third, fifth, seventh, octave), so it follows the chords. Most of the echo is
 its own: the dry note sits a little left, its repeat right. With **Evolve**, a weak step changes
 now and then (another chord note, a ghost note, a rest), and goes back home a step at a time.
@@ -188,8 +188,8 @@ GIO-1's own, written as it plays.
 |---|---|---|---|---|
 | Song (HOME) | Tempo | Evolve | Motion | Arrange |
 | Mixer (HOME again) | Bass | Pad | Lead | Drums |
-| Bass (ENV) | Level | Cutoff | Emphasis | Decay |
-| Bass FM (ENV again), Analog | Voice | Cutoff | Emphasis | Decay |
+| Bass (ENV) | Level | Cutoff | Resonance | Decay |
+| Bass FM (ENV again), Analog | Voice | Cutoff | Resonance | Decay |
 | Bass FM (ENV again), FM | Voice | Ratio | FM depth | FM decay |
 | Lead (ARP) | Level | Voice | Busy | Glide |
 | Lead 2 (ARP again) | Echo | Reverb | Octave | Tone |
@@ -272,8 +272,8 @@ modulated by a sine, with a sine an octave down for weight), and the FM voice's 
 modulator's pitch against the note (0.5, 1, 1.5, 2, 3, 4: 1 and 2 the classic FM basses, 3 and 4 metallic), **FM
 depth**, how bright and growling it is, and **FM decay**, how fast that brightness falls after each note (short: a
 pluck; long: a growl that stays). Both voices go through the same ladder filter and envelope, so the Bass page's
-Level, Cutoff, Emphasis and Decay work on either. Bass FM's other three knobs follow the voice: with Analog they are
-the filter's Cutoff, Emphasis and Decay (the Bass page's own), with FM the FM's Ratio, FM depth and FM decay. Each song keeps its own; every song starts on Analog.
+Level, Cutoff, Resonance and Decay work on either. Bass FM's other three knobs follow the voice: with Analog they are
+the filter's Cutoff, Resonance and Decay (the Bass page's own), with FM the FM's Ratio, FM depth and FM decay. Each song keeps its own; every song starts on Analog.
 
 **The Mixer** (HOME again): the four instruments' levels side by side, KNOB 1–4 Bass, Pad, Lead and Drums. They are
 the same settings as each instrument's own page's Level, so a change shows on both.
@@ -323,7 +323,7 @@ back from there.
 | Evolve | 0–100 | How much the bass pattern, the lead's phrases and the drums change as they repeat |
 | Motion | 0–100 | How far the slow sweeps go (bass filter, pad brightness, phaser's pace) |
 | Arrange | 0–100 | How freely the form goes: repeats, jumps, layers out and in, a cycle in another key |
-| Bass Level · Cutoff · Emphasis · Decay | 0–100 | The bass's level, its filter, the filter's resonance, the length of its notes and envelope |
+| Bass Level · Cutoff · Resonance · Decay | 0–100 | The bass's level, its filter's cutoff, its resonance (the peak at the cutoff), the length of its notes and envelope |
 | Lead Level · Busy · Glide | 0–100 | The lead's level, how many notes a bar (and whether it leaves room), its portamento |
 | Lead Voice | Mini, Odyssey, Synthi, Flute, Theremin, FM Lead, FM Brass, FM Reed, Choir, Robot | |
 | Lead echo · Lead reverb · Tone | 0–100 | The lead's own sends to the echo and the plate; its brightness (the Choir's vowel) |

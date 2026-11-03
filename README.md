@@ -1,7 +1,7 @@
 # GIO-1 for the M-VAVE FM-1
 
 GIO-1 turns the M-VAVE FM-1 into a generative electronic disco machine, after Giorgio Moroder's Munich sound. It
-plays itself from the moment it's switched on: a Moog-style bass sequence out in front, its repeats on the other
+plays itself from the moment it's switched on: an analog-style bass sequence (or FM) out in front, its repeats on the other
 side; strings, a choir or detuned saws through a phaser; a synth lead (ten voices) that writes its
 own phrases, which you can play from the white keys and which answers you; four on the floor with claps, open hats and syndrum fills. Each song is a form (intro, verse, chorus,
 break) with its own chord changes, and it loops for ever, changing as it goes: a section repeated, a layer let

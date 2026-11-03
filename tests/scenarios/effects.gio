@@ -92,7 +92,7 @@ tap HOME
 expect view 0
 tap SEQ
 expect par16 71
-# ENV, ENV: Bass FM: the voice; with Analog the filter's Cutoff, Emphasis and Decay (the Bass page's), with FM the
+# ENV, ENV: Bass FM: the voice; with Analog the filter's Cutoff, Resonance and Decay (the Bass page's), with FM the
 # FM's ratio, depth and decay; ENV again: the Bass page
 tap ENV
 tap ENV

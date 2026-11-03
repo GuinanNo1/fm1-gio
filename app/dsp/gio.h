@@ -4,7 +4,7 @@
  * one song form (sections of bars, each its own chord changes and its own layers) that loops for ever and changes
  * as it goes:
  *
- *   BASS    the sequence, the loudest thing: a Moog-style voice (two saws and a square an octave down, a four-pole
+ *   BASS    the sequence, the loudest thing: an analog-style voice (two saws and a square an octave down, a four-pole
  *           ladder low-pass, a short decay on both the filter and the level) stepping through a 16-step pattern. A
  *           pattern is a shape (pump, arpeggio, gallop, octaves, ...) written in chord degrees, so it follows the
  *           chords; Evolve changes a step now and then, and the bar after it may change back. Most of the echo is
