@@ -9,13 +9,15 @@ The firmware side of the mirror (`device/mirror.c`) is the same in both, so the 
   older one fell back to the first MIDI port it found and sent it the mirror's requests.
 - `fm1ports.js`: fm1-base `web/fm1ports.js`, inlined into the page for its `{{PORTS_JS}}`.
 
-`tools/make_pages.py` makes the site's Mirror page from them and changes two things (each checked to apply once):
+`tools/make_pages.py` makes the site's Mirror page from them and changes three things (each checked to apply once):
 
 1. It does not connect by itself when it opens, even with MIDI already allowed: it waits for **Connect**.
 2. Nothing is sent as the page closes (the request to stop, and the remote's let-go): sending MIDI while Chrome
    tears a page down is the likeliest cause of a crash seen leaving the older page with an FM-1 plugged in. GIO-1
    stops mirroring by itself a few seconds after the requests stop (fm1-base `MR_TIMEOUT_MS`), and lets go of the
    computer's buttons and keys then.
+3. A knob turns by dragging it (up or right: clockwise, a detent every 8 pixels), not only with the mouse wheel,
+   which trackpads and touch screens often don't give over a knob; the help says so.
 
-When GIO-1's fm1-base is updated past `2d8ed74`, use its own pages again (`make_site.tool_pages`) with the same two
+When GIO-1's fm1-base is updated past `2d8ed74`, use its own pages again (`make_site.tool_pages`) with the same
 changes, and remove this folder.

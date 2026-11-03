@@ -72,8 +72,38 @@ code { font: .88em ui-monospace, Menlo, Consolas, monospace; background: var(--c
 NAV = [("emu/", "Try it"), ("install/", "Install"), ("manual/", "Manual"), ("quickstart/", "Quickstart"), ("mirror/", "Mirror")]
 
 
+# GIO-1's third change to the Mirror page: a knob turned by dragging it (up or right: clockwise), not only by the
+# mouse wheel, which trackpads and touch screens often don't give over a knob. Several detents go in one request (the
+# FM-1 takes up to 127 a turn), so a quick drag is not queued up behind its answers
+MIRROR_DRAG = """
+byRole.forEach((k, r) => {                             // (GIO-1) a knob: dragged, a detent every 8 pixels
+  let last = null, acc = 0;
+  k.g.addEventListener("pointerdown", (e) => {
+    if (!control) return;
+    e.preventDefault();
+    k.g.setPointerCapture?.(e.pointerId);
+    last = [e.clientX, e.clientY];
+    acc = 0;
+  });
+  k.g.addEventListener("pointermove", (e) => {
+    if (!last) return;
+    acc += (e.clientX - last[0]) - (e.clientY - last[1]);
+    last = [e.clientX, e.clientY];
+    const n = Math.trunc(acc / 8);
+    if (!n) return;
+    acc -= n * 8;
+    const q = rq.length && rq[rq.length - 1];          // (still waiting to go: added to it)
+    if (q && q[0] === 3 && q[1] === r && Math.abs(((q[2] << 24) >> 24) + n) <= 127) q[2] = (((q[2] << 24) >> 24) + n) & 255;
+    else rsend(3, r, Math.max(-127, Math.min(127, n)) & 255);
+  });
+  const up = () => { last = null; };
+  for (const t of ["pointerup", "pointercancel", "lostpointercapture"]) k.g.addEventListener(t, up);
+});
+"""
+
+
 def mirror_pages(conf):
-    """{"mirror/index.html": html} with mirror = true: tools/fm1base_web's page, filled in, with GIO-1's two changes
+    """{"mirror/index.html": html} with mirror = true: tools/fm1base_web's page, filled in, with GIO-1's three changes
     (tools/fm1base_web/README.md)"""
     if not conf.get("mirror"):
         return {}
@@ -84,10 +114,14 @@ def mirror_pages(conf):
             ('navigator.permissions?.query({ name: "midi", sysex: true }).then((p) => { if (p.state === "granted") connect(); }).catch(() => {});',
              "// (GIO-1: no connecting by itself when the page opens: Connect does it)"),
             ('addEventListener("pagehide", () => { if (control) setControl(false); send(0); });',
-             "// (GIO-1: nothing sent as the page closes; the FM-1 stops mirroring by itself, MR_TIMEOUT_MS)")):
+             "// (GIO-1: nothing sent as the page closes; the FM-1 stops mirroring by itself, MR_TIMEOUT_MS)"),
+            ("  }, { passive: false });\n});\n", "  }, { passive: false });\n});\n" + MIRROR_DRAG)):
         if mh.count(old) != 1:
             raise SystemExit(f"tools/fm1base_web/mirror.html: not found once: {old[:50]}...")
         mh = mh.replace(old, new)
+    if mh.count("Scroll over a knob to turn it.") != 2:  # (the Control button's tip and the help)
+        raise SystemExit("tools/fm1base_web/mirror.html: the knobs' help not found twice")
+    mh = mh.replace("Scroll over a knob to turn it.", "Drag a knob up or down, or scroll over it, to turn it.")
     left = sorted(set(re.findall(r"\{\{[A-Z_]+\}\}", mh)))
     if left:
         raise SystemExit(f"tools/fm1base_web/mirror.html: {' '.join(left)} not filled in")
