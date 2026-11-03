@@ -67,9 +67,9 @@ does the same from Chrome or Edge once a site is published.
 
 | Control | What it does |
 |---|---|
-| White keys | The lead: each key a step of the song's scale, from its key note up. The keys of the chord playing are lit (the safest notes). Three notes or more and a pause of two beats: the lead answers (see The lead, below). On the Effects page: the sixteen effects. |
+| White keys | The lead: each key a step of the song's scale, from its key note up. The keys of the chord playing are lit (the safest notes). Three notes or more and a pause of two beats: the lead answers (see The lead, below). On the FX pages: the sixteen effects. |
 | Black keys | Eleven effects, each while its key is held, left to right: Throw, Tape stop, Swell, Low-pass, High-pass, Sweep, Phaser, Freeze, Drop, Stutter, Roll. Lit; dark while held. |
-| FX | The Effects page (see Effects); again: the Bass FX, Pad FX, Lead FX and Drums FX pages, one a press, then the Space page, then round again. |
+| FX | The FX pages, one a press: Bass FX, Pad FX, Lead FX, Drums FX, then Space, then round again. On each, the white keys play the sixteen effects (see Effects). |
 | PLAY | Plays / stops. From stopped, the song starts from its first section. |
 | REC | A tap: HOLD, the section repeats until you tap it again. Held: the effects grid on the white keys for as long as it's held. |
 | EDIT | The Chords page (see [The Chords page](#the-chords-page)). |
@@ -77,7 +77,7 @@ does the same from Chrome or Edge once a site is published.
 | OCT− / OCT+ | The bass an octave down / up (−1 to +1). |
 | ALGORITHM | The bass pattern: Song (the song's own, section by section), Pump, Pump 16, Arpeggio, Gallop, Octaves, Slow. |
 | PRESETS | The song. Each remembers its settings as you left it. |
-| HOME, ENV, ARP, LFO, SEQ, FX, GLO | The pages: Song, Bass, Lead, Pad, Drums, Effects, Setup. HOME again: Mixer; ARP again: Lead 2; FX again: the four FX pages, then Space; GLO again: MIDI, then Mirror. Each press goes on to the button's next page, then round again. |
+| HOME, ENV, ARP, LFO, SEQ, FX, GLO | The pages: Song, Bass, Lead, Pad, Drums, Bass FX, Setup. HOME again: Mixer; ARP again: Lead 2; FX: the four FX pages, then Space; GLO again: MIDI, then Mirror. Each press goes on to the button's next page, then round again. |
 | SELECT | The previous / next page. With HOME held: the tempo, 110 to 130. |
 | KNOB 1–4 | The page's four values. A quick turn speeds up; a slow one goes a step at a time. |
 | SAVE | Saves all the songs. Held 1.5 s: the song back to its recipe (then SAVE to keep that). |
@@ -193,15 +193,14 @@ GIO-1's own, written as it plays.
 | Lead 2 (ARP again) | Echo | Reverb | Octave | Tone |
 | Pad (LFO) | Level | Colour | Bright | Phaser |
 | Drums (SEQ) | Level | Fills | Hats | Swing |
-| Bass FX (FX twice) | Echo | Reverb | Time | Feedback |
-| Pad FX (FX 3 times) | Echo | Reverb | Time | Feedback |
-| Lead FX (FX 4 times) | Echo | Reverb | Time | Feedback |
-| Drums FX (FX 5 times) | Echo | Reverb | Time | Feedback |
-| Space (FX 6 times) | Echo | Time | Feedback | Reverb |
+| Bass FX (FX) | Echo | Reverb | Time | Feedback |
+| Pad FX (FX twice) | Echo | Reverb | Time | Feedback |
+| Lead FX (FX 3 times) | Echo | Reverb | Time | Feedback |
+| Drums FX (FX 4 times) | Echo | Reverb | Time | Feedback |
+| Space (FX 5 times) | Echo | Time | Feedback | Reverb |
 | Setup (GLO) | Key | Tune | MIDI out | Lights |
 | MIDI (GLO again) | MIDI out | Channels | Clock | Clock out |
 | Mirror (GLO 3 times) | Mirror (On, Off) | | | |
-| Effects (FX) | Bass echo | Lead echo | Time | Feedback |
 | Chords (EDIT) | Chord | Root | Type | Bars |
 
 The Setup page also shows the audio's load (CPU) in the top line.
@@ -259,18 +258,18 @@ wrong).
 
 ## 8a. Effects
 
-![The Effects page, Sweep and Roll held](img/screen-grid.png)
+![The effects grid, Sweep and Roll held](img/screen-grid.png)
 
-Sixteen effects, each on while its key is held, eased in and out; any number together. **FX** opens the Effects
-page, where the white keys play them (white key 1 is the lowest); **REC held** brings the same grid up for as long as
-it's held, and a key still held when REC is let go keeps its effect until it's let go. Eleven of them are also on the
-black keys at all times. The page's knobs are the echo's: Bass echo, Lead echo, Time, Feedback.
+Sixteen effects, each on while its key is held, eased in and out; any number together. Every page **FX**
+brings up (the FX pages, below) shows them as a grid, and the white keys play them (white key 1 is the lowest);
+**REC held** brings the same grid up on any page for as long as it's held, and a key still held when REC is let go
+keeps its effect until it's let go. Eleven of them are also on the black keys at all times.
 
 **The Mixer** (HOME again): the four instruments' levels side by side, KNOB 1–4 Bass, Pad, Lead and Drums. They are
 the same settings as each instrument's own page's Level, so a change shows on both.
 
-**The FX pages.** FX again goes through a page for each instrument: **Bass FX**, **Pad FX**, **Lead FX** and **Drums FX**,
-then **Space**, then back to the Effects page. On each, KNOB 1 **Echo** and KNOB 2 **Reverb** are how much of that
+**The FX pages.** FX goes through a page for each instrument, one a press: **Bass FX**, **Pad FX**, **Lead FX** and
+**Drums FX**, then **Space**, then round again; from any other page, FX starts at Bass FX. Each shows the effects grid. On each, KNOB 1 **Echo** and KNOB 2 **Reverb** are how much of that
 instrument goes into the tape echo and the plate; KNOB 3 **Time** and KNOB 4 **Feedback** are the echo's own. There is
 one echo for all four, so Time and Feedback are the same on every page: turn them on one and the others follow. The
 Space page's Reverb is the plate's overall level, over all four sends. Each song keeps its own settings; the songs

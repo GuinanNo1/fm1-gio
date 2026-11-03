@@ -39,10 +39,10 @@ All of it is a table in `app/dsp/gio.c` (`SONGS`), easy to change.
 |---|---|
 | White keys | The lead, in the song's scale (the chord's notes lit); a call of three notes and a pause, and the lead answers and takes it as its theme |
 | Black keys | Eleven drop-in effects, each while held |
-| FX | The Effects page: sixteen effects on the white keys (REC held: the same, while held); again: Bass FX, Pad FX, Lead FX, Drums FX (each: Echo, Reverb, and the one echo's Time and Feedback), then Space |
+| FX | The FX pages, one a press: Bass FX, Pad FX, Lead FX, Drums FX (each: Echo, Reverb, and the one echo's Time and Feedback), then Space; on each, the sixteen effects on the white keys (REC held: the same, on any page) |
 | PLAY · REC · SEL | Play / stop · a tap holds the section · the next section, on the next bar |
 | EDIT | The Chords page: the section's chord changes, each chord's root, type and length, edited as it plays |
-| HOME · ENV · ARP · LFO · SEQ · FX · GLO | The pages: Song (again: Mixer, the four levels), Bass, Lead (again: Lead 2), Pad, Drums, Effects (again: the four FX pages, then Space), Setup (again: MIDI, then Mirror: the screen mirror on or off); KNOB 1–4 set their values |
+| HOME · ENV · ARP · LFO · SEQ · FX · GLO | The pages: Song (again: Mixer, the four levels), Bass, Lead (again: Lead 2), Pad, Drums, FX (the four FX pages, then Space), Setup (again: MIDI, then Mirror: the screen mirror on or off); KNOB 1–4 set their values |
 | SELECT | The previous or next page; with HOME held, the tempo (110–130) |
 | ALGORITHM · PRESETS | The bass pattern · the song |
 | OCT− / OCT+ | The bass's octave |

@@ -7,14 +7,16 @@
  *   white keys     the lead, a step of the song's scale each (the chord's notes lit); a call of three notes or
  *                  more and a pause: the lead answers, and takes it as its theme
  *   black keys     eleven of the effects, each while held
- *   FX             the Effects page: the sixteen effects on the white keys (REC held: the same, for as long);
- *                  again: the SPACE page, and so on
+ *   FX             the FX pages, one a press: BASS FX, PAD FX, LEAD FX, DRUMS FX (each instrument's echo and reverb,
+ *                  the one echo's time and feedback), SPACE; on each, the sixteen effects on the white keys (REC held:
+ *                  the same, on any page, for as long)
  *   EDIT           the Chords page: the section's chord changes, a chord at a time (its root, type and length)
  *   SEL            the next section, on the next bar
  *   PLAY           plays / stops
  *   REC            a tap: HOLD, the section repeats until let go  OCT- / OCT+   the bass's octave
  *   ALGORITHM      the bass's pattern (Song: the song's own)      PRESETS       the song
- *   HOME ENV ARP LFO SEQ FX GLO   the pages: SONG, BASS, LEAD (again: LEAD FX), PAD, DRUMS, EFFECTS (again: SPACE), SETUP; SELECT
+ *   HOME ENV ARP LFO SEQ FX GLO   the pages: SONG (again: MIXER), BASS, LEAD (again: LEAD 2), PAD, DRUMS, the FX pages,
+ *                  SETUP (again: MIDI, MIRROR); SELECT
  *                  steps through them (with HOME held: the tempo)
  *   KNOB 1-4       the page's four values
  *   SAVE           saves (it also saves by itself a few seconds after a change, while stopped);
@@ -22,14 +24,16 @@
 #include "fastmath.h"
 
 enum { V_SONG, V_MIXER, V_BASS, V_LEAD, V_LEAD2, V_PAD, V_DRUMS, V_BASSFX, V_PADFX, V_LEADFX, V_DRUMFX, V_SPACE, V_SETUP,
-       V_MIDI, V_MIRROR, V_FXGRID, V_CHORDS, NVIEWS };
+       V_MIDI, V_MIRROR, V_CHORDS, NVIEWS };
 static const char *const VIEW_NAME[NVIEWS] = {"Song", "Mixer", "Bass", "Lead", "Lead 2", "Pad", "Drums", "Bass FX",
                                               "Pad FX", "Lead FX", "Drums FX", "Space", "Setup", "MIDI", "Mirror",
-                                              "Effects", "Chords"};
-/* FX: the Effects page, each instrument's FX page, the Space page, and round again */
-static const uint8_t FX_CYCLE[] = {V_FXGRID, V_BASSFX, V_PADFX, V_LEADFX, V_DRUMFX, V_SPACE};
+                                              "Chords"};
+/* FX: each instrument's FX page, the Space page, and round again. On each, the effects grid: the white keys play the
+ * sixteen effects (as REC held does anywhere) */
+static const uint8_t FX_CYCLE[] = {V_BASSFX, V_PADFX, V_LEADFX, V_DRUMFX, V_SPACE};
+#define GRID_PAGE(v) ((v) >= V_BASSFX && (v) <= V_SPACE)
 static const uint8_t VIEW_BTN[NVIEWS] = {B_HOME, B_HOME, B_ENV, B_ARP, B_ARP, B_LFO, B_SEQ, B_FX, B_FX, B_FX, B_FX, B_FX,
-                                         B_GLO, B_GLO, B_GLO, B_FX, B_EDIT};
+                                         B_GLO, B_GLO, B_GLO, B_EDIT};
 enum { K_LEDS = 100, K_CPU, K_NONE, K_CSLOT, K_CROOT, K_CTYPE, K_CLEN, K_MIRROR };
 static const uint8_t VIEW_KNOB[NVIEWS][4] = {
     {P_TEMPO, P_EVOLVE, P_MOTION, P_ARRANGE},
@@ -47,7 +51,6 @@ static const uint8_t VIEW_KNOB[NVIEWS][4] = {
     {P_ROOT, P_TUNE, P_MIDI, K_LEDS},
     {P_MIDI, P_MCHAN, P_MCLOCK, P_MCLKOUT},
     {K_MIRROR, K_NONE, K_NONE, K_NONE},           /* the screen mirror: on or off (the FM-1's, not a song's) */
-    {P_ECHO, P_LECHO, P_ETIME, P_FEEDBACK},
     {K_CSLOT, K_CROOT, K_CTYPE, K_CLEN},
 };
 static const char *const KNOB_LABEL[NVIEWS][4] = {
@@ -66,7 +69,6 @@ static const char *const KNOB_LABEL[NVIEWS][4] = {
     {"Key", "Tune", "MIDI out", "Lights"},
     {"MIDI out", "Channels", "Clock", "Clock out"},
     {"Mirror", "", "", ""},
-    {"Bass echo", "Lead echo", "Time", "Feedback"},
     {"Chord", "Root", "Type", "Bars"},
 };
 /* the black keys' effects, left to right */
@@ -442,8 +444,8 @@ static void button(int b)
         say("NEXT SECTION", en_playing ? "ON THE BAR" : 0);
         return;
     }
-    if (b == B_FX) {                             /* FX: the Effects page; again: each instrument's FX page, Space, and
-                                                  * round again (from any other page: the Effects page) */
+    if (b == B_FX) {                             /* FX: each instrument's FX page, Space, and round again (from any other
+                                                  * page: Bass FX) */
         for (v = 0; v < (int)sizeof FX_CYCLE; v++)
             if (FX_CYCLE[v] == ui.view)
                 break;
@@ -576,7 +578,7 @@ static void input(void)
             continue;
         r = key_role((int)i);
         if (keys & m) {
-            if ((r & 0x80) || ui.view == V_FXGRID || ui.rec_grid) {
+            if ((r & 0x80) || GRID_PAGE(ui.view) || ui.rec_grid) {
                 int f = (r & 0x80) ? BLACK_FX[r & 0x7F] : r;
                 ui.fx_keys |= m;
                 say("EFFECT", EN_FX_NAME[f]);
@@ -1014,7 +1016,7 @@ static int help_lines(int b, const char *l[HELP_LINES])
     case B_ARP: L("THE LEAD"); L("LEVEL, VOICE, BUSY, GLIDE"); L("AGAIN: LEAD 2: ECHO,"); L(" REVERB, OCTAVE, TONE"); break;
     case B_LFO: L("THE PAD"); L("LEVEL, COLOUR, BRIGHT,"); L(" PHASER"); break;
     case B_SEQ: L("THE DRUMS"); L("LEVEL, FILLS, HATS, SWING"); break;
-    case B_FX: L("EFFECTS: 16 ON THE KEYS"); L("AGAIN: BASS, PAD, LEAD,"); L(" DRUMS FX: ECHO, REVERB,"); L(" TIME, FEEDBACK; SPACE"); break;
+    case B_FX: L("BASS, PAD, LEAD, DRUMS FX:"); L(" ECHO, REVERB, TIME,"); L(" FEEDBACK; THEN SPACE"); L("THE 16 EFFECTS ON THE KEYS"); break;
     case B_GLO: L("SETUP: KEY, TUNE,"); L(" MIDI OUT, LIGHTS"); L("AGAIN: MIDI"); L("AGAIN: THE SCREEN MIRROR"); break;
     case B_EDIT: L("THE CHORDS: A CHORD,"); L(" ITS ROOT, TYPE AND BARS"); L("REC HOLDS THE SECTION"); L("SEL: THE NEXT ONE"); break;
     case B_SEL: L("THE NEXT SECTION,"); L("ON THE NEXT BAR"); break;
@@ -1173,7 +1175,7 @@ static void draw_main(void)
         }
         return;
     }
-    if (ui.view == V_FXGRID || ui.rec_grid) {
+    if (GRID_PAGE(ui.view) || ui.rec_grid) {
         h = hash(0x46584752u, en_fx_on | (uint32_t)ui.rec_grid << 16);
         if (h != ui.sig[1]) {
             ui.sig[1] = h;
@@ -1261,7 +1263,7 @@ static void draw_knobs(void)
 static void leds(void)
 {
     uint32_t b = 0, k = 0, i, ch = 0;
-    int grid = ui.view == V_FXGRID || ui.rec_grid;
+    int grid = GRID_PAGE(ui.view) || ui.rec_grid;
     b |= 1u << VIEW_BTN[ui.view];
     if (en_playing)
         b |= 1u << B_PLAY;
