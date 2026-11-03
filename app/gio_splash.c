@@ -4,14 +4,16 @@
  * then a four-point star that pops in on the O. Drawn from rectangles: no bitmap in flash.
  *
  *   gio_splash_begin()      the background, and the shading's table
- *   gio_splash_step(ms)     everything due by ms after the start, drawn (only what is new); 1 once it is all there.
+ *   gio_splash_step(ms)     the picture as it is ms after the start; 1 once it is all there.
  *                           The intro (intro.c) calls it every frame with the chime's own clock, so the star lands on
  *                           the chord however fast the screen draws
  *   gio_splash_draw()       the finished picture, at once
  *
  * The design grid: the word is 198 x 64 units, stroke 18, centred on the 240 x 240 screen. GS_SCALE is in eighths:
- * 8 = 1:1. Every shape is drawn a row at a time (one lcd_fill each), so each row takes its colour from a 64-entry
- * chrome table and every shape can be clipped: that is how the wipe works, and how the star is redrawn.
+ * 8 = 1:1. Every shape is drawn a row at a time, so each row takes its colour from a 64-entry chrome table and every
+ * shape can be clipped: that is how the wipe works. Each change is drawn whole into fm1-base's canvas (gfx.c: the
+ * word's box and the star's room above it, 198 x 72 of its 240 x 144) and sent in one blit: one transfer on the
+ * device, and what the browser's emulator sends on to its screen (it follows blits, not fills).
  *
  * Timing: the wipe is GIO_WIPE_FRAMES frames of GIO_FRAME_MS, then GIO_STAR_PAUSE, then the star's steps
  * GIO_FRAME_MS x 2 apart. The wipe and the pause (20 x 16 + 150 = 470 ms) must equal the chime's rise,
@@ -24,7 +26,7 @@
 
 #define GS_W 240
 #define GS_H 240
-#define GS_FILL(x, y, w, h, c) lcd_fill((uint32_t)(x), (uint32_t)(y), (uint32_t)(w), (uint32_t)(h), (c))
+#define GS_TOP 8                                       /* the canvas's rows above the word: the star's room */
 #define GS_SCALE 8                                     /* /8 */
 #define GS_RGB(r, g, b) (uint16_t)((((r) & 0xF8) << 8) | (((g) & 0xFC) << 3) | ((b) >> 3))   /* (lcd_fill swaps) */
 #define GIO_BG GS_RGB(0x0B, 0x0B, 0x10)
@@ -56,8 +58,8 @@ static const uint8_t gs_stops[][4] = {
 
 static uint16_t gs_chrome[GS_WORD_H];
 static int gs_ox, gs_oy;                               /* the word's top left on the screen */
-static int gs_cx0, gs_cy0, gs_cx1, gs_cy1;             /* the clip, pixels, end-exclusive */
-static int gs_wiped, gs_star;                          /* the wipe's frames drawn, the star's steps drawn */
+static int gs_cx0, gs_cy0, gs_cx1, gs_cy1;             /* the clip, screen pixels, end-exclusive */
+static int gs_wiped, gs_star;                          /* the wipe's frames shown, the star's steps shown */
 
 static void gs_build_chrome(void)
 {
@@ -103,7 +105,7 @@ static uint16_t gs_row_colour(int py, uint16_t c)
     return gs_chrome[dy];
 }
 
-static void gs_span(int x0, int x1, int py, uint16_t c)   /* one clipped row */
+static void gs_span(int x0, int x1, int py, uint16_t c)   /* one clipped row, screen pixels: into the canvas */
 {
     if (py < gs_cy0 || py >= gs_cy1)
         return;
@@ -112,7 +114,7 @@ static void gs_span(int x0, int x1, int py, uint16_t c)   /* one clipped row */
     if (x1 > gs_cx1)
         x1 = gs_cx1;
     if (x1 > x0)
-        GS_FILL(x0, py, x1 - x0, 1, gs_row_colour(py, c));
+        cv_rect(x0 - gs_ox, py - (gs_oy - GS_TOP), x1 - x0, 1, gs_row_colour(py, c));
 }
 
 static void gs_rrect(int x, int y, int w, int h, int r, uint16_t c)   /* a rounded rectangle: design units in */
@@ -167,6 +169,19 @@ static void gs_draw_star(int r)                        /* a tall thin diamond an
     }
 }
 
+static void gs_show(int wiped, int star)               /* the word wiped in this far, the star at this step */
+{
+    cv_begin((uint32_t)GS(GS_WORD_W), (uint32_t)(GS(GS_WORD_H) + GS_TOP), GIO_BG);
+    gs_clip(gs_ox, 0, gs_ox + GS(GS_WORD_W) * wiped / GIO_WIPE_FRAMES, GS_H);
+    gs_word();
+    gs_clip(0, 0, GS_W, GS_H);
+    if (star)
+        gs_draw_star(GS(GS_STAR_R) * gs_star_steps[star - 1] / 10);
+    cv_blit((uint32_t)gs_ox, (uint32_t)(gs_oy - GS_TOP));
+    gs_wiped = wiped;
+    gs_star = star;
+}
+
 void gio_splash_begin(void)
 {
     gs_build_chrome();
@@ -174,43 +189,26 @@ void gio_splash_begin(void)
     gs_oy = (GS_H - GS(GS_WORD_H)) / 2;
     gs_clip(0, 0, GS_W, GS_H);
     gs_wiped = gs_star = 0;
-    GS_FILL(0, 0, GS_W, GS_H, GIO_BG);
+    lcd_fill(0, 0, GS_W, GS_H, GIO_BG);
 }
 
 void gio_splash_draw(void)
 {
     gio_splash_begin();
-    gs_word();
-    gs_draw_star(GS(GS_STAR_R));
-    gs_wiped = GIO_WIPE_FRAMES;
-    gs_star = GS_NSTAR;
+    gs_show(GIO_WIPE_FRAMES, GS_NSTAR);
 }
 
 int gio_splash_step(uint32_t ms)
 {
-    int f = (int)(ms / GIO_FRAME_MS) + 1;              /* the wipe's frames due (frame 1 at 0 ms) */
+    int f = (int)(ms / GIO_FRAME_MS) + 1, s = 0;       /* the wipe's frames due (frame 1 at 0 ms); the star's step */
     if (f > GIO_WIPE_FRAMES)
         f = GIO_WIPE_FRAMES;
-    if (f > gs_wiped) {                                /* only the band newly revealed (a late frame: all it missed) */
-        gs_clip(gs_ox + GS(GS_WORD_W) * gs_wiped / GIO_WIPE_FRAMES, 0,
-                gs_ox + GS(GS_WORD_W) * f / GIO_WIPE_FRAMES, GS_H);
-        gs_word();
-        gs_wiped = f;
-    }
-    if (ms >= GIO_STAR_MS && gs_star < GS_NSTAR) {
-        int s = (int)((ms - GIO_STAR_MS) / (GIO_FRAME_MS * 2)) + 1;   /* the star's steps due: the latest drawn */
-        int rmax = GS(GS_STAR_R) * 13 / 10 + 1;
-        int cx = gs_ox + GS(GS_STAR_X), cy = gs_oy + GS(GS_STAR_Y);
+    if (ms >= GIO_STAR_MS) {
+        s = (int)((ms - GIO_STAR_MS) / (GIO_FRAME_MS * 2)) + 1;
         if (s > GS_NSTAR)
             s = GS_NSTAR;
-        if (s == gs_star)
-            return 0;
-        gs_clip(cx - rmax, cy - rmax, cx + rmax + 1, cy + rmax + 1);   /* its box at its largest, cleared */
-        GS_FILL(cx - rmax, cy - rmax, 2 * rmax + 1, 2 * rmax + 1, GIO_BG);
-        gs_word();
-        gs_draw_star(GS(GS_STAR_R) * gs_star_steps[s - 1] / 10);
-        gs_star = s;
-        gs_clip(0, 0, GS_W, GS_H);
     }
+    if (f != gs_wiped || s != gs_star)
+        gs_show(f, s);                                 /* (a late frame: straight to where it should be) */
     return gs_wiped == GIO_WIPE_FRAMES && gs_star == GS_NSTAR;
 }

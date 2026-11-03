@@ -6,6 +6,8 @@ expect intro 1
 expect playing 0
 wait 150
 shot wipe.png
+# drawn with blits, a frame each (the browser's emulator shows the screen only when there is a new one)
+expect blits >7
 expect intro 1
 wait 330
 shot landing.png
