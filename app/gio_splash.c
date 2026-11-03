@@ -40,7 +40,7 @@
  * tenths: it grows, overshoots and settles */
 #define GS_STAR_X 133
 #define GS_STAR_Y 8
-#define GS_STAR_R 10
+#define GS_STAR_R 14                                   /* (10 in the design: at 0.75x, 14 keeps it as big as it looked) */
 static const uint8_t gs_star_steps[] = {3, 6, 9, 12, 13, 11, 10};
 #define GS_NSTAR (int)sizeof gs_star_steps
 #define GIO_SPLASH_MS (GIO_STAR_MS + (GS_NSTAR - 1) * GIO_FRAME_MS * 2)   /* 662: the last step */
