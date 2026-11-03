@@ -73,7 +73,7 @@ static const char *const KNOB_LABEL[NVIEWS][4] = {
 };
 /* the black keys' effects, left to right */
 static const uint8_t BLACK_FX[11] = {FX_THROW, FX_TAPESTOP, FX_SWELL, FX_LOWPASS, FX_HIGHPASS, FX_SWEEP, FX_PHASER,
-                                     FX_FREEZE, FX_DROP, FX_STUTTER, FX_ROLL};
+                                     FX_FREEZE, FX_STUTTER, FX_DROP, FX_ROLL};
 /* a key (0 = F3 .. 26 = G5) as a white key's index (0..15), or as a black key's (0..10) with 0x80 set */
 static int key_role(int i)
 {

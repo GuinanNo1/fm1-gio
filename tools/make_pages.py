@@ -286,7 +286,7 @@ QUICK_BODY = """<main>
 <h2>Controls</h2>
 <div class="wrap"><table>
 <tr><td>White keys</td><td>The lead, a step of the scale each; the chord's notes lit</td></tr>
-<tr><td>Black keys</td><td>Effects while held: Throw, Tape stop, Swell, Low-pass, High-pass, Sweep, Phaser, Freeze, Drop, Stutter, Roll</td></tr>
+<tr><td>Black keys</td><td>Effects while held: Throw, Tape stop, Swell, Low-pass, High-pass, Sweep, Phaser, Freeze, Stutter, Drop, Roll</td></tr>
 <tr><td>PLAY</td><td>Play / stop (the song from the top)</td></tr>
 <tr><td>REC</td><td>Tap: hold the section. Held: the effects grid</td></tr>
 <tr><td>EDIT</td><td>The Chords page: the section's chords</td></tr>

@@ -68,7 +68,7 @@ does the same from Chrome or Edge once a site is published.
 | Control | What it does |
 |---|---|
 | White keys | The lead: each key a step of the song's scale, from its key note up. The keys of the chord playing are lit (the safest notes). Three notes or more and a pause of two beats: the lead answers (see The lead, below). On the FX pages: the sixteen effects. |
-| Black keys | Eleven effects, each while its key is held, left to right: Throw, Tape stop, Swell, Low-pass, High-pass, Sweep, Phaser, Freeze, Drop, Stutter, Roll. Lit; dark while held. |
+| Black keys | Eleven effects, each while its key is held, left to right: Throw, Tape stop, Swell, Low-pass, High-pass, Sweep, Phaser, Freeze, Stutter, Drop, Roll. Lit; dark while held. |
 | FX | The FX pages, one a press: Bass FX, Pad FX, Lead FX, Drums FX, then Space, then round again. On each, the white keys play the sixteen effects (see Effects). |
 | PLAY | Plays / stops. From stopped, the song starts from its first section. |
 | REC | A tap: HOLD, the section repeats until you tap it again. Held: the effects grid on the white keys for as long as it's held. |
