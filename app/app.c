@@ -5,6 +5,9 @@
  * its own -O2 unit). */
 #include "project.c"
 #include "ui.c"
+#include "gio_splash.c"
+#include "gio_chime.c"
+#include "intro.c"
 
 /* the engine's MIDI out (clock, notes when MIDI out is on): to USB */
 void en_midi_out(uint32_t st, uint32_t d1, uint32_t d2) { plat_midi_out(st >> 4 | st << 8 | d1 << 16 | d2 << 24); }
@@ -16,15 +19,38 @@ void app_init(void)
     project_load();                      /* defaults when nothing (or another format) is saved */
     project_apply();
 }
-void app_render(int32_t *lr, uint32_t n, uint32_t gain_q12) { en_render(lr, n, gain_q12); }
+void app_render(int32_t *lr, uint32_t n, uint32_t gain_q12)
+{
+    en_render(lr, n, gain_q12);
+    gio_chime_mix(lr, n, gain_q12);      /* the start-up chime, while it plays (intro.c) */
+}
 void app_panic(void)
 {
+    gio_chime_stop();
     en_play(0);
     en_panic();
 }
-void app_ui_init(void) { ui_init(); }
-void app_frame(void) { ui_frame(); }
-void app_input_only(void) { ui_input_only(); }
+void app_ui_init(void)                  /* at power-on the intro first; again (an update's return): the screen */
+{
+    if (!intro_seen && !intro_disabled)
+        intro_start();
+    else {
+        intro_on = 0;
+        ui_init();
+    }
+}
+void app_frame(void)
+{
+    if (intro_on)
+        intro_frame();
+    else
+        ui_frame();
+}
+void app_input_only(void)
+{
+    if (!intro_on)
+        ui_input_only();
+}
 void app_say(const char *a, const char *b) { ui_say(a, b); }
 
 #ifdef PLAT_HOST

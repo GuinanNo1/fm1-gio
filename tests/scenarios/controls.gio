@@ -1,5 +1,6 @@
 # the panel: the white keys play the lead, the Setup page's Key moves the key, SEL the next section, REC holds,
 # ALGORITHM the pattern, OCT the bass, HOME + SELECT the tempo (110 .. 130)
+intro off
 wait 500
 key w2 down
 wait 100

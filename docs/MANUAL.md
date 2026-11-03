@@ -49,7 +49,8 @@ does the same from Chrome or Edge once a site is published.
 
 ## 2. Getting started
 
-1. Switch it on. GIO-1 plays the first song, **Feel**, from its intro.
+1. Switch it on. The word **GIO** wipes in as a chord rises and lands with a star; then GIO-1 plays the first
+   song, **Feel**, from its intro. Touch any control to skip the start-up: the song starts when you let go.
 2. Turn **PRESETS** for another song. It starts from the top of its form.
 3. Play the **white keys**: the lead plays them, always in the song's scale. Play three notes or more and pause: the
    lead answers you, and takes your notes as its theme.

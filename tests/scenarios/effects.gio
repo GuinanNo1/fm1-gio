@@ -1,5 +1,6 @@
 # the drop-in effects: the black keys while held; FX, the Effects page, the white keys all sixteen; REC held, the
 # same for as long; ARP twice the Lead FX page; GLO twice the MIDI page
+intro off
 wait 1000
 key b0 down
 wait 100

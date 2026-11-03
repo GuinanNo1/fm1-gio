@@ -1,4 +1,5 @@
 # the screen reader (fm1-reader, announce.c): each page, knob, help card, button, section and chord is said
+intro off
 wait 200
 listen
 wait 100

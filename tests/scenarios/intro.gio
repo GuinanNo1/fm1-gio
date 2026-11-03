@@ -1,0 +1,63 @@
+# the start-up intro (intro.c): at power-on the word GIO wipes in as the chime rises, the star lands with the chord,
+# and once the chime has rung out the song starts, as before. Any control skips it, the song starting when they are
+# let go (or after 1.5 s: a stuck key); an "intro off" scenario or a second start (an update's return) has none
+wav intro.wav
+expect intro 1
+expect playing 0
+wait 150
+shot wipe.png
+expect intro 1
+wait 330
+shot landing.png
+wait 300
+shot splash.png
+expect intro 1
+expect playing 0
+wait 1500
+expect intro 1
+expect playing 0
+wait 1300
+expect intro 0
+expect playing 1
+expect section 0
+wavstop
+expect peak_db_max -1
+expect peak_db_min -30
+shot after.png
+# a restart: the intro again. A button held skips it; the song starts when it is let go, and the press (in the
+# intro) does nothing more: PLAY's release does not stop the song
+reboot
+expect intro 1
+wait 300
+press PLAY
+wait 600
+expect intro 1
+release PLAY
+wait 50
+expect intro 0
+expect playing 1
+wait 500
+expect playing 1
+# a key stuck down: the song starts after 1.5 s anyway
+reboot
+wait 100
+key w0 down
+wait 1400
+expect intro 1
+wait 200
+expect intro 0
+expect playing 1
+key w0 up
+# a turn skips it too
+reboot
+wait 200
+turn K1 1
+wait 50
+expect intro 0
+expect playing 1
+# intro off: none, now or after a restart
+intro off
+reboot
+expect intro 0
+wait 100
+expect playing 1

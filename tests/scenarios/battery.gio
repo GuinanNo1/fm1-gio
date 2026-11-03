@@ -1,4 +1,5 @@
 # the battery in the header: nothing until read, then its bars; a bolt on USB power
+intro off
 wait 300
 battery -1
 wait 200

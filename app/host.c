@@ -5,14 +5,17 @@
  *
  * GIO-1's checks: playing held view piece dirty sixteenths ext section bar layers key chordroot pad_level fx leadstep parN
  * nchords chordN (the section's progression: its length, chord N packed as gio.h's EN_CH) cslot progslot
- * battery (fm1-base's own: store_writes clocks_out midi_out peak_db_max peak_db_min). Its commands: battery N (the
+ * battery intro (fm1-base's own: store_writes clocks_out midi_out peak_db_max peak_db_min). Its commands: intro off|on
+ * (the start-up intro skipped, now and after a reboot: most scenarios start with it); battery N (the
  * battery read as N, plat.h's plat_battery: -1..4; "battery off" the simulator's own, full); saved_as old|v2 (the project
  * saved now as an older firmware left it: under the instrument's old name, or format 2, before the chords). */
 
 int app_expect(const char *what, int *got)
 {
     int g;
-    if (!strcmp(what, "playing"))
+    if (!strcmp(what, "intro"))                  /* the start-up intro on the screen (intro.c) */
+        g = intro_on;
+    else if (!strcmp(what, "playing"))
         g = en_playing;
     else if (!strcmp(what, "held"))
         g = en_held;
@@ -63,6 +66,14 @@ int app_expect(const char *what, int *got)
 int app_host_cmd(const char *cmd, const char *a, const char *b, const char *c, const char *d)
 {
     (void)b, (void)c, (void)d;
+    if (!strcmp(cmd, "intro")) {                 /* intro off: no start-up intro (now, and after a reboot); intro on */
+        intro_disabled = (uint8_t)!strcmp(a, "off");
+        if (intro_disabled && intro_on) {
+            gio_chime_stop();
+            intro_finish();
+        }
+        return 1;
+    }
     if (!strcmp(cmd, "battery")) {               /* battery N: plat_battery as N (-1..4), "battery off" its own */
         batt_host = (int8_t)(strcmp(a, "off") ? atoi(a) : -2);
         return 1;
@@ -83,6 +94,11 @@ int app_host_cmd(const char *cmd, const char *a, const char *b, const char *c, c
     return 0;
 }
 
-void app_host_reboot(void) { memset(&proj, 0, sizeof proj); }
+void app_host_reboot(void)                       /* what a power-off forgets: the project, and that the intro ran */
+{
+    memset(&proj, 0, sizeof proj);
+    intro_seen = intro_on = 0;
+    gio_chime_stop();
+}
 
 void app_speak_dump(void) { speak_dump(); }

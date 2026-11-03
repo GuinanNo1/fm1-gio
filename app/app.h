@@ -9,7 +9,9 @@
 
 #define APP_NAME "GIO-1"
 #define APP_TAGLINE "ELECTRONIC DISCO"
-#define APP_SPLASH_RGB RGB(255, 72, 170)
+#define APP_SPLASH_RGB RGB(255, 72, 170)  /* (fm1-base's own start-up screen: GIO-1 has its own, below) */
+#define APP_SPLASH                       /* app_splash (intro.c): the start-up screen's background, then the intro */
+void app_splash(void);
 #define APP_BLOCK 256u                   /* frames per audio block: 5.8 ms at 44.1 kHz */
 #ifdef APP_VERSION                       /* a release build passes its own (tools/build.py --release) */
 #define EN_VERSION APP_VERSION

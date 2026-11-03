@@ -1,4 +1,5 @@
 # the songs: PRESETS picks one, each remembers its settings, SAVE held puts one back to its recipe
+intro off
 wait 500
 expect piece 0
 expect par0 126

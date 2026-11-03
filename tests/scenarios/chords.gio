@@ -1,6 +1,7 @@
 # the Chords page (EDIT): the chord changes of the section playing, a chord at a time: KNOB 1 the chord, 2 its root,
 # 3 its type, 4 its length (the last one's End takes it away; past the last, a new one); kept with the song, saved,
 # and back to the song's own with SAVE held. SEL: the next section
+intro off
 wait 500
 expect piece 0
 tap EDIT

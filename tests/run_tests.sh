@@ -1,7 +1,7 @@
 #!/bin/sh
 # SPDX-License-Identifier: MPL-2.0
 # Copyright (C) 2026 Charles Vestal, Ian Guinan
-# GIO-1's tests: the instrument (tests/host/gio_test.c), the whole app in fm1-base's simulator (tests/scenarios/*.gio:
+# GIO-1's tests: the instrument (tests/host/gio_test.c), the start-up chime (tests/host/chime_test.c), the whole app in fm1-base's simulator (tests/scenarios/*.gio:
 # UI, the form, the panel, persistence, the screen reader), the browser build, and the update path against GIO-1's
 # package (./build.sh first). Screenshots and audio in app/build/scenarios/. fm1-base's own tests: base/tests/run_tests.sh.
 #   tests/run_tests.sh
@@ -26,6 +26,9 @@ run() {
 }
 run gio sh -c "$CC -O2 -ffp-contract=off -std=c99 -Wall -Wextra -Wdouble-promotion -Werror -DEN_HOST -Iapp/dsp -Ibase/include \
     -o $OUT/gio_test tests/host/gio_test.c app/dsp/gio.c -lm && $OUT/gio_test"
+run chime sh -c "$CC -O2 -std=c99 -Wall -Wextra -Wdouble-promotion -Werror -o $OUT/chime_test tests/host/chime_test.c && \
+    $OUT/chime_test && $CC -O2 -std=c99 -Wall -Wextra -Werror -DGIO_CHIME_SR=48000 -o $OUT/chime_test48 \
+    tests/host/chime_test.c && $OUT/chime_test48"
 if [ -f $B/gio.fwsc ]; then
     run ota-entry sh -c "$CC -w -o $OUT/ota_test base/tests/ota_test.c && $OUT/ota_test $B/gio.fwsc"
     run update-loader sh -c "head -c 100000 $B/gio.bin > $OUT/old_app.bin && \
