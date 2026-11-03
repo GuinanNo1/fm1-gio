@@ -77,7 +77,7 @@ does the same from Chrome or Edge once a site is published.
 | OCT− / OCT+ | The bass an octave down / up (−1 to +1). |
 | ALGORITHM | The bass pattern: Song (the song's own, section by section), Pump, Pump 16, Arpeggio, Gallop, Octaves, Slow. |
 | PRESETS | The song. Each remembers its settings as you left it. |
-| HOME, ENV, ARP, LFO, SEQ, FX, GLO | The pages: Song, Bass, Lead, Pad, Drums, Bass FX, Setup. HOME again: Mixer; ARP again: Lead 2; FX: the four FX pages, then Space; GLO again: MIDI, then Mirror. Each press goes on to the button's next page, then round again. |
+| HOME, ENV, ARP, LFO, SEQ, FX, GLO | The pages: Song, Bass, Lead, Pad, Drums, Bass FX, Setup. HOME again: Mixer; ENV again: Bass 2; ARP again: Lead 2; FX: the four FX pages, then Space; GLO again: MIDI, then Mirror. Each press goes on to the button's next page, then round again. |
 | SELECT | The previous / next page. With HOME held: the tempo, 110 to 130. |
 | KNOB 1–4 | The page's four values. A quick turn speeds up; a slow one goes a step at a time. |
 | SAVE | Saves all the songs. Held 1.5 s: the song back to its recipe (then SAVE to keep that). |
@@ -189,6 +189,7 @@ GIO-1's own, written as it plays.
 | Song (HOME) | Tempo | Evolve | Motion | Arrange |
 | Mixer (HOME again) | Bass | Pad | Lead | Drums |
 | Bass (ENV) | Level | Cutoff | Emphasis | Decay |
+| Bass 2 (ENV again) | Voice (Analog, FM) | Ratio | FM depth | FM decay |
 | Lead (ARP) | Level | Voice | Busy | Glide |
 | Lead 2 (ARP again) | Echo | Reverb | Octave | Tone |
 | Pad (LFO) | Level | Colour | Bright | Phaser |
@@ -265,6 +266,13 @@ brings up (the FX pages, below) shows them as a grid, and the white keys play th
 **REC held** brings the same grid up on any page for as long as it's held, and a key still held when REC is let go
 keeps its effect until it's let go. Eleven of them are also on the black keys at all times.
 
+**Bass 2** (ENV again): the bass's **Voice**, **Analog** (two saws and a square an octave down) or **FM** (a sine
+modulated by a sine, with a sine an octave down for weight), and the FM voice's own settings: **Ratio**, the
+modulator's pitch against the note (0.5, 1, 1.5, 2, 3, 4: 1 and 2 the classic FM basses, 3 and 4 metallic), **FM
+depth**, how bright and growling it is, and **FM decay**, how fast that brightness falls after each note (short: a
+pluck; long: a growl that stays). Both voices go through the same ladder filter and envelope, so the Bass page's
+Level, Cutoff, Emphasis and Decay work on either. Each song keeps its own; every song starts on Analog.
+
 **The Mixer** (HOME again): the four instruments' levels side by side, KNOB 1–4 Bass, Pad, Lead and Drums. They are
 the same settings as each instrument's own page's Level, so a change shows on both.
 
@@ -326,6 +334,9 @@ back from there.
 | Drums Level · Fills · Hats | 0–100 | The kit's level, how often and how long the fills, the hats' level, colour and density (sixteenths from 35) |
 | Swing | 50–75% | The off sixteenths late |
 | Echo · Feedback · Reverb | 0–100 | The bass's send to the echo, the echo's repeats, the plate's overall level |
+| Bass voice | Analog, FM | Bass 2's KNOB 1 |
+| Ratio | 0.5, 1, 1.5, 2, 3, 4 | The FM bass's modulator against the note |
+| FM depth · FM decay | 0–100 | How bright the FM bass is; how fast that falls after a note (30 ms to 1.5 s) |
 | Bass verb · Pad echo · Pad verb · Drum echo · Drum verb | 0–100 | Each instrument's sends (the FX pages): 50 the reverbs as they were; Drum echo the snare's and toms' |
 | Echo time | 1/16, 1/8, 1/8., 1/4, 1/4., 1/2 | In time with the tempo |
 | Key | C–B | The song's key |

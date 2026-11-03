@@ -22,7 +22,7 @@ key w5 up
 # white key 16 Roll
 tap FX
 wait 100
-expect view 7
+expect view 8
 key w6 down
 key w15 down
 wait 300
@@ -40,7 +40,7 @@ spin K3 1
 expect par21 1
 shot bassfx.png
 tap FX
-expect view 8
+expect view 9
 spin K1 10
 expect par37 10
 expect par21 1
@@ -51,14 +51,14 @@ key w8 up
 wait 100
 shot padfx.png
 tap FX
-expect view 9
-tap FX
 expect view 10
+tap FX
+expect view 11
 turn K1 -1
 expect par39 59
 shot drumsfx.png
 tap FX
-expect view 11
+expect view 12
 expect par21 1
 key w0 down
 wait 200
@@ -67,9 +67,9 @@ key w0 up
 wait 100
 expect fx 0
 tap FX
-expect view 7
+expect view 8
 tap SEL
-expect view 7
+expect view 8
 # from another page, FX: Bass FX; the white keys the lead again on the others
 tap LFO
 key w5 down
@@ -77,7 +77,7 @@ wait 100
 expect fx 0
 key w5 up
 tap FX
-expect view 7
+expect view 8
 tap HOME
 expect view 0
 # HOME again: the Mixer, each instrument's level (the same as its own page's KNOB 1); again: the Song page
@@ -92,6 +92,17 @@ tap HOME
 expect view 0
 tap SEQ
 expect par16 71
+# ENV, ENV: Bass 2, the voice (Analog, FM) and the FM's ratio, depth and decay; ENV again: the Bass page
+tap ENV
+tap ENV
+expect view 3
+turn K1 1
+expect par41 1
+turn K2 1
+expect par42 2
+shot bass2.png
+tap ENV
+expect view 2
 # REC held: the grid while held; a key held keeps its effect after REC is let go; a tap of REC still holds
 press REC
 wait 500
@@ -112,18 +123,18 @@ expect held 1
 tap REC
 # ARP, ARP: Lead 2; its first knob the lead's echo
 tap ARP
-expect view 3
-tap ARP
 expect view 4
+tap ARP
+expect view 5
 spin K1 10
 expect par30 50
 shot leadfx.png
 tap ARP
-expect view 3
+expect view 4
 # GLO, GLO: the MIDI page; Channels to 4, 5, 6, 11
 tap GLO
 tap GLO
-expect view 13
+expect view 14
 spin K2 1
 expect par33 1
 shot midi.png

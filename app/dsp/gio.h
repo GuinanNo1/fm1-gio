@@ -47,6 +47,8 @@ enum {
     P_LECHO, P_LREV, P_LTONE,                         /* the lead's own echo and reverb sends, its brightness */
     P_MCHAN, P_MCLOCK, P_MCLKOUT,                     /* MIDI: the channel set, the clock's source, clock out */
     P_BREV, P_PECHO, P_PREV, P_DECHO, P_DREV,         /* the FX pages: the bass's reverb, the pad's and drums' sends */
+    P_BVOICE, P_BRATIO, P_BFM, P_BFMDEC,              /* Bass 2: the bass's voice (Analog, FM), the FM's ratio, depth
+                                                       * and its decay */
     P_NPARAMS
 };
 typedef struct {

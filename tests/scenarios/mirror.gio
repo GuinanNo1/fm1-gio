@@ -38,7 +38,7 @@ mirror_rate 48
 tap GLO
 tap GLO
 tap GLO
-expect view 14
+expect view 15
 shot mirrorpage.png
 turn K1 -1
 expect mirror 0

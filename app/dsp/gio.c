@@ -29,6 +29,7 @@ static const en_param_t PARAMS[P_NPARAMS] = {
     {"Channels", 0, 1, 0},    {"Clock", 0, 2, 0},     {"Clock out", 0, 1, 1},
     {"Bass verb", 0, 100, 50}, {"Pad echo", 0, 100, 0}, {"Pad verb", 0, 100, 50}, {"Drum echo", 0, 100, 45},
     {"Drum verb", 0, 100, 50},
+    {"Bass voice", 0, 1, 0}, {"Ratio", 0, 5, 1}, {"FM depth", 0, 100, 50}, {"FM decay", 0, 100, 40},
 };
 const en_param_t *en_param_info(int i) { return (i >= 0 && i < P_NPARAMS) ? &PARAMS[i] : &PARAMS[0]; }
 
@@ -38,6 +39,9 @@ enum { LV_MINI, LV_ODYSSEY, LV_SYNTHI, LV_FLUTE, LV_THEREMIN, LV_FMLEAD, LV_FMBR
 static const char *const LVOICE_NAME[LV_N] = {"Mini", "Odyssey", "Synthi", "Flute", "Theremin", "FM Lead", "FM Brass",
                                               "FM Reed", "Choir", "Robot"};
 static const char *const PCOLOUR_NAME[3] = {"Strings", "Choir", "Saws"};
+/* the FM bass's modulator against the note */
+static const char *const BRATIO_NAME[6] = {"0.5", "1", "1.5", "2", "3", "4"};
+static const float BRATIO[6] = {0.5f, 1.0f, 1.5f, 2.0f, 3.0f, 4.0f};
 
 static char *itoa_s(int v, char *b)
 {
@@ -73,6 +77,10 @@ void en_param_text(int i, int v, char *b)
         s = LVOICE_NAME[(unsigned)v < LV_N ? v : 0];
     else if (i == P_PCOLOUR)
         s = PCOLOUR_NAME[(unsigned)v < 3u ? v : 0];
+    else if (i == P_BVOICE)
+        s = v ? "FM" : "Analog";
+    else if (i == P_BRATIO)
+        s = BRATIO_NAME[(unsigned)v < 6u ? v : 1];
     else if (i == P_PATTERN)
         s = EN_PATTERN_NAME[(unsigned)v < EN_NPATTERNS ? v : 0];
     else if (i == P_ROOT)
@@ -214,9 +222,9 @@ typedef struct {
 #define ALL (L_BASS | L_PAD | L_LEAD | DR)
 #define GR (L_BASS | L_PAD | DR)
 
-/* recipes:    Tem Evo Mot Arr  Bas Cut Emp Dec  Led Voi Bus Gli  Pad Col Bri Pha  Drm Fil Hat Swi  Ech ET Fbk Rev  Key Tun MI  Pat BO LO  LEc LRv Ton Chn Clk CkO  BRv PEc PRv DEc DRv */
+/* recipes:    Tem Evo Mot Arr  Bas Cut Emp Dec  Led Voi Bus Gli  Pad Col Bri Pha  Drm Fil Hat Swi  Ech ET Fbk Rev  Key Tun MI  Pat BO LO  LEc LRv Ton Chn Clk CkO  BRv PEc PRv DEc DRv  BVo Rat FMd FMy */
 static const song_t SONGS[EN_NSONGS] = {
-    {"Feel", {126, 40, 55, 35, 85, 42, 50, 35, 40, 1, 35, 30, 45, 2, 45, 45, 70, 30, 55, 0, 60, 0, 30, 35, 0, 0, 1, 0, 0, 0, 40, 45, 50, 0, 0, 0, 50, 0, 50, 60, 50},
+    {"Feel", {126, 40, 55, 35, 85, 42, 50, 35, 40, 1, 35, 30, 45, 2, 45, 45, 70, 30, 55, 0, 60, 0, 30, 35, 0, 0, 1, 0, 0, 0, 40, 45, 50, 0, 0, 0, 50, 0, 50, 60, 50, 0, 1, 50, 40},
      M_MAJOR, A_PUMP, 7, 1,
      {{"Intro", 8, 0, L_BASS | L_HATS, 0, F_BUILD, 0},
       {"Verse", 16, 0, L_BASS | L_PAD | L_KICK | L_HATS | L_OHAT, 0, 0, 0},
@@ -226,7 +234,7 @@ static const song_t SONGS[EN_NSONGS] = {
       {"Chorus", 8, 1, ALL, 0, 0, 0},
       {"Break", 8, 0, L_BASS | L_PAD | L_HATS, 0, F_BREAK, 0}},
      {{{0, Q_MAJ, 16}}, {{0, Q_MAJ, 8}, {3, Q_MAJ, 8}, {5, Q_MAJ, 8}, {7, Q_MAJ, 8}}}},
-    {"Gio", {113, 35, 50, 30, 80, 48, 35, 30, 50, 0, 55, 25, 55, 0, 55, 25, 70, 45, 50, 0, 25, 1, 30, 40, 9, 0, 1, 0, 0, 0, 35, 50, 55, 0, 0, 0, 50, 0, 50, 25, 50},
+    {"Gio", {113, 35, 50, 30, 80, 48, 35, 30, 50, 0, 55, 25, 55, 0, 55, 25, 70, 45, 50, 0, 25, 1, 30, 40, 9, 0, 1, 0, 0, 0, 35, 50, 55, 0, 0, 0, 50, 0, 50, 25, 50, 0, 1, 50, 40},
      M_MINOR, A_ARP, 6, 2,
      {{"Click", 8, 2, L_HATS, 0, F_CLICK, 0},
       {"Arpeggio", 8, 0, L_BASS | L_HATS, 0, F_BUILD | F_CLICK, 0},
@@ -235,7 +243,7 @@ static const song_t SONGS[EN_NSONGS] = {
       {"Fills", 8, 0, GR | L_TOMS, 0, F_TOMS, 0},
       {"House", 16, 0, ALL, 0, 0, 0}},
      {{{0, Q_MIN, 8}, {7, Q_MIN, 8}}, {{0, Q_MIN, 8}, {8, Q_MAJ, 8}}, {{0, Q_MIN, 16}}}},
-    {"Mutant", {123, 45, 60, 35, 80, 38, 58, 40, 45, 2, 40, 40, 50, 1, 40, 55, 65, 35, 45, 0, 40, 2, 45, 45, 5, 0, 1, 0, 0, 0, 45, 55, 45, 0, 0, 0, 50, 0, 50, 40, 50},
+    {"Mutant", {123, 45, 60, 35, 80, 38, 58, 40, 45, 2, 40, 40, 50, 1, 40, 55, 65, 35, 45, 0, 40, 2, 45, 45, 5, 0, 1, 0, 0, 0, 45, 55, 45, 0, 0, 0, 50, 0, 50, 40, 50, 0, 1, 50, 40},
      M_MINOR, A_GALLOP, 6, 2,
      {{"Dawn", 8, 0, L_PAD, 0, F_BUILD, 0},
       {"Sequence", 8, 0, L_BASS | L_PAD, 0, F_BUILD, 0},
@@ -244,7 +252,7 @@ static const song_t SONGS[EN_NSONGS] = {
       {"Bridge", 8, 2, L_BASS | L_PAD | L_KICK | L_SNARE, 0, 0, 0},
       {"Theme", 16, 1, ALL, 0, 0, 0}},
      {{{0, Q_MIN, 16}}, {{0, Q_MIN, 8}, {8, Q_MAJ, 8}}, {{5, Q_MIN, 8}, {0, Q_MIN, 8}}}},
-    {"Heaven", {130, 35, 45, 25, 75, 45, 40, 30, 50, 1, 45, 30, 60, 1, 50, 35, 70, 40, 55, 0, 30, 1, 30, 40, 8, 0, 1, 0, 0, 0, 40, 55, 50, 0, 0, 0, 50, 0, 50, 30, 50},
+    {"Heaven", {130, 35, 45, 25, 75, 45, 40, 30, 50, 1, 45, 30, 60, 1, 50, 35, 70, 40, 55, 0, 30, 1, 30, 40, 8, 0, 1, 0, 0, 0, 40, 55, 50, 0, 0, 0, 50, 0, 50, 30, 50, 0, 1, 50, 40},
      M_MAJOR, A_PUMP16, 6, 0,
      {{"Slow", 16, 0, L_PAD | L_BASS | L_KICK | L_SNARE | L_LEAD, A_SLOW, F_HALF, 0},
       {"Slow", 16, 0, L_PAD | L_BASS | L_KICK | L_SNARE | L_HATS | L_LEAD, A_SLOW, F_HALF, 0},
@@ -254,7 +262,7 @@ static const song_t SONGS[EN_NSONGS] = {
       {"Fast", 16, 1, ALL, 0, 0, 0}},
      {{{0, Q_MAJ, 8}, {7, Q_MAJ, 8}, {9, Q_MIN11, 8}, {7, Q_MAJ, 8}},
       {{0, Q_MAJ, 4}, {7, Q_MAJ, 4}, {2, Q_MAJ, 4}, {0, Q_MAJ, 4}}, {{9, Q_MIN11, 16}}}},
-    {"TickTock", {126, 40, 45, 30, 80, 50, 40, 25, 45, 2, 65, 20, 45, 2, 55, 20, 75, 50, 75, 0, 30, 0, 25, 35, 0, 0, 1, 0, 0, 0, 30, 40, 60, 0, 0, 0, 50, 0, 50, 30, 50},
+    {"TickTock", {126, 40, 45, 30, 80, 50, 40, 25, 45, 2, 65, 20, 45, 2, 55, 20, 75, 50, 75, 0, 30, 0, 25, 35, 0, 0, 1, 0, 0, 0, 30, 40, 60, 0, 0, 0, 50, 0, 50, 30, 50, 0, 1, 50, 40},
      M_MAJOR, A_PUMP16, 9, 1,
      {{"Intro", 4, 4, L_BASS | L_KICK | L_HATS, 0, F_BUILD, 0},
       {"Verse", 8, 0, GR, 0, 0, 0},
@@ -267,7 +275,7 @@ static const song_t SONGS[EN_NSONGS] = {
       {"Outro", 4, 4, GR, 0, 0, 3}},
      {{{7, Q_MAJ, 4}, {5, Q_MAJ, 4}}, {{9, Q_MIN, 4}, {2, Q_MIN, 4}, {7, Q_MAJ, 4}, {0, Q_MAJ, 4}},
       {{7, Q_MAJ, 8}, {4, Q_MIN7, 4}, {7, Q_MAJ, 4}}, {{0, Q_MAJ, 8}, {3, Q_MAJ, 8}}, {{0, Q_MAJ, 16}}}},
-    {"Energy", {123, 40, 50, 35, 85, 45, 60, 25, 45, 0, 50, 25, 50, 2, 60, 30, 75, 40, 60, 0, 30, 2, 35, 35, 0, 0, 1, 0, 0, 0, 35, 45, 55, 0, 0, 0, 50, 0, 50, 30, 50},
+    {"Energy", {123, 40, 50, 35, 85, 45, 60, 25, 45, 0, 50, 25, 50, 2, 60, 30, 75, 40, 60, 0, 30, 2, 35, 35, 0, 0, 1, 0, 0, 0, 35, 45, 55, 0, 0, 0, 50, 0, 50, 30, 50, 0, 1, 50, 40},
      M_MINOR, A_OCT, 6, 1,
      {{"Intro", 8, 0, L_BASS | L_KICK | L_HATS, 0, F_BUILD, 0},
       {"Groove", 16, 0, GR, 0, 0, 0},
@@ -276,7 +284,7 @@ static const song_t SONGS[EN_NSONGS] = {
       {"Break", 8, 0, L_BASS | L_PAD, 0, F_BREAK, 0},
       {"Build", 4, 0, L_BASS | L_PAD | L_SNARE, 0, F_BUILD, 0}},
      {{{0, Q_MIN, 16}}, {{8, Q_MAJ, 8}, {10, Q_MAJ, 8}}, {{0, Q_MIN, 8}, {10, Q_MAJ, 8}}}},
-    {"Fly", {126, 40, 60, 30, 70, 42, 45, 35, 70, 4, 40, 75, 55, 0, 45, 45, 65, 35, 50, 0, 35, 3, 35, 45, 9, 0, 1, 0, 0, 0, 55, 60, 50, 0, 0, 0, 50, 0, 50, 35, 50},
+    {"Fly", {126, 40, 60, 30, 70, 42, 45, 35, 70, 4, 40, 75, 55, 0, 45, 45, 65, 35, 50, 0, 35, 3, 35, 45, 9, 0, 1, 0, 0, 0, 55, 60, 50, 0, 0, 0, 50, 0, 50, 35, 50, 0, 1, 50, 40},
      M_MINOR, A_OCT, 5, 1,
      {{"Liftoff", 8, 2, L_PAD | L_BASS, 0, F_BUILD, 0},
       {"Theme", 16, 0, ALL, 0, 0, 0},
@@ -284,7 +292,7 @@ static const song_t SONGS[EN_NSONGS] = {
       {"Theme", 16, 0, ALL, 0, 0, 0},
       {"Space", 8, 2, L_PAD | L_LEAD | L_BASS, 0, F_BREAK, 0}},
      {{{0, Q_MIN, 8}, {8, Q_MAJ, 4}, {10, Q_MAJ, 4}}, {{0, Q_MIN, 8}, {5, Q_MIN, 8}}, {{0, Q_MIN, 16}}}},
-    {"Lover", {130, 40, 45, 30, 80, 46, 50, 25, 55, 9, 55, 15, 45, 0, 50, 30, 75, 40, 60, 0, 35, 0, 30, 35, 0, 0, 1, 0, 0, 0, 30, 40, 55, 0, 0, 0, 50, 0, 50, 35, 50},
+    {"Lover", {130, 40, 45, 30, 80, 46, 50, 25, 55, 9, 55, 15, 45, 0, 50, 30, 75, 40, 60, 0, 35, 0, 30, 35, 0, 0, 1, 0, 0, 0, 30, 40, 55, 0, 0, 0, 50, 0, 50, 35, 50, 0, 1, 50, 40},
      M_MINOR, A_PUMP16, 5, 1,
      {{"Intro", 8, 2, L_BASS | L_KICK | L_HATS, 0, F_BUILD, 0},
       {"Verse", 16, 0, GR | L_LEAD, 0, 0, 0},
@@ -292,7 +300,7 @@ static const song_t SONGS[EN_NSONGS] = {
       {"Robot", 8, 2, L_BASS | L_LEAD | L_KICK | L_HATS, 0, 0, 0},
       {"Hook", 8, 1, ALL, 0, 0, 0}},
      {{{0, Q_MIN, 8}, {10, Q_MAJ, 8}}, {{8, Q_MAJ, 4}, {10, Q_MAJ, 4}, {0, Q_MIN, 8}}, {{0, Q_MIN, 16}}}},
-    {"Express", {128, 40, 60, 30, 85, 44, 55, 30, 50, 5, 50, 30, 50, 0, 50, 70, 75, 45, 60, 0, 45, 0, 30, 35, 2, 0, 1, 0, 0, 0, 40, 45, 55, 0, 0, 0, 50, 0, 50, 45, 50},
+    {"Express", {128, 40, 60, 30, 85, 44, 55, 30, 50, 5, 50, 30, 50, 0, 50, 70, 75, 45, 60, 0, 45, 0, 30, 35, 2, 0, 1, 0, 0, 0, 40, 45, 55, 0, 0, 0, 50, 0, 50, 45, 50, 0, 1, 50, 40},
      M_MINOR, A_PUMP16, 7, 1,
      {{"Intro", 8, 0, L_BASS, 0, F_BUILD, 0},
       {"Drive", 16, 0, L_BASS | L_KICK | L_HATS | L_OHAT, 0, 0, 0},
@@ -632,7 +640,8 @@ static void bass_evolve(void)                   /* a bar: a weak step changes, o
 }
 
 typedef struct {
-    float ph[3], inc[3];
+    float ph[3], inc[3];                        /* Analog: two saws and a square; FM: the carrier, modulator, sub */
+    float fmenv;                                /* FM: the depth's envelope, 1 at the note, falling */
     float s[4];                                 /* the ladder */
     float amp, aenv, fenv, adec, fdec, rel;
     float g, k;                                 /* the ladder's coefficients (every 16 samples) */
@@ -642,15 +651,23 @@ typedef struct {
 } bass_t;
 static bass_t bass;
 static float bass_vol, bcut, breso, bdec, build;
+static int bvoice;                              /* Bass 2: 0 Analog, 1 FM */
+static float bratio = 1.0f, bfm = 0.75f, bfmdec;   /* FM: the modulator's ratio, the depth (turns), its decay a sample */
 
 static void bass_trigger(int n, int accent, int32_t len)
 {
     float f = mtof((float)n);
     if (bass.note && en_playing)
         midi(0x80, bass.note, 0);
-    bass.inc[0] = f * 0.99654f * (1.0f / EN_SR);   /* -6 and +6 cents */
-    bass.inc[1] = f * 1.00347f * (1.0f / EN_SR);
-    bass.inc[2] = f * 0.5f * (1.0f / EN_SR);       /* the square, an octave down */
+    if (bvoice) {                                  /* FM: the carrier on the note, the modulator at the ratio */
+        bass.inc[0] = f * (1.0f / EN_SR);
+        bass.inc[1] = f * bratio * (1.0f / EN_SR);
+    } else {
+        bass.inc[0] = f * 0.99654f * (1.0f / EN_SR);   /* -6 and +6 cents */
+        bass.inc[1] = f * 1.00347f * (1.0f / EN_SR);
+    }
+    bass.inc[2] = f * 0.5f * (1.0f / EN_SR);       /* the square (FM: a sine), an octave down */
+    bass.fmenv = 1.0f;
     bass.aenv = 1.0f;
     bass.fenv = 1.0f;
     bass.acc = accent ? 1.0f : 0.0f;
@@ -1649,6 +1666,10 @@ static void apply(int p, int v)
     case P_PREV: pad_rev = 0.009f * (float)v; break;                    /* 50: 0.45 */
     case P_DECHO: drum_echo = (float)(v * v) * 0.0001f; break;          /* the law of the bass's Echo */
     case P_DREV: drum_rev = 0.02f * (float)v; break;                    /* 50: as it was */
+    case P_BVOICE: bvoice = v != 0; break;
+    case P_BRATIO: bratio = BRATIO[(unsigned)v < 6u ? v : 1]; break;
+    case P_BFM: bfm = 1.5f * (float)v * 0.01f; break;                    /* the depth: up to 1.5 turns */
+    case P_BFMDEC: bfmdec = fm_expf(-6.9f / ((0.03f + 1.5f * (float)(v * v) * 0.0001f) * EN_SR)); break;   /* 30 ms .. 1.5 s */
     case P_TUNE: tunefac = fm_exp2f((float)v * (1.0f / 1200.0f)); break;
     case P_LECHO: lead_echo = (float)(v * v) * 0.00009f; break;
     case P_LREV: lead_rev = (float)v * 0.01f; break;
@@ -1912,7 +1933,9 @@ static void render_bass(uint32_t n)
     const float g = bass_vol * 1.0f;
     bass_t *v = &bass;
     float p0 = v->ph[0], p1 = v->ph[1], p2 = v->ph[2], s0 = v->s[0], s1 = v->s[1], s2 = v->s[2], s3 = v->s[3];
-    float a = v->amp, ae = v->aenv, fe = v->fenv;
+    float a = v->amp, ae = v->aenv, fe = v->fenv, me = v->fmenv;
+    const int fm = bvoice;
+    const float idx0 = bfm * (0.25f + 0.75f * (1.0f + 0.5f * v->acc)), mdec = bfmdec;
     if (!v->on && a < 1e-5f) {
         v->amp = 0.0f;
         return;
@@ -1932,7 +1955,13 @@ static void render_bass(uint32_t n)
         }
         fe *= v->fdec;
         a += (tgt - a) * (tgt > a ? 0.06f : 0.0035f);   /* ~0.4 ms attack, ~6 ms release */
-        x = 0.5f * blep_saw(p0, v->inc[0]) + 0.42f * blep_saw(p1, v->inc[1]) + 0.45f * blep_sq(p2, v->inc[2]);
+        if (fm) {                                /* FM: a sine on a sine (the depth falling after the note), a sine sub */
+            float idx = idx0 * (0.25f + 0.75f * me);
+            x = 0.62f * sine(p0 + 8.0f + idx * sine(p1)) + 0.22f * sine(p2);   /* (as loud as Analog: measured) */
+            me *= mdec;
+        } else {
+            x = 0.5f * blep_saw(p0, v->inc[0]) + 0.42f * blep_saw(p1, v->inc[1]) + 0.45f * blep_sq(p2, v->inc[2]);
+        }
         p0 += v->inc[0];
         if (p0 >= 1.0f)
             p0 -= 1.0f;
@@ -1964,6 +1993,7 @@ static void render_bass(uint32_t n)
     v->amp = a;
     v->aenv = ae;
     v->fenv = fe;
+    v->fmenv = me;
     if (v->gate <= 0 && a < 1e-4f)
         v->on = 0;
 }

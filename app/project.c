@@ -126,9 +126,11 @@ int project_load(void)
     if (n >= 8 && proj.magic == PROJ_MAGIC_OLD)
         proj.magic = PROJ_MAGIC;
     if (proj.magic == PROJ_MAGIC && ((proj.format == 3u && n == (int)sizeof(project_v3_t)) ||
-                                     (proj.format == 2u && n == (int)PROJ_V2_SIZE)))
+                                     (proj.format == 2u && n == (int)PROJ_V2_SIZE))) {
         from_v3(n);
-    if (n >= 8 && project_valid()) {
+        n = (int)sizeof proj;
+    }
+    if (n == (int)sizeof proj && project_valid()) {   /* (its own size: format 4 grew before its release) */
         for (i = 0; i < NPIECES; i++)
             if (!chords_ok(i))
                 chords_recipe(i);
