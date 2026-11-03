@@ -243,7 +243,7 @@ static const song_t SONGS[EN_NSONGS] = {
       {"Fills", 8, 0, GR | L_TOMS, 0, F_TOMS, 0},
       {"House", 16, 0, ALL, 0, 0, 0}},
      {{{0, Q_MIN, 8}, {7, Q_MIN, 8}}, {{0, Q_MIN, 8}, {8, Q_MAJ, 8}}, {{0, Q_MIN, 16}}}},
-    {"Mutant", {123, 45, 60, 35, 80, 38, 58, 40, 45, 2, 40, 40, 50, 1, 40, 55, 65, 35, 45, 0, 40, 2, 45, 45, 5, 0, 1, 0, 0, 0, 45, 55, 45, 0, 0, 0, 50, 0, 50, 40, 50, 0, 1, 50, 40},
+    {"Mutant", {123, 45, 60, 35, 80, 38, 58, 40, 45, 2, 40, 40, 43, 1, 40, 55, 65, 35, 45, 0, 40, 2, 45, 45, 5, 0, 1, 0, 0, 0, 45, 55, 45, 0, 0, 0, 50, 0, 50, 40, 50, 0, 1, 50, 40},
      M_MINOR, A_GALLOP, 6, 2,
      {{"Dawn", 8, 0, L_PAD, 0, F_BUILD, 0},
       {"Sequence", 8, 0, L_BASS | L_PAD, 0, F_BUILD, 0},
@@ -252,7 +252,7 @@ static const song_t SONGS[EN_NSONGS] = {
       {"Bridge", 8, 2, L_BASS | L_PAD | L_KICK | L_SNARE, 0, 0, 0},
       {"Theme", 16, 1, ALL, 0, 0, 0}},
      {{{0, Q_MIN, 16}}, {{0, Q_MIN, 8}, {8, Q_MAJ, 8}}, {{5, Q_MIN, 8}, {0, Q_MIN, 8}}}},
-    {"Heaven", {130, 35, 45, 25, 75, 45, 40, 30, 50, 1, 45, 30, 60, 1, 50, 35, 70, 40, 55, 0, 30, 1, 30, 40, 8, 0, 1, 0, 0, 0, 40, 55, 50, 0, 0, 0, 50, 0, 50, 30, 50, 0, 1, 50, 40},
+    {"Heaven", {130, 35, 45, 25, 75, 45, 40, 30, 50, 1, 45, 30, 51, 1, 50, 35, 70, 40, 55, 0, 30, 1, 30, 40, 8, 0, 1, 0, 0, 0, 40, 55, 50, 0, 0, 0, 50, 0, 50, 30, 50, 0, 1, 50, 40},
      M_MAJOR, A_PUMP16, 6, 0,
      {{"Slow", 16, 0, L_PAD | L_BASS | L_KICK | L_SNARE | L_LEAD, A_SLOW, F_HALF, 0},
       {"Slow", 16, 0, L_PAD | L_BASS | L_KICK | L_SNARE | L_HATS | L_LEAD, A_SLOW, F_HALF, 0},
@@ -2100,7 +2100,7 @@ static void render_pad(uint32_t n)
                 x = (p0 < 0.5f ? 4.0f * p0 - 1.0f : 3.0f - 4.0f * p0) + 0.4f * blep_saw(p1, v->inc[1]);
                 l1 = svf(v->c1, f, x, &bp1);
                 svf(v->c2, f + 2, x, &bp2);
-                x = (bp1 * v->c1[3] + 0.5f * bp2 * v->c2[3] + 0.35f * l1) * 0.5f;
+                x = (bp1 * v->c1[3] + 0.5f * bp2 * v->c2[3] + 0.35f * l1) * 1.1f;   /* (as loud as strings: measured) */
             } else {                             /* strings and saws: two saws */
                 x = 0.5f * (blep_saw(p0, v->inc[0]) + blep_saw(p1, v->inc[1]));
             }
