@@ -126,12 +126,33 @@ def page(title, desc, body, here, depth, css=""):
 """
 
 
+def logo_svg():
+    """GIO-1's start-up logo (app/gio_splash.c: the same shapes in its design units, 290 x 64, its chrome stops and its
+    star at full size), as an SVG for the home page: the counters cut out (the page shows through)"""
+    # (x, y, w, h, radius, 1 = the chrome, 0 = cut out), in drawing order, as gs_word draws them
+    shapes = [(0, 0, 76, 64, 32, 1), (18, 18, 40, 28, 14, 0), (46, 0, 30, 32, 0, 0), (58, 32, 18, 32, 0, 1),
+              (46, 46, 30, 18, 0, 1), (90, 0, 18, 64, 9, 1), (122, 0, 76, 64, 32, 1), (140, 18, 40, 28, 14, 0),
+              (212, 23, 30, 18, 9, 1), (256, 0, 34, 18, 9, 1), (272, 0, 18, 64, 9, 1)]
+    stops = [(0, "#CFE9FF"), (28, "#1E5FD0"), (29, "#E8F6FF"), (32, "#6FB4FF"), (63, "#0A2A7A")]   # (row, colour)
+    cx, cy, r = 133, 8, 14                     # the star: on the O's rim; its arms' inner corners at r / 5
+    k = r / 5
+    star = " ".join(f"{cx + x:g},{cy + y:g}" for x, y in
+                    [(0, -r), (k, -k), (r, 0), (k, k), (0, r), (-k, k), (-r, 0), (-k, -k)])
+    mask = "".join(f'<rect x="{x}" y="{y}" width="{w}" height="{h}" rx="{rad}" fill="{"#fff" if on else "#000"}"/>'
+                   for x, y, w, h, rad, on in shapes)
+    grad = "".join(f'<stop offset="{row / 64:.4f}" stop-color="{c}"/>' for row, c in stops)
+    return (f'<svg class="logo" viewBox="0 -8 290 72" role="img" aria-label="GIO-1" xmlns="http://www.w3.org/2000/svg">'
+            f'<defs><linearGradient id="chrome" x1="0" y1="0" x2="0" y2="64" gradientUnits="userSpaceOnUse">{grad}'
+            f'</linearGradient><mask id="word" maskUnits="userSpaceOnUse" x="0" y="0" width="290" height="64">{mask}</mask>'
+            f'</defs><rect x="0" y="0" width="290" height="64" fill="url(#chrome)" mask="url(#word)"/>'
+            f'<polygon points="{star}" fill="#fff"/></svg>')
+
+
 LANDING_CSS = """
 main { max-width: 46rem; margin: 0 auto; }
 .hero { padding: 2.6rem 0 1.2rem; }
-h1 { font: 700 clamp(3.6rem, 14vw, 6.4rem)/.9 var(--display); letter-spacing: .04em; margin: 0;
-     background: linear-gradient(180deg, #fff 0%, #ffd0ee 38%, var(--magenta) 52%, #7a3cff 100%);
-     -webkit-background-clip: text; background-clip: text; color: transparent; }
+h1 { margin: 0; line-height: 0; }
+h1 .logo { display: block; width: min(100%, 26rem); height: auto; }   /* (the start-up screen's logo: logo_svg) */
 .sub { font: 500 1.15rem/1.3 var(--display); letter-spacing: .1em; text-transform: uppercase; color: var(--muted);
        margin: .7rem 0 0; }
 /* the form strip, as on GIO-1's screen: a block a section, the one playing filling */
@@ -173,7 +194,7 @@ h2 { font: 700 1.25rem/1.2 var(--display); letter-spacing: .08em; text-transform
 
 LANDING_BODY = """<main>
 <section class="hero">
-  <h1>GIO-1</h1>
+  <h1>LOGO_SVG</h1>
   <p class="sub">A generative electronic disco firmware for the M-VAVE FM-1</p>
   <div class="strip" aria-hidden="true"><i style="--w:8"></i><i class="on" style="--w:16"></i><i style="--w:8"></i><i style="--w:8"></i><i style="--w:16"></i><i style="--w:8"></i><i style="--w:8"></i></div>
 </section>
@@ -448,7 +469,7 @@ def main(out, pkg=None, version=None):
     shutil.copytree(SRC / "docs" / "img", out / "img")
     (out / "index.html").write_text(
         page("GIO-1", "A generative electronic disco firmware for the M-VAVE FM-1.",
-             LANDING_BODY.replace("__INSTALL__", install).replace("__DOWNLOAD__", download).replace("__REPO__", REPO),
+             LANDING_BODY.replace("LOGO_SVG", logo_svg()).replace("__INSTALL__", install).replace("__DOWNLOAD__", download).replace("__REPO__", REPO),
              "", 0, LANDING_CSS), encoding="utf-8")
     # the quickstart
     (out / "quickstart" / "index.html").write_text(
