@@ -302,7 +302,9 @@ puts the song back to its recipe, its chords too. Tune and MIDI out belong to th
 
 ## 10. Troubleshooting
 
-**Update mode:** hold OCT− and OCT+ together for five seconds. A countdown appears; let go before it ends to cancel.
+**Update mode by hand:** hold **REC** while you switch the FM-1 on, and keep holding until the screen says UPDATE
+MODE (REC). The FM-1 is then in the chip's own update mode, where the web installer and M-VAVE's updater can reach
+it. In SAFE MODE, REC does the same.
 
 **Calibration:** if a button or knob does the wrong thing, hold OCT− and OCT+ while you switch the FM-1 on, and follow
 the screen.

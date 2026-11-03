@@ -1032,9 +1032,9 @@ static int help_lines(int b, const char *l[HELP_LINES])
     case B_GLO: L("SETUP: KEY, TUNE,"); L(" MIDI OUT, LIGHTS"); L("AGAIN: MIDI"); L("AGAIN: THE SCREEN MIRROR"); break;
     case B_EDIT: L("THE CHORDS: A CHORD,"); L(" ITS ROOT, TYPE AND BARS"); L("REC HOLDS THE SECTION"); L("SEL: THE NEXT ONE"); break;
     case B_SEL: L("THE NEXT SECTION,"); L("ON THE NEXT BAR"); break;
-    case B_REC: L("HOLD: THE SECTION"); L(" REPEATS"); L("AGAIN: LET IT GO ON"); break;
-    case B_OCTDN: L("THE BASS AN OCTAVE DOWN"); L("WITH OCT+, 5 S: UPDATE MODE"); break;
-    case B_OCTUP: L("THE BASS AN OCTAVE UP"); L("WITH OCT-, 5 S: UPDATE MODE"); break;
+    case B_REC: L("TAP: THE SECTION REPEATS"); L("AGAIN: LET IT GO ON"); L("HELD: THE EFFECTS GRID"); L("AT POWER-ON: UPDATE MODE"); break;
+    case B_OCTDN: L("THE BASS AN OCTAVE DOWN"); L("BOTH AT POWER-ON:"); L(" THE PANEL'S CALIBRATION"); break;
+    case B_OCTUP: L("THE BASS AN OCTAVE UP"); L("BOTH AT POWER-ON:"); L(" THE PANEL'S CALIBRATION"); break;
     case B_SAVE: L("SAVES ALL THE SONGS"); L("KEEP HOLDING: THE SONG"); L(" BACK TO ITS RECIPE"); break;
     default: break;
     }
@@ -1606,8 +1606,7 @@ static void speak(void)
 static void sp_print(const char *kind, const char *t) { printf("%s\t%s\n", kind, t); }
 static void speak_dump(void)
 {
-    static const char *const MSG[][2] = {{"UPDATE MODE IN", "3.."}, {"UPDATE MODE", "CANCELLED"},
-                                         {"NEXT SECTION", "ON THE BAR"}, {"NEXT SECTION", 0}, {"STOPPED", 0},
+    static const char *const MSG[][2] = {{"NEXT SECTION", "ON THE BAR"}, {"NEXT SECTION", 0}, {"STOPPED", 0},
                                          {"PLAYING", 0}, {"HOLD", "ON"}, {"HOLD", "OFF"}, {"SAVED", 0}};
     static const char *const WARN[][2] = {{"NOT SAVED", "FLASH ERROR"}};
     project_t keep = proj;

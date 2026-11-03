@@ -72,7 +72,7 @@ From the command line (needs `pip3 install mido python-rtmidi`):
 python3 base/tools/fm1_install.py app/build/gio.fwsc
 ```
 
-Installing firmware is at your own risk. Hold OCT− and OCT+ for 5 seconds for the update mode. If the FM-1 no
+Installing firmware is at your own risk. Hold REC while switching the FM-1 on for the update mode. If the FM-1 no
 longer starts but reaches the chip's update mode (4C4A:8057 on USB), `base/bsp/tools/fm1_rescue.sh` puts stock
 firmware back from a Mac.
 

@@ -358,7 +358,7 @@ instrument's own.</p>
 <div class="wrap"><table>
 <tr><td>Help</td><td>Hold any button a second: a card says what it does</td></tr>
 <tr><td>MIDI</td><td>Out on USB: bass, pad, lead, drums on 1, 2, 3, 10 (or 4, 5, 6, 11). Clock from Internal, USB or TRS</td></tr>
-<tr><td>Update mode</td><td>OCT− and OCT+ together for 5 s</td></tr>
+<tr><td>Update mode</td><td>REC held while switching on</td></tr>
 <tr><td>Calibration</td><td>OCT− and OCT+ held while switching on</td></tr>
 <tr><td>Emulator keys</td><td>White <kbd>Q</kbd>–<kbd>I</kbd> <kbd>A</kbd>–<kbd>K</kbd>, black <kbd>1</kbd>–<kbd>-</kbd>, <kbd>P</kbd> PLAY, <kbd>O</kbd> REC, <kbd>Esc</kbd> HOME, <kbd>Z</kbd> <kbd>X</kbd> OCT, <kbd>↑</kbd> <kbd>↓</kbd> SELECT</td></tr>
 </table></div>
@@ -424,7 +424,7 @@ def main(out, pkg=None, version=None):
                    '<p style="margin:.4rem 0 .2rem"><strong>The safety nets:</strong> a crash restarts it; two failed starts in '
                    'a row bring up SAFE MODE (no sound, USB on: install again, or go back to stock below); past that, the '
                    'chip\'s own update mode, from which the rescue tool puts M-VAVE\'s firmware back. Update mode by hand: hold '
-                   'OCT− and OCT+ for 5 seconds.</p></div>')
+                   'REC while switching the FM-1 on, until the screen says UPDATE MODE.</p></div>')
         if page_i.count("<h1>Install GIO-1</h1>") != 1:
             raise SystemExit("base/web/installer.html: no <h1>Install {{NAME}}</h1> for the warnings")
         page_i = page_i.replace("<h1>Install GIO-1</h1>", "<h1>Install GIO-1</h1>\n  " + caution)
