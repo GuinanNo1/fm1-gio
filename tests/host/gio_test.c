@@ -376,6 +376,22 @@ int main(void)
         en_bshape_put(0, 1, keep, en_bacc_recipe(1));
         CHECK(en_bstep_get(0, 1, 0) == en_bstep_recipe(1, 0), "Pump back as it was");
     }
+    /* the tempo's ends (80, 150): sound, bounded; the longest echo with Time x2 and Stutter held, sixteenths in time */
+    for (k = 0; k < 2; k++) {
+        uint32_t s0;
+        start(3, 0, 14);
+        en_set(P_TEMPO, k ? 150 : 80);
+        en_set(P_ETIME, 5);
+        run(20.0f);
+        s0 = en_bars;
+        run(10.0f);
+        CHECK(abs((int)(en_bars - s0) - (k ? 100 : 53)) <= 1, "tempo %d: %u sixteenths in 10 s", k ? 150 : 80, en_bars - s0);
+        en_fx(1u << FX_TIME | 1u << FX_STUTTER | 1u << FX_THROW);
+        run(6.0f);
+        en_fx(0);
+        run(6.0f);
+        CHECK(!bad && peak < 1.0f && sum2 > 0.0, "tempo %d: bad %d peak %.2f", k ? 150 : 80, bad, (double)peak);
+    }
     /* stopped: silence after the tails */
     start(1, 0, 3);
     run(20.0f);

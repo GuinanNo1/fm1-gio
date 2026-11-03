@@ -1,5 +1,5 @@
 # the panel: the white keys play the lead, the Setup page's Key moves the key, SEL the next section, REC holds,
-# ALGORITHM the pattern, OCT the bass, HOME + SELECT the tempo (110 .. 130)
+# ALGORITHM the pattern, OCT the bass, HOME + SELECT the tempo (80 .. 150)
 intro off
 wait 500
 key w2 down
@@ -49,15 +49,15 @@ tap OCT-
 tap OCT-
 expect par28 -1
 tap OCT+
-# the tempo, with HOME held: never past 130
+# the tempo, with HOME held: never past 150, nor under 80
 press HOME
-spin SELECT 10
+spin SELECT 40
 release HOME
-expect par0 130
+expect par0 150
 press HOME
-spin SELECT -40
+spin SELECT -100
 release HOME
-expect par0 110
+expect par0 80
 # MIDI in: a note on channel 1 moves the key; a clock drives the grid only from the port the MIDI page names
 midi 90 3E 64
 wait 100

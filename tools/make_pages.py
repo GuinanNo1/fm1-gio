@@ -317,7 +317,7 @@ QUICK_BODY = """<main>
 <tr><td>OCT− / OCT+</td><td>The bass's octave</td></tr>
 <tr><td>ALGORITHM</td><td>The bass pattern: Song, Pump, Pump 16, Arpeggio, Gallop, Octaves, Slow</td></tr>
 <tr><td>PRESETS</td><td>The song (each keeps its settings)</td></tr>
-<tr><td>SELECT</td><td>Pages. With HOME held: tempo 110–130</td></tr>
+<tr><td>SELECT</td><td>Pages. With HOME held: tempo 80–150</td></tr>
 <tr><td>SAVE</td><td>Save. Held 1.5 s: the song's recipe again</td></tr>
 </table></div>
 </section>

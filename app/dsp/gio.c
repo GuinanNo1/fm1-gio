@@ -17,7 +17,7 @@ const char *const EN_PATTERN_NAME[EN_NPATTERNS] = {"Song", "Pump", "Pump 16", "A
 enum { A_SONG, A_PUMP, A_PUMP16, A_ARP, A_GALLOP, A_OCT, A_SLOW };
 
 static const en_param_t PARAMS[P_NPARAMS] = {
-    {"Tempo", 110, 130, 122}, {"Evolve", 0, 100, 40}, {"Motion", 0, 100, 50}, {"Arrange", 0, 100, 40},
+    {"Tempo", 80, 150, 122}, {"Evolve", 0, 100, 40}, {"Motion", 0, 100, 50}, {"Arrange", 0, 100, 40},
     {"Bass", 0, 100, 80},     {"Cutoff", 0, 100, 45}, {"Resonance", 0, 100, 45}, {"Decay", 0, 100, 35},
     {"Lead", 0, 100, 50},     {"Voice", 0, 9, 0},     {"Busy", 0, 100, 45},   {"Glide", 0, 100, 30},
     {"Pad", 0, 100, 55},      {"Colour", 0, 2, 0},    {"Bright", 0, 100, 50}, {"Phaser", 0, 100, 40},
@@ -384,11 +384,12 @@ static float drop_g = 1.0f, gate_ph;            /* Drop's gain now; where in its
 static uint32_t roll_n;                         /* Roll: sixteenths so far */
 
 /* ------------------------------------------------------ master effects --- */
-/* Stutter keeps a sixteenth of the mix (16-bit, stereo: 25.6 KB in ordinary RAM, not the pool, which the screen
+/* Stutter keeps a sixteenth of the mix (16-bit, stereo: 33 KB, a sixteenth at 80, the slowest tempo, in ordinary
+ * RAM, not the pool, which the screen
  * mirror's buffers need; the same RAM, as fast) and loops it; Low-pass and High-pass are two
  * one-poles each on the mix; Phaser six all-passes a side, swept; Gate chops the pad in sixteenths; Drop takes all but
  * the bass and the kick out. */
-#define STUT_N 6400
+#define STUT_N 8272
 static int16_t stut[2 * STUT_N];
 static int stut_len, stut_pos, stut_on;        /* stut_on: 1 recording, 2 looping */
 static float m_lp[4], m_hp[2], m_ph[2][6], m_phfb[2], m_pha[2], m_phlfo, gate_g = 1.0f;
@@ -1731,8 +1732,9 @@ static void plate_init(void)
 /* AMB-1's tape at a quarter rate (11 kHz, 16-bit): each repeat darker and thinner. Two heads: the first at the echo's
  * time, on the right (the dry note left, its repeat right); the second at twice it, on the left. The first
  * feeds back. */
-/* 4.4 s at 11.025 kHz: the longest echo asked for, a half note at 110 (the slowest tempo) with Time x2 on, its second
- * head at twice that (48,108 samples); AMB-1's 62,000 does not leave the FM-1's pool room for the Stutter's buffer */
+/* 4.4 s at 11.025 kHz: a half note at 110 with Time x2 on, its second head at twice that (48,108 samples); every
+ * echo time fits it down to 80, the slowest tempo (a half note there: 1.5 s, its second head 3 s); below 110, Time x2
+ * on the longest times stops at the tape's length (echo_len_t). AMB-1's 62,000 does not leave the FM-1's pool room */
 #define TAPE_N 49000
 #define TAPE_SR 11025.0f
 static int16_t tape[TAPE_N] EN_POOL;

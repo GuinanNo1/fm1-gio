@@ -78,7 +78,7 @@ does the same from Chrome or Edge once a site is published.
 | ALGORITHM | The bass pattern: Song (the song's own, section by section), Pump, Pump 16, Arpeggio, Gallop, Octaves, Slow. |
 | PRESETS | The song. Each remembers its settings as you left it. |
 | HOME, ENV, ARP, LFO, SEQ, FX, GLO | The pages: Song, Bass, Lead, Pad, Drums, Bass FX, Setup. HOME again: Mixer; ENV again: Bass FM; ARP again: Lead 2; FX: the four FX pages, then Space; GLO again: MIDI, then Mirror. Each press goes on to the button's next page, then round again. |
-| SELECT | The previous / next page. With HOME held: the tempo, 110 to 130. |
+| SELECT | The previous / next page. With HOME held: the tempo, 80 to 150. |
 | KNOB 1–4 | The page's four values. A quick turn speeds up; a slow one goes a step at a time. |
 | SAVE | Saves all the songs. Held 1.5 s: the song back to its recipe (then SAVE to keep that). |
 | MASTER | The volume. |
@@ -375,7 +375,7 @@ back from there.
 
 | Parameter | Range | What it does |
 |---|---|---|
-| Tempo | 110–130 | Beats a minute |
+| Tempo | 80–150 | Beats a minute |
 | Evolve | 0–100 | How much the bass pattern, the lead's phrases and the drums change as they repeat |
 | Motion | 0–100 | How far the slow sweeps go (bass filter, pad brightness, phaser's pace) |
 | Arrange | 0–100 | How freely the form goes: repeats, jumps, layers out and in, a cycle in another key |

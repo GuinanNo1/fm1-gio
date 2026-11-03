@@ -45,7 +45,7 @@ All of it is a table in `app/dsp/gio.c` (`SONGS`), easy to change.
 | PLAY · REC · SEL | Play / stop · a tap holds the section · the next section, on the next bar |
 | EDIT | The edit pages, one a press: the Bassline (the bass pattern as a piano roll; each step's note, accent and length), the Chords (the section's chord changes), the Drum grid (each drum's steps and levels); on the Bassline and Drum grid the white keys are the bar's sixteen steps |
 | HOME · ENV · ARP · LFO · SEQ · FX · GLO | The pages: Song (again: Mixer, the four levels), Bass (again: Bass FM, the Analog or FM voice), Lead (again: Lead 2), Pad, Drums, FX (the four FX pages, then Space), Setup (again: MIDI, then Mirror: the screen mirror on or off); KNOB 1–4 set their values |
-| SELECT | The previous or next page; with HOME held, the tempo (110–130) |
+| SELECT | The previous or next page; with HOME held, the tempo (80–150) |
 | ALGORITHM · PRESETS | The bass pattern · the song |
 | OCT− / OCT+ | The bass's octave |
 | SAVE | Saves; held, puts the song back to its recipe |
