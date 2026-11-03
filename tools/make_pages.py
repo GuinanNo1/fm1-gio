@@ -19,6 +19,7 @@ checks the download against and what the FM-1 reports after the install."""
 import hashlib
 import html
 import json
+import os
 import re
 import shutil
 import subprocess
@@ -411,7 +412,8 @@ def main(out, pkg=None, version=None):
         pkg = Path(pkg)
         raw = pkg.read_bytes()
         product = product_of(raw)
-        if not re.fullmatch(r"FM-1_58\d{6}", product):
+        test = os.environ.get("GIO_TEST_BUILD") == "1"   # a test build's own Install page (never the site's): a dev build
+        if not re.fullmatch(r"FM-1_58\d{6}", product) and not (test and product == "FM-1_5800"):
             raise SystemExit(f"{pkg}: identity {product!r}: make a release build (./build.sh --release X.Y)")
         if b"FELUCCA-LOADER-1" not in raw:
             raise SystemExit(f"{pkg}: no update loader in it")
