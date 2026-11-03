@@ -283,7 +283,8 @@ the same settings as each instrument's own page's Level, so a change shows on bo
 instrument goes into the tape echo and the plate; KNOB 3 **Time** and KNOB 4 **Feedback** are the echo's own. There is
 one echo for all four, so Time and Feedback are the same on every page: turn them on one and the others follow. The
 Space page's Reverb is the plate's overall level, over all four sends. Each song keeps its own settings; the songs
-start with the pad out of the echo (Pad echo 0).
+start with the pad out of the echo (Pad echo 0). The songs' own settings sit in the lower half of each send; turn
+Echo and Reverb up past about 60 for a lot more: the bass's Reverb, at 100, is 30 dB more than at 50.
 
 | Row | 1 | 2 | 3 | 4 |
 |---|---|---|---|---|
@@ -341,7 +342,7 @@ back from there.
 | Bass voice | Analog, FM | Bass FM's KNOB 1 |
 | Ratio | 0.5, 1, 1.5, 2, 3, 4 | The FM bass's modulator against the note |
 | FM depth · FM decay | 0–100 | How bright the FM bass is; how fast that falls after a note (30 ms to 1.5 s) |
-| Bass verb · Pad echo · Pad verb · Drum echo · Drum verb | 0–100 | Each instrument's sends (the FX pages): 50 the reverbs as they were; Drum echo the snare's and toms' |
+| Bass verb · Pad echo · Pad verb · Drum echo · Drum verb | 0–100 | Each instrument's sends (the FX pages): 50 the reverbs as they were; Drum echo the snare's and toms'. Above 50 (the reverbs) or 60 (the echoes), all the sends grow steeply |
 | Echo time | 1/16, 1/8, 1/8., 1/4, 1/4., 1/2 | In time with the tempo |
 | Key | C–B | The song's key |
 | Tune | ±50 cents | |

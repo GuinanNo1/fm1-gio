@@ -1631,6 +1631,14 @@ static inline void echoes(float in, float *el, float *er)
 static uint32_t ext_age;
 static void tempo_set(void) { step_len = EN_SR * 60.0f / ((float)par[P_TEMPO] * 4.0f); }
 
+/* The sends' knobs (the FX pages): up to the highest a song's recipe sets (`top`), the law they always had, so every
+ * song sounds as it did; above it, each step the same in dB, up to `db` more at 100 (they did little there before:
+ * the bass's reverb, measured on Feel, was 44 dB under the mix at 50 and still 38 dB under it at 100) */
+static float send_law(int v, int top, float old_v, float old_top, float db)
+{
+    return v <= top ? old_v : old_top * fm_exp2f(db * (1.0f / 6.0206f) * (float)(v - top) / (float)(100 - top));
+}
+
 static void notes_off(void);
 static void apply(int p, int v)
 {
@@ -1671,22 +1679,22 @@ static void apply(int p, int v)
         hat_open = 0.45f - 0.0025f * (float)v;
         break;
     case P_SWING: swing = (float)v * 0.005f; break;
-    case P_ECHO: echo_send = (float)(v * v) * 0.0001f; break;
+    case P_ECHO: echo_send = send_law(v, 60, (float)(v * v) * 0.0001f, 0.36f, 12.0f); break;   /* 100: +3 dB on before */
     case P_ETIME: echo_time(); break;
     case P_FEEDBACK: echo_fb = 0.85f * (float)v * 0.01f; break;
     case P_REVERB: rev_send = (float)(v * v) * 0.0001f; break;
-    case P_BREV: bass_rev = 0.0012f * (float)v; break;                  /* 50: 0.06, as it was */
+    case P_BREV: bass_rev = send_law(v, 50, 0.0012f * (float)v, 0.06f, 30.0f); break;   /* 50: 0.06, as it was */
     case P_PECHO: pad_echo = (float)(v * v) * 0.00005f; break;          /* new: none at 0 (the recipes) */
-    case P_PREV: pad_rev = 0.009f * (float)v; break;                    /* 50: 0.45 */
-    case P_DECHO: drum_echo = (float)(v * v) * 0.0001f; break;          /* the law of the bass's Echo */
-    case P_DREV: drum_rev = 0.02f * (float)v; break;                    /* 50: as it was */
+    case P_PREV: pad_rev = send_law(v, 50, 0.009f * (float)v, 0.45f, 12.0f); break;      /* 50: 0.45 */
+    case P_DECHO: drum_echo = send_law(v, 60, (float)(v * v) * 0.0001f, 0.36f, 30.0f); break;
+    case P_DREV: drum_rev = send_law(v, 50, 0.02f * (float)v, 1.0f, 24.0f); break;        /* 50: as it was */
     case P_BVOICE: bvoice = v != 0; break;
     case P_BRATIO: bratio = BRATIO[(unsigned)v < 6u ? v : 1]; break;
     case P_BFM: bfm = 1.5f * (float)v * 0.01f; break;                    /* the depth: up to 1.5 turns */
     case P_BFMDEC: bfmdec = fm_expf(-6.9f / ((0.03f + 1.5f * (float)(v * v) * 0.0001f) * EN_SR)); break;   /* 30 ms .. 1.5 s */
     case P_TUNE: tunefac = fm_exp2f((float)v * (1.0f / 1200.0f)); break;
-    case P_LECHO: lead_echo = (float)(v * v) * 0.00009f; break;
-    case P_LREV: lead_rev = (float)v * 0.01f; break;
+    case P_LECHO: lead_echo = send_law(v, 60, (float)(v * v) * 0.00009f, 0.324f, 12.0f); break;
+    case P_LREV: lead_rev = send_law(v, 60, (float)v * 0.01f, 0.6f, 12.0f); break;
     case P_LTONE: ltone = (float)v * 0.01f; break;
     case P_MCHAN:                                /* the notes on the old channels off first */
         par[P_MCHAN] = (int16_t)!v;
