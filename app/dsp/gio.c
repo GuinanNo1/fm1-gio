@@ -1099,7 +1099,7 @@ typedef struct {
 static drum_t drum[EN_NDRUM];
 static uint32_t dpat[EN_NDRUM];
 static float dvel[EN_NDRUM][EN_STEPS];
-static float drum_vol, swing, hat_f = 0.9f, hat_open = 0.35f, pulse_left;
+static float drum_vol, swing, hat_f = 0.9f, hat_open = 0.35f, hat_lvl = 1.0f, pulse_left;
 static uint32_t noise = 22222u;
 static const uint8_t DRUM_GM[EN_NDRUM] = {36, 39, 42, 46, 45};
 static const float HAT_INC[4] = {304.4f / EN_SR, 369.6f / EN_SR, 522.7f / EN_SR, 800.0f / EN_SR};
@@ -1628,7 +1628,9 @@ static void apply(int p, int v)
     case P_BRIGHT: bright = (float)v; break;
     case P_PHASER: phaser_d = (float)v * 0.01f; break;
     case P_DRUMS: drum_vol = (float)(v * v) * 0.0001f; break;
-    case P_HATS:
+    case P_HATS:                                 /* the hats' level (as before at 55, none at 0), their tone, the open one's
+                                                  * length; from 35 sixteenths (the next bar) */
+        hat_lvl = (float)v * (1.0f / 55.0f);
         hat_f = 0.55f + 0.0070f * (float)v;
         hat_open = 0.45f - 0.0025f * (float)v;
         break;
@@ -2252,7 +2254,7 @@ static void render_hat(drum_t *v, uint32_t n, float g, float pl, float pr)
 static void render_drums(uint32_t n)
 {
     uint32_t j;
-    const float g = drum_vol * 1.0f;
+    const float g = drum_vol * 1.25f;              /* (1.0 until 0.2: the drums about 2 dB up in the mix) */
     drum_t *v = &drum[D_KICK];
     if (v->on) {
         float ph = v->ph, inc = v->inc, amp = v->amp, cl = v->tone;
@@ -2292,8 +2294,8 @@ static void render_drums(uint32_t n)
         v->s[1] = fm_flush(s[1]);
         v->on = amp > 0.0005f;
     }
-    render_hat(&drum[D_HAT], n, g * drop_g * 0.16f, 0.65f, 1.0f);
-    render_hat(&drum[D_OHAT], n, g * drop_g * 0.13f, 1.0f, 0.7f);
+    render_hat(&drum[D_HAT], n, g * drop_g * hat_lvl * 0.16f, 0.65f, 1.0f);
+    render_hat(&drum[D_OHAT], n, g * drop_g * hat_lvl * 0.13f, 1.0f, 0.7f);
     v = &drum[D_TOM];
     if (v->on) {
         float ph = v->ph, inc = v->inc, amp = v->amp;
@@ -2318,7 +2320,9 @@ static void render_chunk(int32_t *out, uint32_t n, float gain)
 {
     uint32_t j;
     const float eg = (sec_now()->flags & F_BREAK) ? 1.4f : 1.0f;
-    const float thr = 1.2f * FXA(THROW) + 0.8f * FXA(SWELL) + FXA(WASH), rx = 0.8f * FXA(REVERB) + 0.6f * FXA(WASH);
+    /* Reverb and Wash: measured on Feel (tests: the mix's RMS held against without), Reverb about +1.5 dB, Wash about
+     * level with the dry mix it replaces (they were +5.5 and +3.1 dB: 0.8 and 1.0 / 0.6) */
+    const float thr = 1.2f * FXA(THROW) + 0.8f * FXA(SWELL) + 0.7f * FXA(WASH), rx = 0.32f * FXA(REVERB) + 0.42f * FXA(WASH);
     const float dry = 1.0f - 0.85f * FXA(WASH), rin = 1.0f - FXA(FREEZE);
     const float alp = FXA(LOWPASS), ahp = FXA(HIGHPASS), aph = FXA(PHASER), ast = FXA(STUTTER);
     float clp = 0.0f, chp = 0.0f;
