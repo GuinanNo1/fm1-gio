@@ -5,7 +5,7 @@ plays itself from the moment it's switched on: an analog-style bass sequence (or
 or saws through a phaser, a synth lead that writes its own phrases, and four on the floor. Each song is a form of
 sections with their own chord changes; it loops for ever and changes as it goes. You steer it.
 
-> **Status: alpha, tested on one FM-1 only.** GIO-1 0.2.1-alpha works on the one FM-1 it has been tested on; it has
+> **Status: alpha, tested on one FM-1 only.** GIO-1 0.3-alpha works on the one FM-1 it has been tested on; it has
 > not yet been tried on others. Installing it is at your own risk: unofficial firmware could brick an FM-1. The
 > safety nets and the way back to M-VAVE's firmware are on the [Install page](https://guinanno1.github.io/fm1-gio/install/).
 
