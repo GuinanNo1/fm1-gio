@@ -6,7 +6,7 @@ wait 500
 expect piece 0
 tap EDIT
 wait 200
-expect view 14
+expect view 15
 # Feel's intro: C, four bars (EN_CH: root | type << 4 | beats << 8)
 expect nchords 1
 expect chord0 4096

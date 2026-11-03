@@ -7,6 +7,9 @@ said Song page: Tempo 126, Evolve 40, Motion 55, Arrange 35. Song Feel, key of C
 listen
 where
 said Section Intro
+tap HOME
+wait 300
+said Mixer page: Bass 85, Pad 45, Lead 40, Drums 70
 tap ENV
 wait 300
 said Bass page: Level 85, Cutoff 42, Emphasis 50, Decay 35

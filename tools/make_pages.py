@@ -283,6 +283,7 @@ QUICK_BODY = """<main>
 <div class="wrap"><table>
 <tr><th>Page</th><th>1</th><th>2</th><th>3</th><th>4</th></tr>
 <tr><td>Song (HOME)</td><td>Tempo</td><td>Evolve</td><td>Motion</td><td>Arrange</td></tr>
+<tr><td>Mixer (HOME ×2)</td><td>Bass</td><td>Pad</td><td>Lead</td><td>Drums</td></tr>
 <tr><td>Bass (ENV)</td><td>Level</td><td>Cutoff</td><td>Emphasis</td><td>Decay</td></tr>
 <tr><td>Lead (ARP)</td><td>Level</td><td>Voice</td><td>Busy</td><td>Glide</td></tr>
 <tr><td>Lead 2 (ARP ×2)</td><td>Echo</td><td>Reverb</td><td>Octave</td><td>Tone</td></tr>

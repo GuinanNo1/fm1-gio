@@ -66,7 +66,7 @@ clock 96
 expect ext 0
 tap GLO
 tap GLO
-expect view 12
+expect view 13
 spin K3 1
 expect par34 1
 clock 96

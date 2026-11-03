@@ -21,17 +21,19 @@
  *                  held 1.5 s: the song back to its recipe */
 #include "fastmath.h"
 
-enum { V_SONG, V_BASS, V_LEAD, V_LEAD2, V_PAD, V_DRUMS, V_BASSFX, V_PADFX, V_LEADFX, V_DRUMFX, V_SPACE, V_SETUP, V_MIDI,
-       V_FXGRID, V_CHORDS, NVIEWS };
-static const char *const VIEW_NAME[NVIEWS] = {"Song", "Bass", "Lead", "Lead 2", "Pad", "Drums", "Bass FX", "Pad FX",
-                                              "Lead FX", "Drums FX", "Space", "Setup", "MIDI", "Effects", "Chords"};
+enum { V_SONG, V_MIXER, V_BASS, V_LEAD, V_LEAD2, V_PAD, V_DRUMS, V_BASSFX, V_PADFX, V_LEADFX, V_DRUMFX, V_SPACE, V_SETUP,
+       V_MIDI, V_FXGRID, V_CHORDS, NVIEWS };
+static const char *const VIEW_NAME[NVIEWS] = {"Song", "Mixer", "Bass", "Lead", "Lead 2", "Pad", "Drums", "Bass FX",
+                                              "Pad FX", "Lead FX", "Drums FX", "Space", "Setup", "MIDI", "Effects",
+                                              "Chords"};
 /* FX: the Effects page, each instrument's FX page, the Space page, and round again */
 static const uint8_t FX_CYCLE[] = {V_FXGRID, V_BASSFX, V_PADFX, V_LEADFX, V_DRUMFX, V_SPACE};
-static const uint8_t VIEW_BTN[NVIEWS] = {B_HOME, B_ENV, B_ARP, B_ARP, B_LFO, B_SEQ, B_FX, B_FX, B_FX, B_FX, B_FX,
+static const uint8_t VIEW_BTN[NVIEWS] = {B_HOME, B_HOME, B_ENV, B_ARP, B_ARP, B_LFO, B_SEQ, B_FX, B_FX, B_FX, B_FX, B_FX,
                                          B_GLO, B_GLO, B_FX, B_EDIT};
 enum { K_LEDS = 100, K_CPU, K_NONE, K_CSLOT, K_CROOT, K_CTYPE, K_CLEN };
 static const uint8_t VIEW_KNOB[NVIEWS][4] = {
     {P_TEMPO, P_EVOLVE, P_MOTION, P_ARRANGE},
+    {P_BASS, P_PAD, P_LEAD, P_DRUMS},             /* the Mixer: each instrument's Level (its own page's KNOB 1) */
     {P_BASS, P_CUTOFF, P_RESO, P_DECAY},
     {P_LEAD, P_LVOICE, P_BUSY, P_GLIDE},
     {P_LECHO, P_LREV, P_LOCT, P_LTONE},
@@ -49,6 +51,7 @@ static const uint8_t VIEW_KNOB[NVIEWS][4] = {
 };
 static const char *const KNOB_LABEL[NVIEWS][4] = {
     {"Tempo", "Evolve", "Motion", "Arrange"},
+    {"Bass", "Pad", "Lead", "Drums"},
     {"Level", "Cutoff", "Emphasis", "Decay"},
     {"Level", "Voice", "Busy", "Glide"},
     {"Echo", "Reverb", "Octave", "Tone"},
@@ -1000,7 +1003,7 @@ static int help_lines(int b, const char *l[HELP_LINES])
     int n = 0;
 #define L(t) (l[n++] = (t))
     switch (b) {
-    case B_HOME: L("THE SONG"); L("TEMPO, EVOLVE, MOTION,"); L(" ARRANGE"); L("+ SELECT: TEMPO"); break;
+    case B_HOME: L("THE SONG: TEMPO, EVOLVE,"); L(" MOTION, ARRANGE"); L("AGAIN: THE MIXER"); L("+ SELECT: TEMPO"); break;
     case B_ENV: L("THE BASS SEQUENCE"); L("LEVEL, CUTOFF, EMPHASIS,"); L(" DECAY"); break;
     case B_ARP: L("THE LEAD"); L("LEVEL, VOICE, BUSY, GLIDE"); L("AGAIN: LEAD 2: ECHO,"); L(" REVERB, OCTAVE, TONE"); break;
     case B_LFO: L("THE PAD"); L("LEVEL, COLOUR, BRIGHT,"); L(" PHASER"); break;

@@ -77,7 +77,7 @@ does the same from Chrome or Edge once a site is published.
 | OCT− / OCT+ | The bass an octave down / up (−1 to +1). |
 | ALGORITHM | The bass pattern: Song (the song's own, section by section), Pump, Pump 16, Arpeggio, Gallop, Octaves, Slow. |
 | PRESETS | The song. Each remembers its settings as you left it. |
-| HOME, ENV, ARP, LFO, SEQ, FX, GLO | The pages: Song, Bass, Lead, Pad, Drums, Effects, Setup. ARP again: Lead 2; FX again: the four FX pages, then Space; GLO again: MIDI. |
+| HOME, ENV, ARP, LFO, SEQ, FX, GLO | The pages: Song, Bass, Lead, Pad, Drums, Effects, Setup. HOME again: Mixer; ARP again: Lead 2; FX again: the four FX pages, then Space; GLO again: MIDI. Each press goes on to the button's next page, then round again. |
 | SELECT | The previous / next page. With HOME held: the tempo, 110 to 130. |
 | KNOB 1–4 | The page's four values. A quick turn speeds up; a slow one goes a step at a time. |
 | SAVE | Saves all the songs. Held 1.5 s: the song back to its recipe (then SAVE to keep that). |
@@ -187,6 +187,7 @@ GIO-1's own, written as it plays.
 | Page (button) | KNOB 1 | KNOB 2 | KNOB 3 | KNOB 4 |
 |---|---|---|---|---|
 | Song (HOME) | Tempo | Evolve | Motion | Arrange |
+| Mixer (HOME again) | Bass | Pad | Lead | Drums |
 | Bass (ENV) | Level | Cutoff | Emphasis | Decay |
 | Lead (ARP) | Level | Voice | Busy | Glide |
 | Lead 2 (ARP again) | Echo | Reverb | Octave | Tone |
@@ -260,6 +261,9 @@ Sixteen effects, each on while its key is held, eased in and out; any number tog
 page, where the white keys play them (white key 1 is the lowest); **REC held** brings the same grid up for as long as
 it's held, and a key still held when REC is let go keeps its effect until it's let go. Eleven of them are also on the
 black keys at all times. The page's knobs are the echo's: Bass echo, Lead echo, Time, Feedback.
+
+**The Mixer** (HOME again): the four instruments' levels side by side, KNOB 1–4 Bass, Pad, Lead and Drums. They are
+the same settings as each instrument's own page's Level, so a change shows on both.
 
 **The FX pages.** FX again goes through a page for each instrument: **Bass FX**, **Pad FX**, **Lead FX** and **Drums FX**,
 then **Space**, then back to the Effects page. On each, KNOB 1 **Echo** and KNOB 2 **Reverb** are how much of that
