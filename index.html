@@ -38,9 +38,8 @@ header.site nav a:hover, header.site nav a[aria-current] { color: var(--magenta)
 
 main { max-width: 46rem; margin: 0 auto; }
 .hero { padding: 2.6rem 0 1.2rem; }
-h1 { font: 700 clamp(3.6rem, 14vw, 6.4rem)/.9 var(--display); letter-spacing: .04em; margin: 0;
-     background: linear-gradient(180deg, #fff 0%, #ffd0ee 38%, var(--magenta) 52%, #7a3cff 100%);
-     -webkit-background-clip: text; background-clip: text; color: transparent; }
+h1 { margin: 0; line-height: 0; }
+h1 .logo { display: block; width: min(100%, 26rem); height: auto; }   /* (the start-up screen's logo: logo_svg) */
 .sub { font: 500 1.15rem/1.3 var(--display); letter-spacing: .1em; text-transform: uppercase; color: var(--muted);
        margin: .7rem 0 0; }
 /* the form strip, as on GIO-1's screen: a block a section, the one playing filling */
@@ -81,10 +80,10 @@ h2 { font: 700 1.25rem/1.2 var(--display); letter-spacing: .08em; text-transform
 </style>
 </head>
 <body>
-<header class="site"><a class="home" href="index.html">GIO-1</a><nav aria-label="GIO-1"><a href="emu/index.html">Try it</a><a href="install/index.html">Install</a><a href="manual/index.html">Manual</a><a href="quickstart/index.html">Quickstart</a><a href="https://github.com/GuinanNo1/fm1-gio">Source</a></nav></header>
+<header class="site"><a class="home" href="index.html">GIO-1</a><nav aria-label="GIO-1"><a href="emu/index.html">Try it</a><a href="install/index.html">Install</a><a href="manual/index.html">Manual</a><a href="quickstart/index.html">Quickstart</a><a href="mirror/index.html">Mirror</a><a href="https://github.com/GuinanNo1/fm1-gio">Source</a></nav></header>
 <main>
 <section class="hero">
-  <h1>GIO-1</h1>
+  <h1><svg class="logo" viewBox="0 -8 290 72" role="img" aria-label="GIO-1" xmlns="http://www.w3.org/2000/svg"><defs><linearGradient id="chrome" x1="0" y1="0" x2="0" y2="64" gradientUnits="userSpaceOnUse"><stop offset="0.0000" stop-color="#CFE9FF"/><stop offset="0.4375" stop-color="#1E5FD0"/><stop offset="0.4531" stop-color="#E8F6FF"/><stop offset="0.5000" stop-color="#6FB4FF"/><stop offset="0.9844" stop-color="#0A2A7A"/></linearGradient><mask id="word" maskUnits="userSpaceOnUse" x="0" y="0" width="290" height="64"><rect x="0" y="0" width="76" height="64" rx="32" fill="#fff"/><rect x="18" y="18" width="40" height="28" rx="14" fill="#000"/><rect x="46" y="0" width="30" height="32" rx="0" fill="#000"/><rect x="58" y="32" width="18" height="32" rx="0" fill="#fff"/><rect x="46" y="46" width="30" height="18" rx="0" fill="#fff"/><rect x="90" y="0" width="18" height="64" rx="9" fill="#fff"/><rect x="122" y="0" width="76" height="64" rx="32" fill="#fff"/><rect x="140" y="18" width="40" height="28" rx="14" fill="#000"/><rect x="212" y="23" width="30" height="18" rx="9" fill="#fff"/><rect x="256" y="0" width="34" height="18" rx="9" fill="#fff"/><rect x="272" y="0" width="18" height="64" rx="9" fill="#fff"/></mask></defs><rect x="0" y="0" width="290" height="64" fill="url(#chrome)" mask="url(#word)"/><polygon points="133,-6 135.8,5.2 147,8 135.8,10.8 133,22 130.2,10.8 119,8 130.2,5.2" fill="#fff"/></svg></h1>
   <p class="sub">A generative electronic disco firmware for the M-VAVE FM-1</p>
   <div class="strip" aria-hidden="true"><i style="--w:8"></i><i class="on" style="--w:16"></i><i style="--w:8"></i><i style="--w:8"></i><i style="--w:16"></i><i style="--w:8"></i><i style="--w:8"></i></div>
 </section>
@@ -97,21 +96,21 @@ and enjoy!</p>
 <div class="shots">
   <figure><img src="img/screen-song.png" width="240" height="240" alt="GIO-1's screen: the song Feel, its verse; the bass's sixteen steps in a ring round the chord C; the form across the top"><figcaption>Feel, its verse</figcaption></figure>
   <figure><img src="img/screen-heaven.png" width="240" height="240" alt="GIO-1's screen: the song Heaven at full tempo, the chord A flat"><figcaption>Heaven at full tempo</figcaption></figure>
-  <figure><img src="img/screen-grid.png" width="240" height="240" alt="GIO-1's Effects page: sixteen effects in four rows, Sweep and Roll held"><figcaption>The effects grid</figcaption></figure>
+  <figure><img src="img/screen-grid.png" width="240" height="240" alt="GIO-1's effects grid: sixteen effects in four rows, Sweep and Roll held"><figcaption>The effects grid</figcaption></figure>
 </div>
 
 <nav class="ways" aria-label="Get GIO-1">
   <a class="first" href="emu/index.html"><strong>Try it in the browser</strong><span>The same code the FM-1 runs, with sound. Mouse, touch or keyboard; no FM-1 needed.</span></a>
-  <a href="install/index.html"><strong>Install <em>alpha 0.1-alpha</em></strong><span>From Chrome or Edge, with the FM-1 connected by USB. Nothing to install on the computer.</span></a>
+  <a href="install/index.html"><strong>Install <em>alpha 0.2-alpha</em></strong><span>From Chrome or Edge, with the FM-1 connected by USB. Nothing to install on the computer.</span></a>
   <a href="manual/index.html"><strong>Manual</strong><span>Getting started in a few minutes, then everything else.</span></a>
   <a href="quickstart/index.html"><strong>Quickstart</strong><span>Every control, page, effect and song on one page.</span></a>
-  <a href="firmware/gio-0.1-alpha.fwsc"><strong>Download <em>gio-0.1-alpha.fwsc</em></strong><span>For the command-line installer: <code>python3 base/tools/fm1_install.py gio-0.1-alpha.fwsc</code>. In alpha; test beta downloads coming soon.</span></a>
+  <a href="firmware/gio-0.2-alpha.fwsc"><strong>Download <em>gio-0.2-alpha.fwsc</em></strong><span>For the command-line installer: <code>python3 base/tools/fm1_install.py gio-0.2-alpha.fwsc</code>. In alpha; test beta downloads coming soon.</span></a>
   <a href="https://github.com/GuinanNo1/fm1-gio"><strong>Source</strong><span>GitHub, MPL-2.0. Built on fm1-base and felucca-bsp, from Felucca by Hügelton Instruments.</span></a>
 </nav>
 
 <h2>What plays</h2>
 <ul class="parts">
-  <li style="--c: var(--cyan)"><b>Bass.</b> A Moog-style sequence out in front: two saws and a square through a four-pole ladder, short decays, the dry note on one side and its echo on the other. Seven pattern shapes, written in chord degrees so they follow the changes.</li>
+  <li style="--c: var(--cyan)"><b>Bass.</b> An analog-style sequence out in front: two saws and a square through a four-pole ladder (or an FM voice), short decays, the dry note on one side and its echo on the other. Seven pattern shapes, written in chord degrees so they follow the changes.</li>
   <li style="--c: var(--violet)"><b>Pad.</b> Strings, a choir or detuned saws on the chord, voice-led, through a slow stereo phaser.</li>
   <li style="--c: var(--gold)"><b>Lead.</b> Ten voices, from Mini and Odyssey to Theremin, FM Brass and Robot. It writes its own phrases. Play the white keys and it follows your line, answers it, and makes it the song's theme.</li>
   <li style="--c: var(--red)"><b>Drums.</b> Four on the floor, claps on two and four, open hats off the beat, and syndrum fills.</li>
