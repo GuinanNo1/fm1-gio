@@ -1,7 +1,7 @@
 /* SPDX-License-Identifier: MPL-2.0
  * Copyright (C) 2026 Ian Guinan */
-/* GIO-1's start-up screen: the word GIO in bold rounded letters with chrome-blue shading, wiped in left to right,
- * then a four-point star that pops in on the O. Drawn from rectangles: no bitmap in flash.
+/* GIO-1's start-up screen: GIO-1 in bold rounded letters with chrome-blue shading, wiped in left to right, then a
+ * four-point star that pops in on the O. Drawn from rectangles: no bitmap in flash.
  *
  *   gio_splash_begin()      the background, and the shading's table
  *   gio_splash_step(ms)     the picture as it is ms after the start; 1 once it is all there.
@@ -9,10 +9,10 @@
  *                           the chord however fast the screen draws
  *   gio_splash_draw()       the finished picture, at once
  *
- * The design grid: the word is 198 x 64 units, stroke 18, centred on the 240 x 240 screen. GS_SCALE is in eighths:
- * 8 = 1:1. Every shape is drawn a row at a time, so each row takes its colour from a 64-entry chrome table and every
+ * The design grid: the logo is 290 x 64 units, stroke 18, centred on the 240 x 240 screen. GS_SCALE is in eighths:
+ * 6 = 0.75x, 217 x 48 pixels (the design's 7 would be 253, wider than the screen). Every shape is drawn a row at a time, so each row takes its colour from a 64-entry chrome table and every
  * shape can be clipped: that is how the wipe works. Each change is drawn whole into fm1-base's canvas (gfx.c: the
- * word's box and the star's room above it, 198 x 72 of its 240 x 144) and sent in one blit: one transfer on the
+ * word's box and the star's room above it, 217 x 56 of its 240 x 144) and sent in one blit: one transfer on the
  * device, and what the browser's emulator sends on to its screen (it follows blits, not fills).
  *
  * Timing: the wipe is GIO_WIPE_FRAMES frames of GIO_FRAME_MS, then GIO_STAR_PAUSE, then the star's steps
@@ -27,13 +27,13 @@
 #define GS_W 240
 #define GS_H 240
 #define GS_TOP 8                                       /* the canvas's rows above the word: the star's room */
-#define GS_SCALE 8                                     /* /8 */
+#define GS_SCALE 6                                     /* /8 */
 #define GS_RGB(r, g, b) (uint16_t)((((r) & 0xF8) << 8) | (((g) & 0xFC) << 3) | ((b) >> 3))   /* (lcd_fill swaps) */
 #define GIO_BG GS_RGB(0x0B, 0x0B, 0x10)
 #define GS_WHITE 0xFFFFu
 #define GS_SHADED 0x0001u                              /* the chrome table's colour for this shape */
 #define GS(v) (((v) * GS_SCALE) / 8)
-#define GS_WORD_W 198
+#define GS_WORD_W 290
 #define GS_WORD_H 64
 
 /* the star: on the O's upper-left rim, radius in design units, arms a quarter of it thick. Its size per step, in
@@ -120,10 +120,10 @@ static void gs_span(int x0, int x1, int py, uint16_t c)   /* one clipped row, sc
 static void gs_rrect(int x, int y, int w, int h, int r, uint16_t c)   /* a rounded rectangle: design units in */
 {
     int j;
+    w = GS(x + w) - GS(x);                             /* the edges scaled, not the sizes: shapes that share an edge */
+    h = GS(y + h) - GS(y);                             /* stay flush at any scale */
     x = gs_ox + GS(x);
     y = gs_oy + GS(y);
-    w = GS(w);
-    h = GS(h);
     r = GS(r);
     for (j = 0; j < h; j++) {
         int inset = 0;
@@ -134,26 +134,32 @@ static void gs_rrect(int x, int y, int w, int h, int r, uint16_t c)   /* a round
             else if (j >= h - r)
                 d = j - (h - r) + 1;
             if (d) {
-                int t2 = (2 * d - 1) * (2 * d - 1);    /* sampled at the pixel's centre */
-                inset = r - gs_isqrt((4 * r * r - t2) / 4);
+                int t2 = (2 * d - 1) * (2 * d - 1);    /* sampled at the pixel's centre; the half-width x 8, a quarter */
+                inset = r - (gs_isqrt(16 * (4 * r * r - t2)) + 2) / 8;   /* pixel in: rounder small curves */
             }
         }
         gs_span(x + inset, x + w - inset, y + j, c);
     }
 }
 
-static void gs_word(void)                              /* the word, through the clip */
+static void gs_word(void)                              /* the logo, through the clip */
 {
     /* G: the O's ring and counter, its upper right opened, a squared foot */
     gs_rrect(0, 0, 76, 64, 32, GS_SHADED);
     gs_rrect(18, 18, 40, 28, 14, GIO_BG);
     gs_rrect(46, 0, 30, 32, 0, GIO_BG);
     gs_rrect(58, 32, 18, 32, 0, GS_SHADED);
+    gs_rrect(46, 46, 30, 18, 0, GS_SHADED);            /* the corner under the foot squared off */
     /* I */
     gs_rrect(90, 0, 18, 64, 9, GS_SHADED);
     /* O */
     gs_rrect(122, 0, 76, 64, 32, GS_SHADED);
     gs_rrect(140, 18, 40, 28, 14, GIO_BG);
+    /* the hyphen: a short capsule across the horizon line */
+    gs_rrect(212, 23, 30, 18, 9, GS_SHADED);
+    /* 1: the I's stem, a rounded flag to its upper left */
+    gs_rrect(256, 0, 34, 18, 9, GS_SHADED);
+    gs_rrect(272, 0, 18, 64, 9, GS_SHADED);
 }
 
 static void gs_draw_star(int r)                        /* a tall thin diamond and a wide one: a row each */
