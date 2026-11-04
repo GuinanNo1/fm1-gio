@@ -5,9 +5,9 @@ plays itself from the moment it's switched on: an analog-style bass sequence (or
 or saws through a phaser, a synth lead that writes its own phrases, and four on the floor. Each song is a form of
 sections with their own chord changes; it loops for ever and changes as it goes. You steer it.
 
-> **Status: alpha, tested on two FM-1s.** This is GIO-1 0.3.1-alpha. 0.3-alpha has been installed on two separate
-> FM-1s and works on both. On each, other firmware was then installed over it and GIO-1 put back again, so moving
-> between GIO-1 and other firmware has been tried too; 0.3.1-alpha changes only the drums' echo. Installing it is at your own risk: unofficial firmware could brick an FM-1. The
+> **Status: alpha, tested on two FM-1s.** GIO-1 0.3.1-alpha has been installed on two separate FM-1s and works on
+> both, with m-bootloader installed on both too. With 0.3-alpha, other firmware was installed over GIO-1 on each and
+> GIO-1 put back again, so moving between GIO-1 and other firmware has been tried too. Installing it is at your own risk: unofficial firmware could brick an FM-1. The
 > safety nets and the way back to M-VAVE's firmware are on the [Install page](https://guinanno1.github.io/fm1-gio/install/).
 
 ---
@@ -361,7 +361,10 @@ puts the song back to its recipe, its chords too. Tune and MIDI out belong to th
 
 **Update mode by hand:** hold **REC** while you switch the FM-1 on, and keep holding until the screen says UPDATE
 MODE (REC). The FM-1 is then in the chip's own update mode, where the web installer and M-VAVE's updater can reach
-it. In SAFE MODE, REC does the same.
+it. In SAFE MODE, REC does the same. **With m-bootloader installed** (an option on the Install page), it catches REC
+before GIO-1 starts and the screen stays black: that is its update mode, the same chip's mode, for its M-Flasher
+tool and the rescue. Switch the FM-1 off and on again to leave it. m-bootloader's own menu is PLAY held at power-on;
+its WIPE USER DATA erases GIO-1's saved songs.
 
 **Calibration:** if a button or knob does the wrong thing, hold OCT− and OCT+ while you switch the FM-1 on, and follow
 the screen.

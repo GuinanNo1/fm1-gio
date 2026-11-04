@@ -416,7 +416,7 @@ instrument's own.</p>
 <div class="wrap"><table>
 <tr><td>Help</td><td>Hold any button a second: a card says what it does</td></tr>
 <tr><td>MIDI</td><td>Out on USB: bass, pad, lead, drums on 1, 2, 3, 10 (or 4, 5, 6, 11). Clock from Internal, USB or TRS</td></tr>
-<tr><td>Update mode</td><td>REC held while switching on</td></tr>
+<tr><td>Update mode</td><td>REC held while switching on (with m-bootloader: a black screen; off and on to leave)</td></tr>
 <tr><td>Calibration</td><td>OCT− and OCT+ held while switching on</td></tr>
 <tr><td>Emulator keys</td><td>White <kbd>Q</kbd>–<kbd>I</kbd> <kbd>A</kbd>–<kbd>K</kbd>, black <kbd>1</kbd>–<kbd>-</kbd>, <kbd>P</kbd> PLAY, <kbd>O</kbd> REC, <kbd>Esc</kbd> HOME, <kbd>Z</kbd> <kbd>X</kbd> OCT, <kbd>↑</kbd> <kbd>↓</kbd> SELECT</td></tr>
 </table></div>
@@ -478,17 +478,30 @@ def main(out, pkg=None, version=None):
                    '<p style="margin:.2rem 0"><strong>Disclaimer: installing this firmware could brick your FM-1.</strong> '
                    'GIO-1 is unofficial firmware, not made, endorsed or supported by M-VAVE, and this is an alpha. You install '
                    'it entirely at your own risk.</p>'
-                   '<p style="margin:.4rem 0"><strong>Tested on two FM-1s.</strong> 0.3-alpha has been installed on two separate '
-                   'FM-1s and works on both. On each, other firmware was then installed over it and GIO-1 put back again, so '
-                   'moving between GIO-1 and other firmware has been tried too; 0.3.1-alpha changes only the drums\' echo. '
-                   'It has not yet been tried more widely.</p>'
+                   '<p style="margin:.4rem 0"><strong>Tested on two FM-1s.</strong> 0.3.1-alpha has been installed on two separate '
+                   'FM-1s and works on both, with m-bootloader installed on both too. With 0.3-alpha, other firmware was '
+                   'installed over GIO-1 on each and GIO-1 put back again, so moving between GIO-1 and other firmware has been '
+                   'tried too. It has not yet been tried more widely.</p>'
                    '<p style="margin:.4rem 0 .2rem"><strong>The safety nets:</strong> a crash restarts it; two failed starts in '
                    'a row bring up SAFE MODE (no sound, USB on: install again, or go back to stock below); past that, the '
                    'chip\'s own update mode, from which the rescue tool puts M-VAVE\'s firmware back. Update mode by hand: hold '
-                   'REC while switching the FM-1 on, until the screen says UPDATE MODE.</p></div>')
+                   'REC while switching the FM-1 on, until the screen says UPDATE MODE; with m-bootloader installed, the screen '
+                   'stays black instead (its update mode, the same chip\'s mode). Switch off and on again to leave it.</p></div>')
         if page_i.count("<h1>Install GIO-1</h1>") != 1:
             raise SystemExit("base/web/installer.html: no <h1>Install {{NAME}}</h1> for the warnings")
         page_i = page_i.replace("<h1>Install GIO-1</h1>", "<h1>Install GIO-1</h1>\n  " + caution)
+        # m-bootloader's own warning (its README, 1.2): under the option, shown with it
+        mboot_end = ('github.com/jvitkauskas/m-bootloader<span class="sr" data-t="newtab"> (opens in a new tab)</span></a></p>\n'
+                     '  </div>')
+        if page_i.count(mboot_end) != 1:
+            raise SystemExit("base/web/installer.html: the m-bootloader option has changed: place its caution again")
+        mboot_caution = ('<p class="small" style="border-left:3px solid #b5451b;padding-left:.6rem"><strong>Caution: newer '
+                         'FM-1s.</strong> FM-1s sold from late 2026 have a different flash chip (UCUN UC25HQ80). m-bootloader\'s '
+                         'author reports that one such FM-1 did not start after m-bootloader was installed, and the cause is not '
+                         'known yet. If your FM-1 was bought in late 2026 or later, or you are not sure, leave this unticked: '
+                         'GIO-1 does not need it. With m-bootloader, REC held at power-on gives a black screen (its update '
+                         'mode); switch off and on to leave it.</p>')
+        page_i = page_i.replace(mboot_end, mboot_end[:-len('  </div>')] + '    ' + mboot_caution + '\n  </div>')
         app_js = (SRC / "app" / conf["install_app"]).read_text(encoding="utf-8") if conf.get("install_app") else "null"
         (out / "install" / "index.html").write_text(page_i.replace("/*LIB*/", lib).replace("/*META*/", meta)
                                                     .replace("/*APP*/", app_js), encoding="utf-8")
