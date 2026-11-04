@@ -1747,6 +1747,7 @@ static uint8_t ts_on;                           /* Tape stop held */
 /* each instrument's own sends (the FX pages): the bass's reverb, the pad's echo and reverb, the drums' echo and reverb;
  * at a recipe's values exactly as they were fixed before (the reverbs at 50, the drums' echo the bass's Echo) */
 static float bass_rev = 0.06f, pad_echo, pad_rev = 0.45f, drum_echo = 0.2025f, drum_rev = 1.0f;
+static int drum_lim;                             /* the drums' echo above 60: through a limiter (render) */
 
 static inline float tape_read(float d)
 {
@@ -1831,6 +1832,16 @@ static float send_law(int v, int top, float old_v, float old_top, float db)
     return v <= top ? old_v : old_top * fm_exp2f(db * (1.0f / 6.0206f) * (float)(v - top) / (float)(100 - top));
 }
 
+/* The drums' echo: only the snare and the tom feed it, and little of each, so up to 60 (the recipes) it is still some
+ * 50 dB under the drums, and even 30 dB more at 100 left it 21 dB under them. Above 60 it rises fast, then less and less
+ * (in dB, as the square root of the way to 100), through a limiter (DRUM_ECHO_LIM) before the tape: about 24 dB under
+ * the drums at 70, 13 at 80, 7 at 90, 4 at 100 */
+static float drum_echo_law(int v)
+{
+    return v <= 60 ? (float)(v * v) * 0.0001f
+                   : 0.36f * fm_exp2f(55.0f * (1.0f / 6.0206f) * fm_sqrtf((float)(v - 60) * (1.0f / 40.0f)));
+}
+
 static void notes_off(void);
 static void apply(int p, int v)
 {
@@ -1878,7 +1889,10 @@ static void apply(int p, int v)
     case P_BREV: bass_rev = send_law(v, 50, 0.0012f * (float)v, 0.06f, 30.0f); break;   /* 50: 0.06, as it was */
     case P_PECHO: pad_echo = (float)(v * v) * 0.00005f; break;          /* new: none at 0 (the recipes) */
     case P_PREV: pad_rev = send_law(v, 50, 0.009f * (float)v, 0.45f, 12.0f); break;      /* 50: 0.45 */
-    case P_DECHO: drum_echo = send_law(v, 60, (float)(v * v) * 0.0001f, 0.36f, 30.0f); break;
+    case P_DECHO:
+        drum_echo = drum_echo_law(v);
+        drum_lim = v > 60;
+        break;
     case P_DREV: drum_rev = send_law(v, 50, 0.02f * (float)v, 1.0f, 24.0f); break;        /* 50: as it was */
     case P_BVOICE: bvoice = v != 0; break;
     case P_BRATIO: bratio = BRATIO[(unsigned)v < 6u ? v : 1]; break;
@@ -2147,6 +2161,9 @@ static void drain(void)
 /* --------------------------------------------------------------- render --- */
 #define BLK 256
 static float mixl[BLK], mixr[BLK], rsend[BLK], esend[BLK];
+static float dsend[BLK];                         /* the drums' echo, above 60 (drum_lim): limited before the tape */
+#define DRUM_ECHO_LIM 0.5f                       /* (with it the tape never clips, even at 100 with Feedback 100;
+                                                  * without, a snare hit could, 0.4% of the time) */
 
 static void render_bass(uint32_t n)
 {
@@ -2517,6 +2534,7 @@ static void render_drums(uint32_t n)
 {
     uint32_t j;
     const float g = drum_vol * 1.25f;              /* (1.0 until 0.2: the drums about 2 dB up in the mix) */
+    float *es = drum_lim ? dsend : esend;          /* the snare's and tom's echo (above 60, limited: render_chunk) */
     drum_t *v = &drum[D_KICK];
     if (v->on) {
         float ph = v->ph, inc = v->inc, amp = v->amp, cl = v->tone;
@@ -2544,7 +2562,7 @@ static void render_drums(uint32_t n)
             mixl[j] += x * 0.95f;
             mixr[j] += x;
             rsend[j] += x * 0.5f * drum_rev;
-            esend[j] += x * 0.08f * drum_echo;
+            es[j] += x * 0.08f * drum_echo;
             ph += v->inc;
             if (ph >= 1.0f)
                 ph -= 1.0f;
@@ -2566,7 +2584,7 @@ static void render_drums(uint32_t n)
             mixl[j] += x * 1.0f;
             mixr[j] += x * 0.75f;
             rsend[j] += x * 0.5f * drum_rev;
-            esend[j] += x * 0.15f * drum_echo;
+            es[j] += x * 0.15f * drum_echo;
             ph += inc;
             if (ph >= 1.0f)
                 ph -= 1.0f;
@@ -2596,13 +2614,15 @@ static void render_chunk(int32_t *out, uint32_t n, float gain)
     if (ahp > 0.001f)                            /* 20 Hz up to 1.3 kHz */
         chp = 1.0f - fm_expf(-FM_TWO_PI * 20.0f * fm_exp2f(6.0f * ahp) * (1.0f / EN_SR));
     for (j = 0; j < n; j++)
-        mixl[j] = mixr[j] = rsend[j] = esend[j] = 0.0f;
+        mixl[j] = mixr[j] = rsend[j] = esend[j] = dsend[j] = 0.0f;
     render_pad(n);
     render_bass(n);
     render_lead(n);
     render_drums(n);
     for (j = 0; j < n; j++) {
         float wl, wr, l, r, el, er, dm = (mixl[j] + mixr[j]) * 0.5f;
+        if (drum_lim)                            /* (a loud snare would clip the tape; the bass's echo never does) */
+            esend[j] += DRUM_ECHO_LIM * fm_tanhf(dsend[j] * (1.0f / DRUM_ECHO_LIM));
         echoes((esend[j] + dm * thr) * eg, &el, &er);
         reverb(((rsend[j] + (el + er) * 0.25f) * rev_send * 0.9f + dm * rx) * rin, &wl, &wr);
         l = mixl[j] * dry + 0.8f * el + 1.2f * wl;

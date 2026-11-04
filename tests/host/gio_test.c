@@ -73,6 +73,29 @@ static void reset_meters(void)
     seen = 0;
     hash = 2166136261u;
 }
+/* the drums alone (Reverb 0), their echo at `decho`: the right channel from 8 s on, into `out` (n frames) */
+static void drums_only(int decho, float *out, int n)
+{
+    int16_t par[P_NPARAMS];
+    int i, k = 0, skip = (int)(8.0f * 44100.0f);
+    en_init();
+    en_song(0);
+    en_song_recipe(0, par);
+    par[P_BASS] = par[P_LEAD] = par[P_PAD] = par[P_REVERB] = 0;
+    par[P_DECHO] = (int16_t)decho;
+    for (i = 0; i < P_NPARAMS; i++)
+        en_set(i, par[i]);
+    en_seed(1);
+    en_play(1);
+    while (k < n) {
+        int j;
+        en_render(buf, 256, 4096);
+        for (j = 0; j < 256 && k < n; j++, skip--)
+            if (skip <= 0)
+                out[k++] = (float)buf[2 * j + 1] / 8388608.0f;
+    }
+}
+
 static void start(int song, int arrange, uint32_t seed)
 {
     int16_t par[P_NPARAMS];
@@ -401,6 +424,32 @@ int main(void)
     run(1.0f);
     CHECK(peak < 0.002f, "stopped: peak %.4f", (double)peak);
     CHECK(midi_count > 0, "no MIDI");
+    {   /* the drums' echo: at 100 well up (it was 21 dB under the drums before: only the snare and tom feed it); at 60
+         * (the recipes' highest) as before; with Feedback 100 too, the whole mix doesn't overload */
+        enum { N = 44100 * 20 };
+        static float dry[N], wet[N];
+        double d2 = 0.0, e2 = 0.0, db;
+        int i;
+        drums_only(0, dry, N);
+        drums_only(100, wet, N);
+        for (i = 0; i < N; i++) {
+            d2 += (double)dry[i] * (double)dry[i];
+            e2 += (double)(wet[i] - dry[i]) * (double)(wet[i] - dry[i]);
+        }
+        db = 10.0 * log10(e2 / d2);
+        CHECK(db > -7.0 && db < 0.0, "drums' echo at 100: %.1f dB against the drums", db);
+        drums_only(60, wet, N);
+        e2 = 0.0;
+        for (i = 0; i < N; i++)
+            e2 += (double)(wet[i] - dry[i]) * (double)(wet[i] - dry[i]);
+        db = 10.0 * log10(e2 / d2);
+        CHECK(db < -45.0 && db > -60.0, "drums' echo at 60: %.1f dB against the drums (was -52)", db);
+        start(0, -1, 1);
+        en_set(P_DECHO, 100);
+        en_set(P_FEEDBACK, 100);
+        run(40.0f);
+        CHECK(!bad && peak < 0.99f, "drums' echo 100, Feedback 100: peak %.3f", (double)peak);
+    }
     if (fails)
         printf("%d FAILED\n", fails);
     else

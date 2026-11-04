@@ -338,7 +338,9 @@ instrument goes into the tape echo and the plate; KNOB 3 **Time** and KNOB 4 **F
 one echo for all four, so Time and Feedback are the same on every page: turn them on one and the others follow. The
 Space page's Reverb is the plate's overall level, over all four sends. Each song keeps its own settings; the songs
 start with the pad out of the echo (Pad echo 0). The songs' own settings sit in the lower half of each send; turn
-Echo and Reverb up past about 60 for a lot more: the bass's Reverb, at 100, is 30 dB more than at 50.
+Echo and Reverb up past about 60 for a lot more: the bass's Reverb, at 100, is 30 dB more than at 50. The drums' Echo
+(only the snare and tom go into it) is faint at the songs' settings; past 60 it comes up fast, nearly as loud as the
+drums themselves at 100.
 
 | Row | 1 | 2 | 3 | 4 |
 |---|---|---|---|---|
