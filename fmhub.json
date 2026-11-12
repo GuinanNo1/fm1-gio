@@ -1,0 +1,9 @@
+{
+  "what": "A generative disco machine after Giorgio Moroder's Munich sound. It plays itself: a sequenced bass, strings or choir, a lead that answers what you play on the white keys, four-on-the-floor drums. Nine songs, each a form with its own chords. Pick a song, key and bass pattern; hold or skip sections.",
+  "author": "Guinan",
+  "kinds": ["groove"],
+  "play": "https://guinanno1.github.io/fm1-gio/emu/",
+  "cheat": "https://guinanno1.github.io/fm1-gio/quickstart/",
+  "image": "docs/img/screen-song.png",
+  "color": "#FF48AC"
+}
