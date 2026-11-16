@@ -290,9 +290,8 @@ my channel those immortal words, "My name is Giovanni Giorgio…", and set off t
 </main>"""
 
 INSTALL_SOON = """<main style="max-width:46rem;margin:0 auto">
-<h1 style="font:700 2.6rem/1 var(--display);letter-spacing:.05em;margin:2.4rem 0 .6rem">Install <span style="color:var(--gold);font-weight:500">alpha</span></h1>
-<p>GIO-1 is in alpha. The installer will be here with the first firmware build, and test beta downloads are coming
-soon. Until then, <a href="../emu/index.html">try it in the browser</a>: the same code the FM-1 will run.</p>
+<h1 style="font:700 2.6rem/1 var(--display);letter-spacing:.05em;margin:2.4rem 0 .6rem">Install <span style="color:var(--gold);font-weight:500">beta</span></h1>
+<p>GIO-1 is in beta. The installer will be here with the first firmware build. Until then, <a href="../emu/index.html">try it in the browser</a>: the same code the FM-1 will run.</p>
 <p>When it's ready, installing works from Chrome or Edge with the FM-1 connected by a USB data cable, with nothing to
 install on the computer, and the same page can put M-VAVE's own firmware back.</p>
 </main>"""
@@ -474,14 +473,13 @@ def main(out, pkg=None, version=None):
                          ("LICENSE", conf.get("licence", "MPL-2.0")), ("CREDITS", " " + conf.get("credits", ""))):
             page_i = page_i.replace("{{" + key + "}}", val)
         # the release notes' warnings, over the Install button too
-        caution = ('<div style="border:2px solid #b5451b;border-radius:10px;padding:.7rem 1rem;margin:1rem 0">'
-                   '<p style="margin:.2rem 0"><strong>Disclaimer: installing this firmware could brick your FM-1.</strong> '
-                   'GIO-1 is unofficial firmware, not made, endorsed or supported by M-VAVE, and this is an alpha. You install '
-                   'it entirely at your own risk.</p>'
-                   '<p style="margin:.4rem 0"><strong>Tested on two FM-1s.</strong> 0.3.1-alpha has been installed on two separate '
-                   'FM-1s and works on both, with m-bootloader installed on both too. With 0.3-alpha, other firmware was '
-                   'installed over GIO-1 on each and GIO-1 put back again, so moving between GIO-1 and other firmware has been '
-                   'tried too. It has not yet been tried more widely.</p>'
+        caution = ('<div style="border:2px solid #c08a1e;border-radius:10px;padding:.7rem 1rem;margin:1rem 0">'
+                   '<p style="margin:.2rem 0"><strong>Beta: no major issues so far, but install with caution.</strong> '
+                   'GIO-1 is unofficial firmware, not made, endorsed or supported by M-VAVE. It has been installed on three '
+                   'FM-1s with no major issues reported, but any unofficial firmware can in rare cases leave an FM-1 that '
+                   'won\'t start. You install it at your own risk.</p>'
+                   '<p style="margin:.4rem 0"><strong>Tested so far:</strong> three FM-1s. The first two have m-bootloader '
+                   'installed too, and on those, other firmware was installed over GIO-1 and GIO-1 put back again.</p>'
                    '<p style="margin:.4rem 0 .2rem"><strong>The safety nets:</strong> a crash restarts it; two failed starts in '
                    'a row bring up SAFE MODE (no sound, USB on: install again, or go back to stock below); past that, the '
                    'chip\'s own update mode, from which the rescue tool puts M-VAVE\'s firmware back. Update mode by hand: hold '
@@ -505,19 +503,19 @@ def main(out, pkg=None, version=None):
         app_js = (SRC / "app" / conf["install_app"]).read_text(encoding="utf-8") if conf.get("install_app") else "null"
         (out / "install" / "index.html").write_text(page_i.replace("/*LIB*/", lib).replace("/*META*/", meta)
                                                     .replace("/*APP*/", app_js), encoding="utf-8")
-        install = (f'<a href="install/index.html"><strong>Install <em>alpha {html.escape(version)}</em></strong><span>From Chrome '
+        install = (f'<a href="install/index.html"><strong>Install <em>beta {html.escape(version)}</em></strong><span>From Chrome '
                    f'or Edge, with the FM-1 connected by USB. Nothing to install on the computer.</span></a>')
         download = (f'<a href="firmware/{name}"><strong>Download <em>{name}</em></strong><span>For the command-line '
-                    f'installer: <code>python3 base/tools/fm1_install.py {name}</code>. In alpha; test beta downloads '
-                    f'coming soon.</span></a>')
+                    f'installer: <code>python3 base/tools/fm1_install.py {name}</code>. Beta: install with '
+                    f'caution.</span></a>')
     else:
         (out / "install" / "index.html").write_text(
             page("GIO-1 Install", "Installing GIO-1 on the M-VAVE FM-1: coming with the first build.", INSTALL_SOON,
                  "install/", 1), encoding="utf-8")
-        install = ('<a href="install/index.html"><strong>Install <em>alpha</em></strong><span>From Chrome or Edge, with the FM-1 '
+        install = ('<a href="install/index.html"><strong>Install <em>beta</em></strong><span>From Chrome or Edge, with the FM-1 '
                    'connected by USB. Coming with the first firmware build.</span></a>')
-        download = ('<div class="off"><strong>Download <em>alpha</em></strong><span>In alpha; test beta downloads coming '
-                    'soon.</span></div>')
+        download = ('<div class="off"><strong>Download <em>beta</em></strong><span>Coming with the first firmware '
+                    'build.</span></div>')
     # the landing page and its screenshots
     shutil.copytree(SRC / "docs" / "img", out / "img")
     (out / "index.html").write_text(

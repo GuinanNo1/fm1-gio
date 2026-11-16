@@ -5,10 +5,11 @@ plays itself from the moment it's switched on: an analog-style bass sequence (or
 or saws through a phaser, a synth lead that writes its own phrases, and four on the floor. Each song is a form of
 sections with their own chord changes; it loops for ever and changes as it goes. You steer it.
 
-> **Status: alpha, tested on two FM-1s.** GIO-1 0.3.1-alpha has been installed on two separate FM-1s and works on
-> both, with m-bootloader installed on both too. With 0.3-alpha, other firmware was installed over GIO-1 on each and
-> GIO-1 put back again, so moving between GIO-1 and other firmware has been tried too. Installing it is at your own risk: unofficial firmware could brick an FM-1. The
-> safety nets and the way back to M-VAVE's firmware are on the [Install page](https://guinanno1.github.io/fm1-gio/install/).
+> **Status: beta, no major issues so far.** GIO-1 0.3.1-beta has been installed on three FM-1s with no major issues
+> reported. The first two have m-bootloader installed too, and on those, other firmware was installed over GIO-1 and
+> GIO-1 put back again. Still, install with caution: it is unofficial firmware, and any unofficial firmware can in
+> rare cases leave an FM-1 that won't start. The safety nets and the way back to M-VAVE's firmware are on the
+> [Install page](https://guinanno1.github.io/fm1-gio/install/).
 
 ---
 
