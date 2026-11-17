@@ -1,0 +1,20 @@
+{
+  "schema": 1,
+  "id": "gio",
+  "name": "GIO-1",
+  "author": "Guinan",
+  "license": "MPL-2.0",
+  "tagline": "A generative electronic disco machine for the FM-1",
+  "description": "A generative disco machine after Giorgio Moroder's Munich sound. It plays itself: a sequenced bass, strings or choir, a lead that answers what you play on the white keys, four-on-the-floor drums. Nine songs, each a form with its own chords. Pick a song, key and bass pattern; hold or skip sections.",
+  "tags": ["generative", "groovebox", "sequencer"],
+  "install": "https://guinanno1.github.io/fm1-gio/install/",
+  "site": "https://guinanno1.github.io/fm1-gio/",
+  "source": "https://github.com/GuinanNo1/fm1-gio",
+  "screenshot": "docs/img/screen-song.png",
+  "hardware": {
+    "models": ["FM-1"],
+    "flash": ["856014", "B36014"],
+    "features": ["usb-audio-in", "screen-reader", "screen-mirror"]
+  },
+  "credits": "A fork of AMB-1 by Charles Vestal. Built on fm1-base and felucca-bsp, from Felucca by Leo Kuroshita (Hügelton Instruments)."
+}

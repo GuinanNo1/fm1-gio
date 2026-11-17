@@ -1,13 +1,15 @@
-# fm1-base's web pages, newer than GIO-1's pinned fm1-base
+# fm1-base's web pages, as GIO-1's site uses them
 
-Copied unchanged from [fm1-base](https://github.com/charlesvestal/fm1-base) at `2d8ed74` (MPL-2.0, Charles Vestal;
-`fm1ports.js` also Chris Farrell's, see its header), because the pinned fm1-base (`d8ff8f4`) has the older Mirror page.
-The firmware side of the mirror (`device/mirror.c`) is the same in both, so the newer page speaks to GIO-1 as it is.
+Copied unchanged from [fm1-base](https://github.com/charlesvestal/fm1-base) at `c8e0599`, the commit `base/` links
+(MPL-2.0, Charles Vestal; `fm1ports.js` also Chris Farrell's, see its header). They were first copied (at `2d8ed74`)
+because the fm1-base pinned then (`d8ff8f4`) had the older Mirror page; they are kept here so the site's three changes
+below are made to a known copy. Copy them again when `base/` moves.
 
-- `mirror.html`: fm1-base `web/mirror/index.html`. The newer page only talks to the FM-1: a port named after the
-  firmware or with an FM-1's usual name, the one the user picked, or one that answered the screen reader's HELLO. The
-  older one fell back to the first MIDI port it found and sent it the mirror's requests.
+- `mirror.html`: fm1-base `web/mirror/index.html`. It only talks to the FM-1: a port named after the firmware or with
+  an FM-1's usual name, the one the user picked, or one that answered the screen reader's HELLO. From `c8e0599` it
+  reads mirror version 4's input report (the dim lights, as the browser emulator shows them) and still reads older ones.
 - `fm1ports.js`: fm1-base `web/fm1ports.js`, inlined into the page for its `{{PORTS_JS}}`.
+- `fm1panel.js`: fm1-base `web/fm1panel.js` (the panel drawn once, shared with the emulator), for its `{{PANEL_JS}}`.
 
 `tools/make_pages.py` makes the site's Mirror page from them and changes three things (each checked to apply once):
 

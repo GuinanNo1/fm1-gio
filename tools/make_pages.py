@@ -110,6 +110,7 @@ def mirror_pages(conf):
     web = SRC / "tools" / "fm1base_web"
     mh = (web / "mirror.html").read_text(encoding="utf-8")
     mh = mh.replace("{{NAME}}", "GIO-1").replace("{{PORTS_JS}}", strip_module((web / "fm1ports.js").read_text(encoding="utf-8")))
+    mh = mh.replace("{{PANEL_JS}}", strip_module((web / "fm1panel.js").read_text(encoding="utf-8")))
     for old, new in (
             ('navigator.permissions?.query({ name: "midi", sysex: true }).then((p) => { if (p.state === "granted") connect(); }).catch(() => {});',
              "// (GIO-1: no connecting by itself when the page opens: Connect does it)"),
@@ -456,8 +457,9 @@ def main(out, pkg=None, version=None):
         (out / "firmware").mkdir()
         shutil.copy(pkg, out / "firmware" / name)
         page_i = (BASE / "web" / "installer.html").read_text(encoding="utf-8")
-        lib = strip_module((BASE / "web" / "fm1pkg.js").read_text(encoding="utf-8")) + "\n" + \
-            strip_module((BASE / "web" / "fm1ota.js").read_text(encoding="utf-8"))
+        # (as fm1-base's make_site.py: fm1ota.js finds the FM-1 with fm1ports.js, from fm1-base 4d48dd8 on)
+        lib = "\n".join(strip_module((BASE / "web" / f).read_text(encoding="utf-8"))
+                        for f in ("fm1ports.js", "fm1pkg.js", "fm1ota.js"))
         boot = BASE / "web" / "m-bootloader" / f"fm1-uboot-{MBOOT_VERSION}.fwsc"
         boot_name = f"m-bootloader-{MBOOT_VERSION}.fwsc"
         shutil.copy(boot, out / "firmware" / boot_name)
@@ -469,17 +471,22 @@ def main(out, pkg=None, version=None):
         for mark in ("/*LIB*/", "/*META*/", "/*APP*/"):
             if page_i.count(mark) != 1:
                 raise SystemExit(f"base/web/installer.html must contain {mark} once")
-        for key, val in (("NAME", "GIO-1"), ("REPO", REPO), ("REPO_SHORT", re.sub(r"^https?://", "", REPO)),
+        for key, val in (("RES", "GIO-1's data"), ("RES_JA", "GIO-1 のデータ"),   # (no resource region: never shown)
+                         ("NAME", "GIO-1"), ("REPO", REPO), ("REPO_SHORT", re.sub(r"^https?://", "", REPO)),
                          ("LICENSE", conf.get("licence", "MPL-2.0")), ("CREDITS", " " + conf.get("credits", ""))):
             page_i = page_i.replace("{{" + key + "}}", val)
+        left = sorted(set(re.findall(r"\{\{[A-Z_]+\}\}", page_i)))
+        if left:
+            raise SystemExit(f"base/web/installer.html: {' '.join(left)} not filled in")
         # the release notes' warnings, over the Install button too
         caution = ('<div style="border:2px solid #c08a1e;border-radius:10px;padding:.7rem 1rem;margin:1rem 0">'
                    '<p style="margin:.2rem 0"><strong>Beta: no major issues so far, but install with caution.</strong> '
-                   'GIO-1 is unofficial firmware, not made, endorsed or supported by M-VAVE. It has been installed on three '
-                   'FM-1s with no major issues reported, but any unofficial firmware can in rare cases leave an FM-1 that '
+                   'GIO-1 is unofficial firmware, not made, endorsed or supported by M-VAVE. It has been tested on only two '
+                   'FM-1s so far, with no issues, but any unofficial firmware can in rare cases leave an FM-1 that '
                    'won\'t start. You install it at your own risk.</p>'
-                   '<p style="margin:.4rem 0"><strong>Tested so far:</strong> three FM-1s. The first two have m-bootloader '
-                   'installed too, and on those, other firmware was installed over GIO-1 and GIO-1 put back again.</p>'
+                   '<p style="margin:.4rem 0"><strong>Tested so far:</strong> two FM-1s, both with the original flash chip and '
+                   'with m-bootloader installed too. Not yet one of the newer FM-1s with the UC25HQ80 flash chip, which this '
+                   'version now supports: if you have one, please report how it goes in the Issues.</p>'
                    '<p style="margin:.4rem 0 .2rem"><strong>The safety nets:</strong> a crash restarts it; two failed starts in '
                    'a row bring up SAFE MODE (no sound, USB on: install again, or go back to stock below); past that, the '
                    'chip\'s own update mode, from which the rescue tool puts M-VAVE\'s firmware back. Update mode by hand: hold '
@@ -495,8 +502,8 @@ def main(out, pkg=None, version=None):
             raise SystemExit("base/web/installer.html: the m-bootloader option has changed: place its caution again")
         mboot_caution = ('<p class="small" style="border-left:3px solid #b5451b;padding-left:.6rem"><strong>Caution: newer '
                          'FM-1s.</strong> FM-1s sold from late 2026 have a different flash chip (UCUN UC25HQ80). m-bootloader\'s '
-                         'author reports that one such FM-1 did not start after m-bootloader was installed, and the cause is not '
-                         'known yet. If your FM-1 was bought in late 2026 or later, or you are not sure, leave this unticked: '
+                         'author reports that one such FM-1 did not start after m-bootloader 1.1 or 1.2 (the version offered '
+                         'here) was installed, and the cause is not known yet. If your FM-1 was bought in late 2026 or later, or you are not sure, leave this unticked: '
                          'GIO-1 does not need it. With m-bootloader, REC held at power-on gives a black screen (its update '
                          'mode); switch off and on to leave it.</p>')
         page_i = page_i.replace(mboot_end, mboot_end[:-len('  </div>')] + '    ' + mboot_caution + '\n  </div>')
