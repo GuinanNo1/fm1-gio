@@ -11,6 +11,7 @@
   install/index.html          fm1-base's web installer, when a package is given; else a page saying it's coming
   firmware/gio-VERSION.fwsc   the package the installer writes; also the download (when given)
   words/                      the screen reader's words files (app/web/words)
+  tools/test-installer/       the FM-1 test installer (tools/test_installer, made in gio-tools): any .fwsc, unlisted
 
   tools/make_pages.py OUT_DIR [PKG VERSION]
 
@@ -571,8 +572,11 @@ def main(out, pkg=None, version=None):
         (out / rel).write_text(mh, encoding="utf-8")
     # the screen reader's words files (fm1-reader): every one ever made, for the devices that point at them
     shutil.copytree(SRC / "app" / "web" / "words", out / "words")
+    # the FM-1 test installer (tools/test_installer: made in gio-tools), unlisted: no link from the site's pages
+    (out / "tools" / "test-installer").mkdir(parents=True, exist_ok=True)
+    shutil.copy(SRC / "tools" / "test_installer" / "index.html", out / "tools" / "test-installer" / "index.html")
     (out / ".nojekyll").write_text("")
-    print(f"site: {out}: index.html, quickstart/, manual/, emu/, mirror/, words/, install/ ({product or 'coming with the first build'})")
+    print(f"site: {out}: index.html, quickstart/, manual/, emu/, mirror/, words/, tools/test-installer/, install/ ({product or 'coming with the first build'})")
 
 
 if __name__ == "__main__":
