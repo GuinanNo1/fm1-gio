@@ -110,6 +110,7 @@ def mirror_pages(conf):
     web = SRC / "tools" / "fm1base_web"
     mh = (web / "mirror.html").read_text(encoding="utf-8")
     mh = mh.replace("{{NAME}}", "GIO-1").replace("{{PORTS_JS}}", strip_module((web / "fm1ports.js").read_text(encoding="utf-8")))
+    mh = mh.replace("{{PANEL_JS}}", strip_module((web / "fm1panel.js").read_text(encoding="utf-8")))
     for old, new in (
             ('navigator.permissions?.query({ name: "midi", sysex: true }).then((p) => { if (p.state === "granted") connect(); }).catch(() => {});',
              "// (GIO-1: no connecting by itself when the page opens: Connect does it)"),
