@@ -5,9 +5,9 @@ plays itself from the moment it's switched on: an analog-style bass sequence (or
 or saws through a phaser, a synth lead that writes its own phrases, and four on the floor. Each song is a form of
 sections with their own chord changes; it loops for ever and changes as it goes. You steer it.
 
-> **Status: beta, no major issues so far.** GIO-1 0.3.1-beta has been installed on three FM-1s with no major issues
-> reported. The first two have m-bootloader installed too, and on those, other firmware was installed over GIO-1 and
-> GIO-1 put back again. Still, install with caution: it is unofficial firmware, and any unofficial firmware can in
+> **Status: beta, no major issues so far.** GIO-1 0.3.2-beta has been tested on only two FM-1s so far, both with the
+> original flash chip and with m-bootloader, with no issues. It hasn't yet been tried on one of the newer FM-1s with
+> the UC25HQ80 flash chip, which it now supports. Still, install with caution: it is unofficial firmware, and any unofficial firmware can in
 > rare cases leave an FM-1 that won't start. The safety nets and the way back to M-VAVE's firmware are on the
 > [Install page](https://guinanno1.github.io/fm1-gio/install/).
 
@@ -365,7 +365,9 @@ MODE (REC). The FM-1 is then in the chip's own update mode, where the web instal
 it. In SAFE MODE, REC does the same. **With m-bootloader installed** (an option on the Install page), it catches REC
 before GIO-1 starts and the screen stays black: that is its update mode, the same chip's mode, for its M-Flasher
 tool and the rescue. Switch the FM-1 off and on again to leave it. m-bootloader's own menu is PLAY held at power-on;
-its WIPE USER DATA erases GIO-1's saved songs.
+its WIPE USER DATA erases GIO-1's saved songs. On the newer FM-1s (UC25HQ80 flash chip, sold from late 2026), leave
+m-bootloader out: its author reports that one such FM-1 did not start after version 1.1 or 1.2 (the one the Install
+page offers) was installed, and the cause is not known.
 
 **Calibration:** if a button or knob does the wrong thing, hold OCT− and OCT+ while you switch the FM-1 on, and follow
 the screen.

@@ -12,9 +12,10 @@ hold a section, push it on to the next.
 
 ![The Song page: Feel's verse, the bass's sixteen steps round the chord, the form across the top](docs/img/screen-song.png) ![Heaven at full tempo](docs/img/screen-heaven.png) ![The Bass page](docs/img/screen-bass.png)
 
-**Status: beta, no major issues so far.** The latest release, [0.3.1-beta](https://github.com/GuinanNo1/fm1-gio/releases/tag/v0.3.1-beta),
-has been installed on three FM-1s with no major issues reported. The first two have m-bootloader installed too, and on
-those, other firmware was installed over GIO-1 and GIO-1 put back again. Still, install with caution: GIO-1 is
+**Status: beta, no major issues so far.** The latest release, [0.3.2-beta](https://github.com/GuinanNo1/fm1-gio/releases/tag/v0.3.2-beta),
+has been tested on only two FM-1s so far, both with the original flash chip and with m-bootloader, with no issues. It
+hasn't yet been tried on one of the newer FM-1s with the UC25HQ80 flash chip, which it now supports (0.3.1 was installed
+on three FM-1s with no major issues reported). Still, install with caution: GIO-1 is
 unofficial firmware, and any unofficial firmware can in rare cases leave an FM-1 that won't start. See
 [BUILDING.md](BUILDING.md) for the toolchain.
 
